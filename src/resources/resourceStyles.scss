@@ -1,0 +1,31 @@
+.resourceGridLayoutShow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-column-gap: 1.2em;
+
+    & > div {
+        overflow: hidden;
+    }
+}
+
+.resourceGridLayoutCreateEdit > div:first-child {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    & > div {
+        display: flex;
+    }
+}
+
+.hide {
+    display: none !important;
+}
+
+.resources {
+    .MuiTableCell-root.MuiTableCell-head:nth-child(n+3) {
+        text-align: center;
+    }
+    .MuiTableCell-root.MuiTableCell-body:nth-child(n+3) {
+        text-align: center;
+    }
+}

@@ -1,0 +1,17 @@
+.interestGridLayoutCreateEdit > div:first-child {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    & > div {
+        display: flex;
+    }
+}
+
+.interests {
+    .MuiTableCell-root.MuiTableCell-head:nth-child(n+3) {
+        text-align: center;
+    }
+    .MuiTableCell-root.MuiTableCell-body:nth-child(n+3) {
+        text-align: center;
+    }
+}

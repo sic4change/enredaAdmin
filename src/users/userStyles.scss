@@ -1,0 +1,42 @@
+.userGridLayoutShow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-column-gap: 1.2em;
+
+    & > div {
+        overflow: hidden;
+    }
+
+    img {
+        margin: 0;
+    }
+}
+
+.userIsAdmin {
+    justify-content: center;
+}
+
+.userImageShow {
+    grid-row: 1 / span 10;
+}
+
+.avatarListImageShow {
+    width: 50;
+    height: 50;
+    display: "block";
+    border-radius: "50%"
+}
+
+.userGridLayoutCreateEdit > div:first-child {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    & > div {
+        display: flex;
+    }
+
+    & > div:last-child {
+        grid-row: 100;
+        grid-column: 1/span 3;
+    }
+}
