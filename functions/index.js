@@ -732,9 +732,27 @@ exports.createSpecificInterest = functions.firestore
             });
     });
 
+exports.sendEmailActiveUsers = functions.firestore.document('users/{userId}')
+.onUpdate((change, context) => {
+    const userId = context.params.userId;
+    const newValue = change.after.data();
+        if (newValue.active) {
+            let htmlToSendToNewUser = createWelcomeToUserTemplate(newValue.firstName, newValue.email.trim().toLowerCase(), 'enreda_' + userId.slice(-3) );
+            return adminFirebase.firestore().collection('mail').add({
+                to: newValue.email,
+                message: {
+                    subject: 'Equipo enREDa',
+                    html: htmlToSendToNewUser,
+                }
+            })
+            }
+        
+    });
+
 exports.sendEmailNewUsers = functions.firestore
     .document('users/{userId}')
     .onCreate((snapshot, context) => {
+        const userId = context.params.userId;
         const role = snapshot.get('role');
         const phone = snapshot.get('phone');
         const address = snapshot.get('address');
@@ -748,7 +766,7 @@ exports.sendEmailNewUsers = functions.firestore
                 active = true
             }
         }
-        let htmlToSendToNewUser = (active) ?  createWelcomeToUserTemplate(snapshot.get('firstName'), snapshot.get('email').trim().toLowerCase(), 'enreda_' + phone.slice(-3)) : createWelcomeToInactiveUserTemplate(snapshot.get('firstName'));
+        let htmlToSendToNewUser = (active) ?  createWelcomeToUserTemplate(snapshot.get('firstName'), snapshot.get('email').trim().toLowerCase(), 'enreda_' + userId.slice(-3)) : createWelcomeToInactiveUserTemplate(snapshot.get('firstName'));
         return adminFirebase.firestore().collection('mail').add({
             to: snapshot.get('email'),
             message: {
