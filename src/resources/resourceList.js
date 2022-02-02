@@ -49,6 +49,8 @@ import AddUserToExternalResource from "../components/buttons/addUserToExternalRe
 import AddUserToResource from "../components/buttons/addUserToResource";
 import RemoveUserFromResource from "../components/buttons/removeUserFromResource";
 
+const maxPerPage = 999999999999999999999999999999999;
+
 const modalityChoices = [
         { _id: 'Presencial', name: 'Presencial' },
         { _id: 'Semipresencial', name: 'Semipresencial' },
@@ -100,10 +102,10 @@ const ResourceFilter = ({role, permissions, ...props}) => {
             <ReferenceInput source="address.country" reference="countries" label="País" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
                 <AutocompleteInput optionText="name" resettable/>
             </ReferenceInput>
-            <ReferenceInput source="address.province" reference="provinces" label="Provincia" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
+            <ReferenceInput source="address.province" reference="provinces" label="Provincia" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} perPage={maxPerPage} alwaysOn resettable>
                 <AutocompleteInput optionText="name" resettable/>
             </ReferenceInput>
-            <ReferenceInput source="address.city" reference="cities" label="Municipio" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
+            <ReferenceInput source="address.city" reference="cities" label="Municipio" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} perPage={maxPerPage} alwaysOn resettable>
                 <AutocompleteInput optionText="name" resettable/>
             </ReferenceInput>
             {/* <ReferenceInput source="address.country" reference="countries" label="Online" filter={{active: false}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
@@ -135,10 +137,10 @@ const ResourceFilterUnemployed = ({ ...props}) => {
             <ReferenceInput source="address.country" reference="countries" label="País" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
                 <AutocompleteInput optionText="name" resettable/>
             </ReferenceInput>
-            <ReferenceInput source="address.province" reference="provinces" label="Provincia" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
+            <ReferenceInput source="address.province" reference="provinces" label="Provincia" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }}  perPage={maxPerPage} alwaysOn resettable>
                 <AutocompleteInput optionText="name" resettable/>
             </ReferenceInput>
-            <ReferenceInput source="address.city" reference="cities" label="Municipio" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
+            <ReferenceInput source="address.city" reference="cities" label="Municipio" filter={{active: true}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} perPage={maxPerPage} alwaysOn resettable>
                 <AutocompleteInput optionText="name" resettable/>
             </ReferenceInput>
             {/* <ReferenceInput source="address.country" reference="countries" label="Online" filter={{active: false}} filterToQuery={searchText => ({ name: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
