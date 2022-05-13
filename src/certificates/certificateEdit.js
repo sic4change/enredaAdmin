@@ -31,13 +31,13 @@ export const CertificateEditView = ({permissions, ...props}) => {
     return (<Edit {...newProps} title={<EditTitle/>}>
             <SimpleForm className={'certificateGridLayoutCreateEdit'} >
                 <TextInput source="name" label="Nombre certificación" validate={[required()]} alwaysOn resettable/>
-                <ReferenceInput source="resource" reference="resources" label="Recurso" filterToQuery={searchText => ({ title: searchText })} sort={{ field: 'title', order: 'ASC' }} alwaysOn resettable validate={[required()]} >
+                <ReferenceInput source="resource" reference="resources" label="Recurso" filterToQuery={searchText => ({ title: searchText })} sort={{ field: 'title', order: 'ASC' }} alwaysOn resettable validate={[required()]} disabled>
                     <AutocompleteInput optionText="title" resettable/>
                 </ReferenceInput>
-                <ReferenceInput source="user" reference="users" label="Nombre" filterToQuery={searchText => ({ firstName: searchText })} sort={{ field: 'firstName', order: 'ASC' }} alwaysOn resettable validate={[required()]} >
+                <ReferenceInput source="user" reference="users" label="Nombre" filterToQuery={searchText => ({ firstName: searchText })} sort={{ field: 'firstName', order: 'ASC' }} alwaysOn resettable validate={[required()]} disabled>
                     <AutocompleteInput optionText="firstName" resettable/>
                 </ReferenceInput>
-                <ReferenceInput source="user" reference="users" label="Apellidos" filterToQuery={searchText => ({ firstName: searchText })} sort={{ field: 'lastName', order: 'ASC' }} alwaysOn resettable validate={[required()]} >
+                <ReferenceInput source="user" reference="users" label="Apellidos" filterToQuery={searchText => ({ firstName: searchText })} sort={{ field: 'lastName', order: 'ASC' }} alwaysOn resettable validate={[required()]} disabled>
                     <AutocompleteInput optionText="lastName" resettable/>
                 </ReferenceInput>
                 <DateInput source="date" options={{ format: 'dd/MM/yyyy' }} label="Fecha" validate={[required()]} />
