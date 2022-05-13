@@ -384,8 +384,8 @@ export const ResourceListView = ({permissions, ...props}) => {
                     <ChipField source="name"/>
                 </SingleFieldList>
             </ReferenceArrayField>
-            <FunctionField label="Comienzo" render={record => record.start.getTime() > 2556057600000 ? 'No expira' : `${moment(record.start).format("DD/MM/YYYY")}` } />
-            <FunctionField label="Fecha máxima de inscripción" render={record => record.maximumDate.getTime() > 2555971200000 ? 'No expira' : `${moment(record.maximumDate).format("DD/MM/YYYY")}` } />
+            <FunctionField label="Comienzo" render={record => new Date(record.start).getTime() >2556057600000 ? 'No expira' : `${moment(record.start).format("DD/MM/YYYY")}` } />
+            <FunctionField label="Fecha máxima de inscripción" render={record => new Date(record.maximumDate).getTime() > 2555971200000 ? 'No expira' : `${moment(record.maximumDate).format("DD/MM/YYYY")}` } />
             <TextField source="capacity" label="Aforo" emptyText='-'/>
             <TextField source="assistants" label="Asistentes" emptyText='-'/>
             {permissions && permissions['super-admin'] &&

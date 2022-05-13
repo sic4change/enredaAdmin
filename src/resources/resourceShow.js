@@ -253,6 +253,12 @@ const ResourceShow = ({permissions, ...props}) => {
                         {controllerProps.record && controllerProps.record.link &&
                             <TextField label="Link" source="link"/>
                         }
+                        {controllerProps.record && controllerProps.record.contactEmail &&
+                            <TextField label="Email" source="contactEmail"/>
+                        }
+                        {controllerProps.record && controllerProps.record.contactPhone &&
+                            <TextField label="Teléfono" source="contactPhone"/>
+                        }
                         <BooleanField label="Confianza" source="trust"/>
                         
                     </SimpleShowLayout>
