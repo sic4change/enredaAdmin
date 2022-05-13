@@ -48,13 +48,9 @@ const Empty = () => {
     const { basePath, certificate } = useListContext();
     return (
         <Box textAlign="center" m={10}>
-            <Typography variant="h4" paragraph>
+            <Typography variant="h6" paragraph>
                 Sin certificaciones todavía
             </Typography>
-            <Typography variant="body1">
-                ¿Te apetece crear uno nuevo?
-            </Typography>
-            <CreateButton basePath={basePath} />
         </Box>
     );
 };
@@ -122,6 +118,8 @@ export const CertificateListView = ({permissions, ...props}) => {
     }));
 
     const imageFieldClasses = useImageFieldStyles();
+
+
     
 
     return (<List empty={<Empty />} {...newProps}
