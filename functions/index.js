@@ -192,11 +192,21 @@ exports.createOrganization = functions.firestore
     .document('organizations/{organizationId}')
     .onCreate((snapshot, context) => {
         const organizationId = context.params.organizationId;
+        const email = snapshot.data().email;
         let trust = snapshot.data().trust !== undefined ? snapshot.data().trust : false;
         
         return adminFirebase.firestore().doc(`organizations/${organizationId}`).set({organizationId, trust }, {merge: true})
             .then(() => {
                 console.log("Successfully added organizationId to new organization");
+                return adminFirebase.firestore().collection('users').where("email", "==", email).get().then(
+                    (snapshot) => {
+                        snapshot.forEach((user) => {
+                            return adminFirebase.firestore().collection("users").doc(user.id).set({organization: organizationId}, {merge: true})
+                            .then(() => {
+                                console.log("Successfully add organizationId in organization user");
+                            })
+                        })
+                    });
             });
     });
 
