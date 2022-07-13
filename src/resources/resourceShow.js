@@ -171,8 +171,13 @@ const ResourceShow = ({permissions, ...props}) => {
                 <ShowView {...props} {...controllerProps} actions={<ResourceShowActions/>}
                           title={<ResourceTitle/>}>
                               <TabbedShowLayout>
-                                  <Tab label="Resumen">
-                                  <SimpleShowLayout className={'resourceGridLayoutShow'}>
+                    <Tab label="Resumen">
+                    <SimpleShowLayout className={'resourceGridLayoutShow'}>
+                        {controllerProps.record && controllerProps.record.resourcePictureId &&
+                            <ReferenceField source="resourcePictureId" reference="resourcesPictures" label="Foto del recurso" link="show">
+                                <ImageField source="resourcePhoto.src" title="Foto" label="Foto"/>
+                            </ReferenceField>
+                        }
                         <TextField source="title" label="Título"/>
                         <TextField source="description" label="Descripción"/>
                         {controllerProps.record && controllerProps.record.notExpire &&

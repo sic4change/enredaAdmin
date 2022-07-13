@@ -191,7 +191,8 @@ export const ResourceListView = ({permissions, ...props}) => {
             width: 50,
             height: 50,
             display: "block",
-            borderRadius: "50%"
+            borderRadius: "50%",
+            objectFit: "cover",
         }
     }));
 
@@ -372,6 +373,9 @@ export const ResourceListView = ({permissions, ...props}) => {
                   sort={{ field: 'title', order: 'ASC' }}
     >
         <Datagrid rowClick="show" className={'resources'}>
+            <ReferenceField source="resourcePictureId" reference="resourcesPictures" label="Foto">
+                <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
+            </ReferenceField>
             <TextField source="title" label="Título"/>
             <DateField source="createdate" label="Creación"/>
             <DateField source="lastupdate" label="Actualización"/>

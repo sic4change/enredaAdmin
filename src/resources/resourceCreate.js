@@ -14,6 +14,7 @@ import {
     SelectArrayInput,
     ChipField,
     Create,
+    AutocompleteInput,
 } from 'react-admin';
 import { connect } from 'react-redux';
 import './resourceStyles.scss';
@@ -222,6 +223,15 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
     delete newProps.onChangeOnline;
     delete newProps.onChangeNotExpire;
     delete newProps.formInput;
+
+    let filter;
+    if (permissions && !permissions['super-admin']) {
+        if (permissions['organization']) {
+            filter = {organizer: props.user.organization}
+        } else if (permissions['mentor']) {
+            filter = {organizer: props.user.userId}
+        } 
+    }
 
     return (<Create {...newProps} title={<CreateTitle />}>
         <SimpleForm className={'resourceGridLayoutCreateEdit'} toolbar={<CreateToolbar />}>
@@ -488,7 +498,17 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
 
             {permissions && permissions['super-admin'] &&
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
-        }
+            }
+
+            <ReferenceInput
+                source="resourcePictureId"
+                reference="resourcesPictures"
+                label="Foto del recurso"
+                filterToQuery={searchText => ({ name: searchText })}
+                filter={filter}
+                validate={[required()]}>
+                <AutocompleteInput optionText="name" />
+            </ReferenceInput>
 
         </SimpleForm>
     </Create>

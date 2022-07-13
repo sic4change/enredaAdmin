@@ -46,6 +46,10 @@ import ResourceTypeList from "./resourcesTypes/resourceTypeList";
 import ResourceTypeEdit from "./resourcesTypes/resourceTypeEdit";
 import ResourceTypeCreate from "./resourcesTypes/resourceTypeCreate";
 import ResourceEdit from "./resources/resourceEdit";
+import ResourcePicturesList from "./resourcesPictures/picturesList";
+import ResourcePicturesCreate from "./resourcesPictures/picturesCreate";
+import ResourcePicturesEdit from "./resourcesPictures/picturesEdit";
+import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import CertificateIcon from '@material-ui/icons/Star';
 import CertificateEdit from "./certificates/certificateEdit";
 import AbilityIcon from '@material-ui/icons/GolfCourse';
@@ -182,6 +186,14 @@ export default class App extends Component {
                                       edit={ResourceTypeEdit}
                                       create={ResourceTypeCreate}
                             /> : <Resource name="resourcesTypes"/>,
+                        permissions['super-admin'] || permissions['organization'] ?
+                            <Resource name="resourcesPictures"
+                                      options={{label: "Fotos de recursos"}}
+                                      icon={InsertPhotoIcon}
+                                      list={ResourcePicturesList}
+                                      edit={ResourcePicturesEdit}
+                                      create={ResourcePicturesCreate}
+                            /> : <Resource name="resourcesPictures"/>,
                         permissions['super-admin'] ?
                             <Resource name="countries"
                                       options={{label: "Países"}}

@@ -11,7 +11,11 @@ import {
     SelectArrayInput,
     ChipField,
     ReferenceArrayInput,
-    Edit
+    Edit,
+    ImageInput,
+    ImageField,
+    AutocompleteInput
+
 } from 'react-admin';
 import { connect } from 'react-redux';
 import './resourceStyles.scss';
@@ -207,6 +211,15 @@ export const ResourceEditView = ({ permissions, ...props }) => {
     delete newProps.onChangeNotExpire;
 
     delete newProps.formInput;
+
+    let filter;
+    if (permissions && !permissions['super-admin']) {
+        if (permissions['organization']) {
+            filter = {organizer: props.user.organization}
+        } else if (permissions['mentor']) {
+            filter = {organizer: props.user.userId}
+        } 
+    }
 
     return (<Edit {...newProps} title={<EditTitle />}>
         <SimpleForm className={'resourceGridLayoutCreateEdit'} >
@@ -463,6 +476,17 @@ export const ResourceEditView = ({ permissions, ...props }) => {
             {permissions && permissions['super-admin'] &&
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
             }
+
+            <ReferenceInput
+                source="resourcePictureId"
+                reference="resourcesPictures"
+                label="Foto del recurso"
+                filterToQuery={searchText => ({ name: searchText })}
+                filter={filter}
+                validate={[required()]}>
+                <AutocompleteInput optionText="name" />
+            </ReferenceInput>
+
         </SimpleForm>
     </Edit>
     )
