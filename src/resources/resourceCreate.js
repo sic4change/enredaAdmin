@@ -224,13 +224,10 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
     delete newProps.onChangeNotExpire;
     delete newProps.formInput;
 
+
     let filter;
-    if (permissions && !permissions['super-admin']) {
-        if (permissions['organization']) {
-            filter = {organizer: props.user.organization}
-        } else if (permissions['mentor']) {
-            filter = {organizer: props.user.userId}
-        } 
+    if (permissions && permissions['super-admin']) {
+        filter = {createdby: props.user.email}
     }
 
     return (<Create {...newProps} title={<CreateTitle />}>
@@ -506,6 +503,7 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                 label="Foto del recurso"
                 filterToQuery={searchText => ({ name: searchText })}
                 filter={filter}
+                sort={{ field: 'name', order: 'ASC' }}
                 validate={[required()]}>
                 <AutocompleteInput optionText="name" />
             </ReferenceInput>

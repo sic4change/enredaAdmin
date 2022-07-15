@@ -48,14 +48,13 @@ export const ResourcePicturesListView = ({permissions, ...props}) => {
     let filter;
     if (permissions && !permissions['super-admin']) {
         if (permissions['organization']) {
-            filter = {organizer: props.user.organization}
+            filter = {createdby: props.user.email}
         }
     }
     return (<List {...props} 
             filters={<ResourcePictureFilter/>} 
             title={<ResourcePictureTitle/>} 
-            sort={{ field: 'resourcePictureId', order: 'ASC' }}
-            filter={filter}
+            sort={{ field: 'name', order: 'ASC' }}
             >
         <Datagrid className="resourcePictures">
             <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
@@ -66,8 +65,8 @@ export const ResourcePicturesListView = ({permissions, ...props}) => {
             <ReferenceField source="organizer" reference="organizations" label="Organizador">
                 <TextField source="name" label="Organizador"/>
             </ReferenceField>
-            {props.user.role !== 'Desempleado' && <EditButton/>}
-            {props.user.role !== 'Desempleado' && <DeleteButton/>}
+            {props.user.role == 'Super Admin' && <EditButton/>}
+            {props.user.role == 'Super Admin' && <DeleteButton/>}
         </Datagrid>
     </List>)
 };
