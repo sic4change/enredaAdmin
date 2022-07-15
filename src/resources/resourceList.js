@@ -19,7 +19,8 @@ import {
     SingleFieldList,
     TopToolbar,
     CreateButton,
-    BooleanField
+    BooleanField,
+    UrlField
 }
     from 'react-admin';
 
@@ -403,6 +404,7 @@ export const ResourceListView = ({permissions, ...props}) => {
             <TextField source="modality" label="Modalidad"/>
             <TextField source="link" label="Link" emptyText='-'/>
             <BooleanField source="notExpire" label="No Expira"/>
+            <UrlField source="resourceLink" label="Link al recurso" emptyText='-'/>
             <BooleanField source="trust" label="Confianza"/>
             {props.user.role !== 'Desempleado' && <EditButton/>}
             {props.user.role !== 'Desempleado' && <DeleteButton/>}

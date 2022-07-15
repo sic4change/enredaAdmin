@@ -333,6 +333,9 @@ exports.createResource = functions.runWith(options).firestore
         const provinceUpdate = (snapshot.data().address.province === undefined || snapshot.data().address.province === null) ? "undefined" : snapshot.data().address.province;
         const cityUpdate = (snapshot.data().address.city === undefined || snapshot.data().address.city === null) ? "undefined" : snapshot.data().address.city;
         const placeUpdate = snapshot.data().address.place;
+
+        adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceLink: `https://enredawebapp.web.app/resources/${resourceId}` }, { merge: true });
+        
         //Si el creador del recurso es un mentor hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
         if (snapshot.data().organizerType === 'Mentor') {
             return adminFirebase.firestore().collection('users').where("userId", "==", snapshot.data().organizer).get()

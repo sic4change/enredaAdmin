@@ -28,6 +28,7 @@ import {
     ReferenceArrayField,
     ChipField,
     SingleFieldList, SelectInput, CreateButton,
+    UrlField,
 } from 'react-admin';
 import './resourceStyles.scss';
 
@@ -258,6 +259,9 @@ const ResourceShow = ({permissions, ...props}) => {
                         }
                         {controllerProps.record && controllerProps.record.contactPhone &&
                             <TextField label="Teléfono" source="contactPhone"/>
+                        }
+                        {controllerProps.record && controllerProps.record.resourceLink &&
+                            <UrlField label="Link al recurso" source="resourceLink"/>
                         }
                         <BooleanField label="Confianza" source="trust"/>
                         
