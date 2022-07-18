@@ -450,6 +450,44 @@ exports.createResource = functions.runWith(options).firestore
         
     });
 
+exports.storage = functions.storage.object().onFinalize(async (object) => {
+    const bucket = object.bucket;
+    const pathToFile = object.name;
+    const downloadToken = object.metadata.firebaseStorageDownloadTokens;
+    const url =`https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
+        pathToFile
+        )}?alt=media&token=${downloadToken}`;
+    const path = pathToFile.substring(0, pathToFile.lastIndexOf('/'));
+    //const title = pathToFile.substring(pathToFile.lastIndexOf('/') + 1);
+    let resourcePhoto = {
+        src: url,
+    }
+
+    return adminFirebase.firestore().doc(path).set({resourcePhoto}, {merge: true})
+        .then(() => {
+            console.log("Successfully updated");
+        });
+    });
+
+    exports.deleteResourcePicture = functions.firestore
+    .document('resourcesPictures/{resourcePictureId}')
+    .onDelete((snapshot, context) => {
+        const resourcePictureId = snapshot.data().id;
+        return adminFirebase.firestore().collection('resourcesPictures').where("id", "==", resourcePictureId).get()
+            .then(() => {
+                const bucket = adminFirebase.storage().bucket();
+                return bucket.deleteFiles({
+                    prefix: `resourcesPictures/${resourcePictureId}`
+                });
+            })
+            .then(() => {
+                console.log("Successfully updated category items and delete lessons and resources from course");
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    });
+
 exports.createResourceType = functions.firestore
     .document('resourcesTypes/{resourceTypeId}')
     .onCreate((snapshot, context) => {

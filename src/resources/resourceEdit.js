@@ -487,9 +487,9 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 label="Foto del recurso"
                 filterToQuery={searchText => ({ name: searchText })}
                 filter={filter}
-                sort={{ field: 'name', order: 'ASC' }}
+                sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
                 validate={[required()]}>
-                <AutocompleteInput optionText="name" />
+                <AutocompleteInput optionText="resourcePhoto.title" />
             </ReferenceInput>
 
         </SimpleForm>

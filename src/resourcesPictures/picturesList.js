@@ -58,13 +58,11 @@ export const ResourcePicturesListView = ({permissions, ...props}) => {
             >
         <Datagrid className="resourcePictures">
             <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
-            <TextField source="name" label="Nombre"/>
+            <TextField source="resourcePhoto.title" label="Nombre"/>
             <ReferenceField source="resourceTypeId" reference="resourcesTypes" label="Tipo de recurso">
                 <TextField source="name" label="Tipo de recurso"/>
             </ReferenceField>
-            <ReferenceField source="organizer" reference="organizations" label="Organizador">
-                <TextField source="name" label="Organizador"/>
-            </ReferenceField>
+            <TextField source="createdby" label="Creado por"/>
             {props.user.role == 'Super Admin' && <EditButton/>}
             {props.user.role == 'Super Admin' && <DeleteButton/>}
         </Datagrid>
