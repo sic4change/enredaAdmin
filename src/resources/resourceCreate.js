@@ -227,7 +227,7 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
 
     let filter;
     if (permissions && permissions['super-admin']) {
-        filter = {createdby: props.user.email}
+        filter = {role: 'Super Admin'}
     }
 
     return (<Create {...newProps} title={<CreateTitle />}>
@@ -503,9 +503,9 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                 label="Foto del recurso"
                 filterToQuery={searchText => ({ name: searchText })}
                 filter={filter}
-                sort={{ field: 'name', order: 'ASC' }}
+                sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
                 validate={[required()]}>
-                <AutocompleteInput optionText="name" />
+                <AutocompleteInput optionText="resourcePhoto.title" />
             </ReferenceInput>
 
         </SimpleForm>
