@@ -21,19 +21,6 @@ const CreateTitle = () => {
 export const ResourcePicturesCreateView = ({ permissions, ...props }) => (
     <Create {...props} title={<CreateTitle/>}>
         <SimpleForm className={'resourceTypeGridLayoutCreateEdit'} redirect="list">
-           {permissions && (permissions['super-admin']) &&
-            <ReferenceInput source="role" label="Rol" reference="users" filter={{ userId: props.user.userId }} sort={{ field: 'role', order: 'ASC' }} validate={[required()]}>
-                <SelectInput optionValue="role" optionText="role" />
-            </ReferenceInput>
-            }
-           {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-            <ReferenceInput source="role" label="Rol" reference="users" filter={{ organization: props.user.organization }}  validate={[required()]}>
-                <SelectInput optionValue="role" optionText="role" />
-            </ReferenceInput>
-            }
-            <ReferenceInput source="resourceTypeId" reference="resourcesTypes" label="Tipo de recurso" validate={[required()]}>
-                <SelectInput source="name" label="Tipo de recurso"/>
-            </ReferenceInput>
             <ImageInput source="resourcePhoto" label="Foto" accept="image/*" placeholder={<p>Deje su archivo aquí</p>} validate={[required()]}>
                 <ImageField source="src" title="title"/>
             </ImageInput>
@@ -42,6 +29,7 @@ export const ResourcePicturesCreateView = ({ permissions, ...props }) => (
                     <TextInput source="resourcePhoto.title" label="Nombre" validate={[required()]} {...rest} />
                 }
             </FormDataConsumer>
+            <TextInput source="role" label="Creado por" initialValue={props.user.role} disabled />
         </SimpleForm>
     </Create>
 );

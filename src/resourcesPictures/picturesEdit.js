@@ -21,11 +21,6 @@ const EditTitle = ({record}) => {
 export const ResourcePicturesEditView = ({ permissions, ...props }) => (
     <Edit {...props} title={<EditTitle/>}>
         <SimpleForm className={'resourceTypeGridLayoutCreateEdit'} redirect="list">
-            <TextInput source="role" label="Rol" disabled />
-            <TextInput source="createdby" label="Creado por" disabled/>
-            <ReferenceInput source="resourceTypeId" reference="resourcesTypes" label="Tipo de recurso" validate={[required()]}>
-                <SelectInput source="name" label="Tipo de recurso"/>
-            </ReferenceInput>
             <ImageInput source="resourcePhoto" label="Foto" accept="image/*" placeholder={<p>Deje su archivo aquí</p>} validate={[required()]}>
                 <ImageField source="src" title="title"/>
             </ImageInput>

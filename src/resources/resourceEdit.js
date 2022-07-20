@@ -481,6 +481,19 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
             }
 
+            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <ReferenceInput
+                    source="resourcePictureId"
+                    reference="resourcesPictures"
+                    label="Foto del recurso"
+                    filterToQuery={searchText => ({ name: searchText })}
+                    sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                    validate={[required()]}>
+                    <AutocompleteInput optionText="resourcePhoto.title" />
+                </ReferenceInput>
+            }
+
+            {permissions && (permissions['super-admin'] && props.user.role === 'Super Admin') &&
             <ReferenceInput
                 source="resourcePictureId"
                 reference="resourcesPictures"
@@ -491,7 +504,7 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 validate={[required()]}>
                 <AutocompleteInput optionText="resourcePhoto.title" />
             </ReferenceInput>
-
+            }
         </SimpleForm>
     </Edit>
     )

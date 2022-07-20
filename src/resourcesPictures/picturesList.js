@@ -54,17 +54,14 @@ export const ResourcePicturesListView = ({permissions, ...props}) => {
     return (<List {...props} 
             filters={<ResourcePictureFilter/>} 
             title={<ResourcePictureTitle/>} 
-            sort={{ field: 'name', order: 'ASC' }}
+            filter={filter}
+            sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
             >
         <Datagrid className="resourcePictures">
             <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
-            <TextField source="resourcePhoto.title" label="Nombre"/>
-            <ReferenceField source="resourceTypeId" reference="resourcesTypes" label="Tipo de recurso">
-                <TextField source="name" label="Tipo de recurso"/>
-            </ReferenceField>
-            <TextField source="createdby" label="Creado por"/>
-            {props.user.role == 'Super Admin' && <EditButton/>}
-            {props.user.role == 'Super Admin' && <DeleteButton/>}
+            <TextField source="resourcePhoto.title" label="Nombre"/>    
+            <EditButton/>
+            <DeleteButton/>
         </Datagrid>
     </List>)
 };
