@@ -228,6 +228,8 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
     let filter;
     if (permissions && permissions['super-admin']) {
         filter = {role: 'Super Admin'}
+    } else if (permissions && permissions['organization']){
+        filter = {createdby: props.user.email}
     }
 
     return (<Create {...newProps} title={<CreateTitle />}>
@@ -497,16 +499,31 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
             }
 
-            <ReferenceInput
-                source="resourcePictureId"
-                reference="resourcesPictures"
-                label="Foto del recurso"
-                filterToQuery={searchText => ({ name: searchText })}
-                filter={filter}
-                sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                validate={[required()]}>
-                <AutocompleteInput optionText="resourcePhoto.title" />
-            </ReferenceInput>
+            {permissions && (permissions['super-admin'] && props.user.role === 'Super Admin') &&
+                <ReferenceInput
+                    source="resourcePictureId"
+                    reference="resourcesPictures"
+                    label="Foto del recurso"
+                    filterToQuery={searchText => ({ name: searchText })}
+                    filter={filter}
+                    sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                    validate={[required()]}>
+                    <AutocompleteInput optionText="resourcePhoto.title" />
+                </ReferenceInput>
+            }
+
+            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <ReferenceInput
+                    source="resourcePictureId"
+                    reference="resourcesPictures"
+                    label="Foto del recurso"
+                    filterToQuery={searchText => ({ name: searchText })}
+                    filter={filter}
+                    sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                    validate={[required()]}>
+                    <AutocompleteInput optionText="resourcePhoto.title" />
+                </ReferenceInput>
+            }
 
         </SimpleForm>
     </Create>

@@ -222,9 +222,11 @@ export const ResourceEditView = ({ permissions, ...props }) => {
     // }
 
     if (permissions && permissions['super-admin']) {
+        filter = {role: 'Super Admin'}
+    } else if (permissions && permissions['organization']){
         filter = {createdby: props.user.email}
     }
-    
+
     return (<Edit {...newProps} title={<EditTitle />}>
         <SimpleForm className={'resourceGridLayoutCreateEdit'} >
             <TextInput source="title" label="Título" validate={[required()]} />
@@ -481,18 +483,6 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
             }
 
-            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-                <ReferenceInput
-                    source="resourcePictureId"
-                    reference="resourcesPictures"
-                    label="Foto del recurso"
-                    filterToQuery={searchText => ({ name: searchText })}
-                    sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                    validate={[required()]}>
-                    <AutocompleteInput optionText="resourcePhoto.title" />
-                </ReferenceInput>
-            }
-
             {permissions && (permissions['super-admin'] && props.user.role === 'Super Admin') &&
             <ReferenceInput
                 source="resourcePictureId"
@@ -504,6 +494,19 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 validate={[required()]}>
                 <AutocompleteInput optionText="resourcePhoto.title" />
             </ReferenceInput>
+            }
+
+            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <ReferenceInput
+                    source="resourcePictureId"
+                    reference="resourcesPictures"
+                    label="Foto del recurso"
+                    filterToQuery={searchText => ({ name: searchText })}
+                    filter={filter}
+                    sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                    validate={[required()]}>
+                    <AutocompleteInput optionText="resourcePhoto.title" />
+                </ReferenceInput>
             }
         </SimpleForm>
     </Edit>
