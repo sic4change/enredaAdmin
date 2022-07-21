@@ -227,9 +227,9 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
 
     let filter;
     if (permissions && permissions['super-admin']) {
-        filter = {role: 'Super Admin'}
+        filter = {organizationId: 'admin'}
     } else if (permissions && permissions['organization']){
-        filter = {createdby: props.user.email}
+        filter = {organizationId: props.user.organization}
     }
 
     return (<Create {...newProps} title={<CreateTitle />}>
