@@ -2064,27 +2064,3 @@ exports.deleteResource = functions.firestore
                 console.log("Successfully added certificateId to new certificate");
             });
     }); 
-
-
-    exports.createResourcePicture = functions.firestore
-    .document('resourcesPictures/{resourcePictureId}')
-    .onCreate((snapshot, context) => {
-        const resourcePictureId = context.params.resourcePictureId;
-        const createdby = snapshot.data().createdby;
-        return adminFirebase.firestore().collection('users').where("email", "==", createdby).get()
-                    .then((snapshot2) => {
-                        snapshot2.forEach((user) => {
-                            const role = user.data().role;
-                            let organization = ''
-                            if (role == 'Super Admin') {
-                                organization = 'admin'
-                            } else {
-                                organization = user.data().organization
-                            }
-                            return adminFirebase.firestore().doc(`resourcesPictures/${resourcePictureId}`).set({organizationId:organization}, {merge: true})
-                                .then(() => {
-                                    console.log("Successfully added organizationId to new resourcePicture");
-                                });
-                            }) 
-                    })
-    });
