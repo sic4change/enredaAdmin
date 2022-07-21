@@ -8,10 +8,7 @@ import {
     TextInput,
     Filter,
     ImageField,
-    ReferenceField,
-    ReferenceInput,
-    AutocompleteInput
-
+    Button
 }
     from 'react-admin';
 import {connect} from 'react-redux';
@@ -22,9 +19,6 @@ const ResourcePictureFilter = ({permissions, ...props}) => {
     return(
         <Filter {...props}>
             <TextInput source="name" label="Nombre" alwaysOn resettable/>
-            <ReferenceInput source="resourceTypeId" reference="resourcesTypes" label="Tipo" filterToQuery={searchText => ({ title: searchText })} sort={{ field: 'name', order: 'ASC' }} alwaysOn resettable>
-                <AutocompleteInput optionText="name"  resettable/>
-            </ReferenceInput>
         </Filter>
     )
 };
@@ -33,7 +27,15 @@ const ResourcePictureTitle = () => {
     return <span>Lista de fotos de recursos</span>;
 };
 
-export const ResourcePicturesListView = ({permissions, ...props}) => {
+const useStyles = makeStyles(theme => ({
+    button: {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      color: 'white !important'
+    },
+  }));
+
+export const ResourcePicturesListView = ({permissions, record, ...props}) => {
 
     const useImageFieldStyles = makeStyles(theme => ({
         image: { 
@@ -45,23 +47,46 @@ export const ResourcePicturesListView = ({permissions, ...props}) => {
         }
     }));
     const imageFieldClasses = useImageFieldStyles();
-    let filter;
-    if (permissions && !permissions['super-admin']) {
-        if (permissions['organization']) {
-            filter = {createdby: props.user.email}
+    
+    const currentUserMail = props ? props.user.email : null;
+    const userIsAdmin = permissions && permissions['super-admin'];
+    const userIsOrganization = permissions && permissions['organization'];
+
+    const EditResourcePicture = ({ record }) => {
+        const currentPicture = record ? record.createdby : null;
+        if (permissions && permissions['organization'] && currentUserMail == currentPicture || permissions && permissions['super-admin'] ) {
+            return <EditButton record={record}/>;
         }
-    }
+        if (permissions && permissions['organization'] && currentUserMail != currentPicture ) {
+            return null;
+        }
+    };
+    
+    const DeleteResourcePicture = ({ record }) => {
+        const currentPicture = record ? record.createdby : null;
+        if (permissions && permissions['organization'] && currentUserMail == currentPicture || permissions && permissions['super-admin'] ) {
+            return <DeleteButton record={record}/>;
+        }
+        if (permissions && permissions['organization'] && currentUserMail != currentPicture ) {
+            return null;
+        }
+    };
+
     return (<List {...props} 
             filters={<ResourcePictureFilter/>} 
             title={<ResourcePictureTitle/>} 
-            filter={filter}
             sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
             >
         <Datagrid className="resourcePictures">
             <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
             <TextField source="resourcePhoto.title" label="Nombre"/>    
-            <EditButton/>
-            <DeleteButton/>
+            
+            { userIsAdmin && <EditButton record={record}/> }
+            { userIsAdmin && <DeleteButton record={record}/> }
+
+            { userIsOrganization && <EditResourcePicture/>}
+            { userIsOrganization && <DeleteResourcePicture/>}
+
         </Datagrid>
     </List>)
 };
