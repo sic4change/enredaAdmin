@@ -209,22 +209,17 @@ export const ResourceEditView = ({ permissions, ...props }) => {
     delete newProps.onChangeProvince;
     delete newProps.onChangeOnline;
     delete newProps.onChangeNotExpire;
-
     delete newProps.formInput;
 
     let filter;
-    // if (permissions && !permissions['super-admin']) {
-    //     if (permissions['organization']) {
-    //         filter = {organizer: props.user.organization}
-    //     } else if (permissions['mentor']) {
-    //         filter = {organizer: props.user.userId}
-    //     } 
-    // }
+    let filterOrg;
 
-    if (permissions && permissions['super-admin']) {
+    if (permissions && permissions['super-admin'] || permissions && permissions['organization']) {
         filter = {role: 'Super Admin'}
-    } else if (permissions && permissions['organization']){
-        filter = {createdby: props.user.email}
+    } 
+
+    if (permissions && permissions['organization']){
+        filterOrg = {createdby: props.user.email}
     }
 
     return (<Edit {...newProps} title={<EditTitle />}>
@@ -483,31 +478,44 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
             }
 
-            {permissions && (permissions['super-admin'] && props.user.role === 'Super Admin') &&
-            <ReferenceInput
-                source="resourcePictureId"
-                reference="resourcesPictures"
-                label="Foto del recurso"
-                filterToQuery={searchText => ({ name: searchText })}
-                filter={filter}
-                sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                validate={[required()]}>
-                <AutocompleteInput optionText="resourcePhoto.title" />
-            </ReferenceInput>
+            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <BooleanInput source="myPictures" label="Elegir Mis imágenes" defaultValue={true}/>
             }
 
             {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <FormDataConsumer>
+                {({ formData, ...rest }) => formData.myPictures &&
+                    <ReferenceInput
+                        source="resourcePictureId"
+                        reference="resourcesPictures"
+                        label="Mis imágenes"
+                        filterToQuery={searchText => ({ name: searchText })}
+                        filter={filterOrg}
+                        sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                        validate={[required()]} 
+                        {...rest}>
+                        <AutocompleteInput optionText="resourcePhoto.title" />
+                    </ReferenceInput>
+                }
+                </FormDataConsumer>
+            }
+            
+            <FormDataConsumer>
+            {({ formData, ...rest }) => !formData.myPictures &&
                 <ReferenceInput
                     source="resourcePictureId"
                     reference="resourcesPictures"
-                    label="Foto del recurso"
+                    label="Banco de imágenes"
                     filterToQuery={searchText => ({ name: searchText })}
                     filter={filter}
                     sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                    validate={[required()]}>
+                    validate={[required()]} 
+                    {...rest}>
                     <AutocompleteInput optionText="resourcePhoto.title" />
                 </ReferenceInput>
             }
+            </FormDataConsumer>
+
         </SimpleForm>
     </Edit>
     )
