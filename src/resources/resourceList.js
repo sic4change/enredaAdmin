@@ -352,6 +352,19 @@ export const ResourceListView = ({permissions, ...props}) => {
         );
     };
 
+    const ShowPhoto = ({ record }) => {
+        const currentPicture = record ? record.resourcePictureId : null;
+        if ( currentPicture != null ) {
+            return <ReferenceField source="resourcePictureId" reference="resourcesPictures" label="Foto">
+            <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
+        </ReferenceField>;
+        }
+        else {
+            return <ImageField classes={imageFieldClasses} source="resourcePhoto" title="Foto" label="Foto"/>;
+        }
+    };
+
+
     if (permissions && !permissions['super-admin']) {
         if (permissions['organization']) {
             filter = {organizer: props.user.organization}
@@ -374,9 +387,10 @@ export const ResourceListView = ({permissions, ...props}) => {
                   sort={{ field: 'title', order: 'ASC' }}
     >
         <Datagrid rowClick="show" className={'resources'}>
-            <ReferenceField source="resourcePictureId" reference="resourcesPictures" label="Foto">
+            {/* <ReferenceField source="resourcePictureId" reference="resourcesPictures" label="Foto">
                 <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
-            </ReferenceField>
+            </ReferenceField> */}
+            <ShowPhoto/>
             <TextField source="title" label="Título"/>
             <DateField source="createdate" label="Creación"/>
             <DateField source="lastupdate" label="Actualización"/>
