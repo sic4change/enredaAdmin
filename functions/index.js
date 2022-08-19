@@ -880,7 +880,7 @@ exports.sendEmailNewUsers = functions.firestore
             }
         }).then(() => {
             return adminFirebase.firestore().collection('mail').add({
-                to: 'escuchamos@enredaempleo.org',
+                to: 'escuchamos@enredas.org',
                 message: {
                     subject: 'Tenemos un nuevo integrante',
                     html:
@@ -1373,7 +1373,7 @@ exports.contactFormHandler = functions.firestore
                     }
                 }).then(() => {
                     return adminFirebase.firestore().collection('mail').add({
-                        to: 'escuchamos@enredaempleo.org',
+                        to: 'escuchamos@enredas.org',
                         message: {
                             subject: 'Hemos recibido una solicitud de contacto',
                             html:
