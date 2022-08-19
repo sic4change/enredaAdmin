@@ -516,7 +516,7 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                         filterToQuery={searchText => ({ name: searchText })}
                         filter={filterOrg}
                         sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                        validate={[required()]} 
+                        //validate={[required()]} 
                         {...rest}>
                         <AutocompleteInput optionText="resourcePhoto.title" />
                     </ReferenceInput>
@@ -533,7 +533,7 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                     filterToQuery={searchText => ({ name: searchText })}
                     filter={filter}
                     sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                    validate={[required()]} 
+                    //validate={[required()]} 
                     {...rest}>
                     <AutocompleteInput optionText="resourcePhoto.title" />
                 </ReferenceInput>
