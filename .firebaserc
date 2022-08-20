@@ -1,6 +1,14 @@
 {
   "projects": {
-    "default": "react-admin-fb",
     "enreda-admin": "enreda-d3b41"
+  },
+  "targets": {
+    "enreda-d3b41": {
+      "hosting": {
+        "admin": [
+          "enreda-d3b41"
+        ]
+      }
+    }
   }
 }
