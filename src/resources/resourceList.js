@@ -387,9 +387,6 @@ export const ResourceListView = ({permissions, ...props}) => {
                   sort={{ field: 'title', order: 'ASC' }}
     >
         <Datagrid rowClick="show" className={'resources'}>
-            {/* <ReferenceField source="resourcePictureId" reference="resourcesPictures" label="Foto">
-                <ImageField classes={imageFieldClasses} source="resourcePhoto.src" title="Foto" label="Foto"/>
-            </ReferenceField> */}
             <ShowPhoto/>
             <TextField source="title" label="Título"/>
             <DateField source="createdate" label="Creación"/>
