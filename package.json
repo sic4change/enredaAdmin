@@ -25,6 +25,7 @@
     "react-admin": "^3.8.3",
     "react-admin-date-inputs": "WiXSL/react-admin-date-inputs#mui-pickers-v3",
     "react-admin-firebase": "^3.2.2",
+    "react-admin-import-csv": "^1.0.33",
     "react-dom": "^16.13.1",
     "react-firebaseui": "^4.1.0",
     "react-router": "^5.2.0",

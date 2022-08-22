@@ -49,6 +49,13 @@ import ResourceEdit from "./resources/resourceEdit";
 import ResourcePicturesList from "./resourcesPictures/picturesList";
 import ResourcePicturesCreate from "./resourcesPictures/picturesCreate";
 import ResourcePicturesEdit from "./resourcesPictures/picturesEdit";
+import ActivitiesList from "./activities/activitiesList";
+import ActivitiesCreate from "./activities/activitiesCreate";
+import ActivitiesEdit from "./activities/activitiesEdit";
+import LocalActivityIcon from '@material-ui/icons/LocalActivity';
+import ProfessionsList from "./professions/professionsList";
+import ProfessionsCreate from "./professions/professionsCreate";
+import ProfessionsEdit from "./professions/professionsEdit";
 import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import CertificateIcon from '@material-ui/icons/Star';
 import CertificateEdit from "./certificates/certificateEdit";
@@ -194,6 +201,22 @@ export default class App extends Component {
                                       edit={ResourcePicturesEdit}
                                       create={ResourcePicturesCreate}
                             /> : <Resource name="resourcesPictures"/>,
+                        permissions['super-admin'] ?
+                            <Resource name="activities"
+                                      options={{label: "Actividades"}}
+                                      icon={LocalActivityIcon}
+                                      list={ActivitiesList}
+                                      edit={ActivitiesEdit}
+                                      create={ActivitiesCreate}
+                            /> : <Resource name="activities"/>,
+                        permissions['super-admin'] ?
+                            <Resource name="professions"
+                                      options={{label: "Profesiones"}}
+                                      icon={LocalActivityIcon}
+                                      list={ProfessionsList}
+                                      edit={ProfessionsEdit}
+                                      create={ProfessionsCreate}
+                            /> : <Resource name="activities"/>,
                         permissions['super-admin'] ?
                             <Resource name="countries"
                                       options={{label: "Países"}}
