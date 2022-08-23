@@ -3,7 +3,10 @@ import {
     TextInput, 
     Edit, 
     required,
-    SimpleForm 
+    SimpleForm,
+    ReferenceArrayInput, 
+    SelectArrayInput,
+    ChipField
 }
     from 'react-admin';
 import { connect } from 'react-redux';
@@ -16,6 +19,11 @@ export const ActivitiesEditView = ({ permissions, ...props }) => (
     <Edit {...props} title={<EditTitle/>}>
         <SimpleForm redirect="list">
             <TextInput source="name" label="Actividad" validate={[required()]} />
+            <ReferenceArrayInput reference="competencies" source="competencies" label="Competencias" sort={{ field: 'name', order: 'ASC' }}>
+                <SelectArrayInput>
+                    <ChipField source="name" />
+                </SelectArrayInput>
+            </ReferenceArrayInput> 
         </SimpleForm>    
     </Edit>
 );
