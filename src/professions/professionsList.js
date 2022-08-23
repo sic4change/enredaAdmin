@@ -10,6 +10,7 @@ import {
     downloadCSV,
     TopToolbar,
     ExportButton,
+    CreateButton,
 }
     from 'react-admin';
 import {connect} from 'react-redux';
@@ -38,6 +39,7 @@ const ProfessionListActions = (props) => {
     } = props;
     return (
       <TopToolbar className={className}>
+        <CreateButton/>
         <ExportButton
           maxResults='99999999999999999999999999999999999999999'
           disabled={total === 0}
@@ -74,7 +76,7 @@ export const ActivitiesListView = ({permissions, record, ...props}) => {
             actions={<ProfessionListActions />}
             exporter={exporter}
             >
-        <Datagrid className="professions">
+        <Datagrid className="professions" rowClick="show">
             <TextField source="name" label="Profesión"/>      
             { userIsAdmin && <EditButton/> }
             { userIsAdmin && <DeleteButton/> }

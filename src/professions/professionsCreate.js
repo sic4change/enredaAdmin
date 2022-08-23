@@ -3,6 +3,9 @@ import {
     TextInput,
     SimpleForm,
     Create,
+    required,
+    SelectArrayInput,
+    ReferenceInput
 } from 'react-admin';
 import { connect } from 'react-redux';
 
@@ -13,7 +16,10 @@ const CreateTitle = () => {
 export const ProfessionsCreateView = ({ permissions, ...props }) => (
     <Create {...props} title={<CreateTitle/>}>
         <SimpleForm redirect="list">
-            <TextInput source="name" label="Profesión" />
+            <TextInput source="name" label="Profesión" validate={[required()]} />
+            <ReferenceInput source="activities" label="Actividades" reference="activities" sort={{ field: 'name', order: 'ASC' }}>
+                <SelectArrayInput optionText="name" validate={[required()]} />
+            </ReferenceInput>
         </SimpleForm>
     </Create>
 );

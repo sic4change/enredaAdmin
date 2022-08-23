@@ -11,28 +11,25 @@ import {
     TopToolbar,
     ExportButton,
     CreateButton,
-    SelectArrayInput,
-    ReferenceArrayInput,
-    ChipField
 }
     from 'react-admin';
 import {connect} from 'react-redux';
 import jsonExport from 'jsonexport/dist';
 import { ImportButton } from "react-admin-import-csv";
 
-const ActivityFilter = ({permissions, ...props}) => {
+const CompetenciesFilter = ({permissions, ...props}) => {
     return(
         <Filter {...props}>
-            <TextInput source="name" label="Actividad" alwaysOn resettable/>
+            <TextInput source="name" label="Competencia" alwaysOn resettable/>
         </Filter>
     )
 };
 
-const ActivityTitle = () => {
-    return <span>Lista de Actividades</span>;
+const CompetenciesTitle = () => {
+    return <span>Lista de Competencias</span>;
 };
 
-const ActivityListActions = (props) => {
+const CompetenciesListActions = (props) => {
     const {
       className,
       total,
@@ -63,24 +60,24 @@ const exporter =(records, fetchRelatedRecords) => {
     jsonExport(data, {
         headers: ['id','name','lastupdate','updatedby','createdate','createdby'] // order fields in the export
     }, (err, csv) => {
-        downloadCSV(csv, 'activities'); 
+        downloadCSV(csv, 'competencies'); 
     }); 
 });
 };
 
-export const ActivitiesListView = ({permissions, record, ...props}) => {
+export const CompetenciesListView = ({permissions, record, ...props}) => {
     
     const userIsAdmin = permissions && permissions['super-admin'];
 
     return (<List {...props} 
-            filters={<ActivityFilter/>} 
-            title={<ActivityTitle/>} 
+            filters={<CompetenciesFilter/>} 
+            title={<CompetenciesTitle/>} 
             sort={{ field: 'name', order: 'ASC' }}
-            actions={<ActivityListActions />}
+            actions={<CompetenciesListActions />}
             exporter={exporter}
             >
-        <Datagrid className="activities">
-            <TextField source="name" label="Actividad"/>     
+        <Datagrid className="competencies">
+            <TextField source="name" label="Competencia"/>      
             { userIsAdmin && <EditButton/> }
             { userIsAdmin && <DeleteButton/> }
         </Datagrid>
@@ -91,8 +88,8 @@ function mapStateToProps(state) {
     return {user: state.user}
 }
 
-const ActivitiesList = connect(mapStateToProps)(ActivitiesListView);
-export default ActivitiesList;
+const CompetenciesList = connect(mapStateToProps)(CompetenciesListView);
+export default CompetenciesList;
 
 
 

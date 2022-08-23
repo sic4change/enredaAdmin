@@ -56,6 +56,10 @@ import LocalActivityIcon from '@material-ui/icons/LocalActivity';
 import ProfessionsList from "./professions/professionsList";
 import ProfessionsCreate from "./professions/professionsCreate";
 import ProfessionsEdit from "./professions/professionsEdit";
+import ProfessionsShow from "./professions/professionsShow";
+import CompetenciesList from "./competencies/competenciesList";
+import CompetenciesCreate from "./competencies/competenciesCreate";
+import CompetenciesEdit from "./competencies/competenciesEdit";
 import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import CertificateIcon from '@material-ui/icons/Star';
 import CertificateEdit from "./certificates/certificateEdit";
@@ -216,7 +220,16 @@ export default class App extends Component {
                                       list={ProfessionsList}
                                       edit={ProfessionsEdit}
                                       create={ProfessionsCreate}
-                            /> : <Resource name="activities"/>,
+                                      show={ProfessionsShow}
+                            /> : <Resource name="professions"/>,
+                        permissions['super-admin'] ?
+                            <Resource name="competencies"
+                                      options={{label: "Competencias"}}
+                                      icon={LocalActivityIcon}
+                                      list={CompetenciesList}
+                                      edit={CompetenciesEdit}
+                                      create={CompetenciesCreate}
+                            /> : <Resource name="competencies"/>,
                         permissions['super-admin'] ?
                             <Resource name="countries"
                                       options={{label: "Países"}}
