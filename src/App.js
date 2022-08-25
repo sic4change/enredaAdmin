@@ -52,6 +52,7 @@ import ResourcePicturesEdit from "./resourcesPictures/picturesEdit";
 import ActivitiesList from "./activities/activitiesList";
 import ActivitiesCreate from "./activities/activitiesCreate";
 import ActivitiesEdit from "./activities/activitiesEdit";
+import ActivitiesShow from "./activities/activitiesShow";
 import LocalActivityIcon from '@material-ui/icons/LocalActivity';
 import ProfessionsList from "./professions/professionsList";
 import ProfessionsCreate from "./professions/professionsCreate";
@@ -212,6 +213,7 @@ export default class App extends Component {
                                       list={ActivitiesList}
                                       edit={ActivitiesEdit}
                                       create={ActivitiesCreate}
+                                      show={ActivitiesShow}
                             /> : <Resource name="activities"/>,
                         permissions['super-admin'] ?
                             <Resource name="professions"

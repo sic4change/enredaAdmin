@@ -10,12 +10,13 @@ import {
     TabbedShowLayout,
     ShowView,
     ReferenceArrayField,
-    SingleFieldList,
-    ChipField
+    Datagrid,
+    ReferenceField,
+    ArrayField
     
 } from 'react-admin';
 
-const ProfessionShowActions = ({basePath, data, resource}) => (
+const ActivityShowActions = ({basePath, data, resource}) => (
     <TopToolbar>
         <EditButton basePath={basePath} record={data}/>
         <DeleteButton basePath={basePath} record={data} resource={resource}/>
@@ -23,25 +24,28 @@ const ProfessionShowActions = ({basePath, data, resource}) => (
     </TopToolbar>
 );
 
-const ProfessionTitle = ({record}) => {
+const ActivityTitle = ({record}) => {
     return <span>Actividad: {record ? `${record.name}` : ''}</span>;
 };
 
-export const ProfessionShow = ({permissions, ...props}) => {
+export const ActivitiesShow = ({permissions, ...props}) => {
     return (<ShowController {...props}>
         {controllerProps =>
-            <ShowView {...props} {...controllerProps} actions={<ProfessionShowActions/>} title={<ProfessionTitle/>}>
+            <ShowView {...props} {...controllerProps} actions={<ActivityShowActions/>} title={<ActivityTitle/>}>
                 <TabbedShowLayout syncWithLocation={false}>
                     <Tab label="información" contentClassName={'courseGridLayoutShow'}>
                     {controllerProps.record && controllerProps.record.name && 
                         <TextField source="name" label="Actividad"/>
                     }
                     {controllerProps.record && controllerProps.record.competencies &&
-                        <ReferenceArrayField reference="competencies" source="competencies" label="Competencias">
-                            <SingleFieldList >
-                                <ChipField source="name"/>
-                            </SingleFieldList>
-                        </ReferenceArrayField>
+                        <ArrayField source="competencies" label="Competencias" addLabel={false}>
+                        <Datagrid>
+                            <ReferenceField source="competencyId" label="Competencias" reference="competencies" sortByOrder="DESC">
+                                <TextField source="name"/>
+                            </ReferenceField>
+                            <TextField source="points" label="Puntos" />
+                        </Datagrid>
+                        </ArrayField>
                     }
                     </Tab>
                 </TabbedShowLayout>
@@ -49,4 +53,4 @@ export const ProfessionShow = ({permissions, ...props}) => {
         }
     </ShowController>)
 }
-export default ProfessionShow;
+export default ActivitiesShow;

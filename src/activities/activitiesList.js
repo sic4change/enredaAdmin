@@ -61,7 +61,7 @@ const exporter =(records, fetchRelatedRecords) => {
                 ...record,
         }));
     jsonExport(data, {
-        headers: ['id','name','lastupdate','updatedby','createdate','createdby'] // order fields in the export
+        headers: ['id','name','lastupdate','updatedby','createdate','createdby','competencies.competencyId','competencies.points'] // order fields in the export
     }, (err, csv) => {
         downloadCSV(csv, 'activities'); 
     }); 
@@ -79,7 +79,7 @@ export const ActivitiesListView = ({permissions, record, ...props}) => {
             actions={<ActivityListActions />}
             exporter={exporter}
             >
-        <Datagrid className="activities">
+        <Datagrid className="activities" rowClick="show">
             <TextField source="name" label="Actividad"/>     
             { userIsAdmin && <EditButton/> }
             { userIsAdmin && <DeleteButton/> }
