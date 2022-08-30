@@ -505,22 +505,34 @@ exports.storage = functions.storage.object().onFinalize(async (object) => {
     const bucket = object.bucket;
     const pathToFile = object.name;
     const downloadToken = object.metadata.firebaseStorageDownloadTokens;
-    const url =`https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
         pathToFile
-        )}?alt=media&token=${downloadToken}`;
+    )}?alt=media&token=${downloadToken}`;
     const path = pathToFile.substring(0, pathToFile.lastIndexOf('/'));
     //const title = pathToFile.substring(pathToFile.lastIndexOf('/') + 1);
     let resourcePhoto = {
         src: url,
     }
+    let logoPic = {
+        src: url,
+    }
 
-    return adminFirebase.firestore().doc(path).set({resourcePhoto}, {merge: true})
-        .then(() => {
-            console.log("Successfully updated");
-        });
-    });
+    const pathToCollection = pathToFile.substring(0, pathToFile.indexOf('/'));
+    //console.log(`Path to collection: ${pathToCollection}`);
+    if (pathToCollection === 'resources') {
+        return adminFirebase.firestore().doc(path).set({ resourcePhoto }, { merge: true })
+            .then(() => {
+                console.log("Resource photo successfully updated");
+            });
+    } else if (pathToCollection === 'organizations') {
+        return adminFirebase.firestore().doc(path).set({ logoPic }, { merge: true })
+            .then(() => {
+                console.log("Organization Logo successfully updated");
+            });
+    }
+});
 
-    exports.deleteResourcePicture = functions.firestore
+exports.deleteResourcePicture = functions.firestore
     .document('resourcesPictures/{resourcePictureId}')
     .onDelete((snapshot, context) => {
         const resourcePictureId = snapshot.data().id;
