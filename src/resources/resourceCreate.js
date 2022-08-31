@@ -518,7 +518,20 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                         sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
                         //validate={[required()]} 
                         {...rest}>
-                        <AutocompleteInput optionText="resourcePhoto.title" />
+                        <AutocompleteInput 
+                            optionText={<OptionRenderer/>} 
+                            inputText={inputText} 
+                            matchSuggestion={() => true}
+                            options={{
+                                suggestionsContainerProps: {
+                                  modifiers: {
+                                    computeStyle: {
+                                      gpuAcceleration: false,
+                                    },
+                                  },
+                                }
+                              }}
+                        />
                     </ReferenceInput>
                 }
                 </FormDataConsumer>
@@ -535,7 +548,20 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                     sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
                     //validate={[required()]} 
                     {...rest}>
-                    <AutocompleteInput optionText="resourcePhoto.title" />
+                    <AutocompleteInput 
+                            optionText={<OptionRenderer/>} 
+                            inputText={inputText} 
+                            matchSuggestion={() => true}
+                            options={{
+                                suggestionsContainerProps: {
+                                  modifiers: {
+                                    computeStyle: {
+                                      gpuAcceleration: false,
+                                    },
+                                  },
+                                }
+                              }}
+                        />
                 </ReferenceInput>
             }
             </FormDataConsumer>
@@ -544,6 +570,14 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
     </Create>
     )
 };
+
+const inputText = choice => `${choice.resourcePhoto.title}`;
+const OptionRenderer = choice => (
+    <span style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+        <img src={choice.record.resourcePhoto.src} width="80" height="60" style={{ marginRight: '.5rem' }}/>
+        {choice.record.resourcePhoto.title}
+    </span>
+);
 
 function mapStateToProps(state, props) {
     return { formInput: state.formInput, user: state.user }
