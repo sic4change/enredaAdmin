@@ -13,11 +13,13 @@ const CreateTitle = () => {
     return <span>Crear Profesión</span>;
 };
 
+const maxPerPage = 999999999999999999999999999999999;
+
 export const ProfessionsCreateView = ({ permissions, ...props }) => (
     <Create {...props} title={<CreateTitle/>}>
         <SimpleForm redirect="list">
             <TextInput source="name" label="Profesión" validate={[required()]} />
-            <ReferenceInput source="activities" label="Actividades" reference="activities" sort={{ field: 'name', order: 'ASC' }}>
+            <ReferenceInput source="activities" label="Actividades" reference="activities" sort={{ field: 'name', order: 'ASC' }} perPage={maxPerPage}>
                 <SelectArrayInput optionText="name" validate={[required()]} />
             </ReferenceInput>
         </SimpleForm>
