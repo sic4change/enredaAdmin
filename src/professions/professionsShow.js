@@ -10,9 +10,9 @@ import {
     TabbedShowLayout,
     ShowView,
     ReferenceArrayField,
-    SingleFieldList,
-    ChipField
-    
+    Datagrid,
+    ReferenceField
+
 } from 'react-admin';
 
 const ProfessionShowActions = ({basePath, data, resource}) => (
@@ -38,9 +38,11 @@ export const ProfessionShow = ({permissions, ...props}) => {
                     }
                     {controllerProps.record && controllerProps.record.activities &&
                         <ReferenceArrayField reference="activities" source="activities" label="Actividades">
-                            <SingleFieldList >
-                                <ChipField source="name"/>
-                            </SingleFieldList>
+                            <Datagrid>
+                                <ReferenceField source="id" label="Actividades" reference="activities" sortByOrder="DESC">
+                                    <TextField source="name"/>
+                                </ReferenceField>
+                            </Datagrid>
                         </ReferenceArrayField>
                     }
                     </Tab>

@@ -15,6 +15,9 @@ import {
     ChipField,
     Create,
     AutocompleteInput,
+    Title,
+    BooleanField,
+    TextField,
 } from 'react-admin';
 import { connect } from 'react-redux';
 import './resourceStyles.scss';
@@ -223,6 +226,14 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
     delete newProps.onChangeOnline;
     delete newProps.onChangeNotExpire;
     delete newProps.formInput;
+
+    const inputText = choice => `${choice.resourcePhoto.title}`;
+    const OptionRenderer = choice => (
+        <span style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+            <img src={choice.record.resourcePhoto.src} width="80" height="60" style={{ marginRight: '.5rem' }}/>
+            {choice.record.resourcePhoto.title}
+        </span>
+    );
 
     let filter;
     let filterOrg;
@@ -502,82 +513,89 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                 <BooleanInput source="trust" label="Confianza" defaultValue="true" />
             }
 
-            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-                <BooleanInput source="myPictures" label="Elegir Mis imágenes" defaultValue={true}/>
-            }
-
-            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-                <FormDataConsumer>
-                {({ formData, ...rest }) => formData.myPictures &&
-                    <ReferenceInput
-                        source="resourcePictureId"
-                        reference="resourcesPictures"
-                        label="Mis imágenes"
-                        filterToQuery={searchText => ({ name: searchText })}
-                        filter={filterOrg}
-                        sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                        //validate={[required()]} 
-                        {...rest}>
-                        <AutocompleteInput 
-                            optionText={<OptionRenderer/>} 
-                            inputText={inputText} 
-                            matchSuggestion={() => true}
-                            options={{
-                                suggestionsContainerProps: {
-                                  modifiers: {
-                                    computeStyle: {
-                                      gpuAcceleration: false,
-                                    },
-                                  },
-                                }
-                              }}
-                        />
-                    </ReferenceInput>
-                }
-                </FormDataConsumer>
-            }
             
-            <FormDataConsumer>
-            {({ formData, ...rest }) => !formData.myPictures &&
-                <ReferenceInput
-                    source="resourcePictureId"
-                    reference="resourcesPictures"
-                    label="Banco de imágenes"
-                    filterToQuery={searchText => ({ name: searchText })}
-                    filter={filter}
-                    sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                    //validate={[required()]} 
-                    {...rest}>
-                    <AutocompleteInput 
-                            optionText={<OptionRenderer/>} 
-                            inputText={inputText} 
-                            matchSuggestion={() => true}
-                            options={{
-                                suggestionsContainerProps: {
-                                  modifiers: {
-                                    computeStyle: {
-                                      gpuAcceleration: false,
-                                    },
-                                  },
-                                }
-                              }}
-                        />
-                </ReferenceInput>
-            }
-            </FormDataConsumer>
+            <div>
+
+                    {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                        <BooleanInput source="myPictures" label="Elegir mis imágenes" defaultValue={true}/>
+                    }
+
+                    {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                        <FormDataConsumer>
+                        {({ formData, ...rest }) => formData.myPictures &&
+                            <ReferenceInput
+                                source="resourcePictureId"
+                                reference="resourcesPictures"
+                                label="Mis imágenes"
+                                filterToQuery={searchText => ({ name: searchText })}
+                                filter={filterOrg}
+                                sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                                {...rest}>
+                                <AutocompleteInput 
+                                    optionText={<OptionRenderer/>} 
+                                    inputText={inputText} 
+                                    matchSuggestion={() => true}
+                                    options={{
+                                        suggestionsContainerProps: {
+                                        modifiers: {
+                                            computeStyle: {
+                                            gpuAcceleration: false,
+                                            },
+                                        },
+                                        }
+                                    }}
+                                />
+                            </ReferenceInput>
+                        }
+                        </FormDataConsumer>
+                    }
+                    
+
+                    {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                        <FormDataConsumer>
+                            {({ formData, ...rest }) => !formData.myPictures &&
+                                <span>Elegir del banco de imágenes: </span>
+                            }
+                        </FormDataConsumer>   
+                    }
+
+                    <FormDataConsumer>
+                    {({ formData, ...rest }) => !formData.myPictures &&
+                        <ReferenceInput
+                            source="resourcePictureId"
+                            reference="resourcesPictures"
+                            label="Banco de imágenes"
+                            filterToQuery={searchText => ({ name: searchText })}
+                            filter={filter}
+                            sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                            {...rest}>
+                            <AutocompleteInput 
+                                    optionText={<OptionRenderer/>} 
+                                    inputText={inputText} 
+                                    matchSuggestion={() => true}
+                                    options={{
+                                        suggestionsContainerProps: {
+                                        modifiers: {
+                                            computeStyle: {
+                                            gpuAcceleration: false,
+                                            },
+                                        },
+                                        }
+                                    }}
+                                />
+                        </ReferenceInput>
+                    }
+                    </FormDataConsumer>
+
+               
+            </div>
             
         </SimpleForm>
     </Create>
     )
 };
 
-const inputText = choice => `${choice.resourcePhoto.title}`;
-const OptionRenderer = choice => (
-    <span style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <img src={choice.record.resourcePhoto.src} width="80" height="60" style={{ marginRight: '.5rem' }}/>
-        {choice.record.resourcePhoto.title}
-    </span>
-);
+
 
 function mapStateToProps(state, props) {
     return { formInput: state.formInput, user: state.user }

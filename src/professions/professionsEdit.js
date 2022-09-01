@@ -6,7 +6,7 @@ import {
     SimpleForm,
     ReferenceArrayInput, 
     SelectArrayInput,
-    ChipField
+    ChipField,
 }
     from 'react-admin';
 import { connect } from 'react-redux';
@@ -15,11 +15,13 @@ const EditTitle = ({record}) => {
     return <span>Editar Profesión: {record ? `${record.name}` : ''}</span>;
 };
 
+const maxPerPage = 999999999999999999999999999999999;
+
 export const ProfessionsEditView = ({ permissions, ...props }) => (
     <Edit {...props} title={<EditTitle/>}>
         <SimpleForm redirect="list">
-            <TextInput source="name" label="Profesión" validate={[required()]} />
-            <ReferenceArrayInput reference="activities" source="activities" label="Actividades" sort={{ field: 'name', order: 'ASC' }}>
+            <TextInput source="name" label="Profesión" validate={[required()]} fullWidth/>
+            <ReferenceArrayInput reference="activities" source="activities" label="Actividades" sort={{ field: 'name', order: 'ASC' }} perPage={maxPerPage} fullWidth>
                 <SelectArrayInput>
                     <ChipField source="name" validate={[required()]} />
                 </SelectArrayInput>
