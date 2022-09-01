@@ -519,7 +519,7 @@ exports.storage = functions.storage.object().onFinalize(async (object) => {
 
     const pathToCollection = pathToFile.substring(0, pathToFile.indexOf('/'));
     //console.log(`Path to collection: ${pathToCollection}`);
-    if (pathToCollection === 'resources') {
+    if (pathToCollection === 'resourcesPictures') {
         return adminFirebase.firestore().doc(path).set({ resourcePhoto }, { merge: true })
             .then(() => {
                 console.log("Resource photo successfully updated");
