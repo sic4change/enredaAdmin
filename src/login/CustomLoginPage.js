@@ -15,6 +15,14 @@ import ForgotPasswordButton from "./CustomForgotPassword";
 import {authProvider} from "../firebase/firebaseConfig";
 import getCurrentUser from "../firebase/userService";
 import {connect} from 'react-redux';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Snackbar,
+} from "@material-ui/core";
 
 export const lightTheme = {
     palette: {
@@ -84,7 +92,6 @@ export const lightTheme = {
     },
 };
 
-
 const useStyles = makeStyles(theme => ({
     main: {
         display: 'flex',
@@ -137,7 +144,6 @@ const renderInput = ({
     />
 );
 
-
 const {Form} = withTypes();
 
 const LoginComponent = (props) => {
@@ -147,14 +153,21 @@ const LoginComponent = (props) => {
     const notify = useNotify();
     const login = useLogin();
     const location = useLocation();
+    const [toastOpen, setToastOpen] = useState(false);
 
-    const handleSubmit = (auth) => {
+
+    const handleSubmit = async (auth) => {
         setLoading(true);
         login(auth, location.state ? location.state.nextPathname : '/')
             .then(() => {
                 authProvider.checkAuth().then(data => {
-                    getCurrentUser(data.email, props.onLogin);
-                });
+                    getCurrentUser(data.email, props.onLogin).then(currentUser => {
+                        if(currentUser.role == 'Desempleado') {
+                            setToastOpen(true);
+                            alert('es usuario joven')
+                        }
+                    })                
+                }); 
             })
             .catch(
                 (error) => {
@@ -182,10 +195,12 @@ const LoginComponent = (props) => {
         return errors;
     };
 
+    const handleClose = () => {
+        setToastOpen(false);
+    };
 
-    return (
+    return ( 
         <React.Fragment>
-            
             <Form
                 onSubmit={handleSubmit}
                 validate={validate}
@@ -250,7 +265,23 @@ const LoginComponent = (props) => {
                             </Card>
                             <Notification/>
                         </div>
+                        <div>
+                            <Dialog
+                                open={toastOpen}
+                                //onClose={handleClose}
+                                aria-labelledby="alert-dialog-title"
+                                aria-describedby="alert-dialog-description"
+                                disabled={loading}
+                            >
+                                <DialogTitle id="alert-dialog-title">Usuario Joven por favor dirigirse a la web</DialogTitle>
+                                <DialogActions>
+                                    <Button onClick={handleClose}>Aceptar</Button>
+                                </DialogActions>
+                            </Dialog>
+                        </div>
+                        
                     </form>
+                    
                 )}
             />
         </React.Fragment>
