@@ -13,21 +13,6 @@ export default function getCurrentUser(value, cb) {
             });
 }
 
-// const getCurrentUser = async (value, cb) => {
-//     const result = database
-//         .collection('users')
-//         .where( 'email', '==', value)
-//         .get();
-
-//     result.forEach(async doc => {
-//         const user = doc.data()[0];
-//         cb(user);
-//         if(user.role === 'Desempleado') console.log('Usuario sin privilegios');
-//       })
-//       return;
-// }
-
-// export default getCurrentUser;
 
 /*export default function getUserById(id) {
     return new Observable(observer => {

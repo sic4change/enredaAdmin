@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect, useContext} from 'react';
+import { AppContext } from '../components/appContext';
 import {Field, withTypes} from 'react-final-form';
 import {useLocation} from 'react-router-dom';
 import loginBackground from '../assets/enreda_fondo.jpg';
@@ -9,20 +10,15 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import TextField from '@material-ui/core/TextField';
 import {createMuiTheme, makeStyles} from '@material-ui/core/styles';
 import {ThemeProvider} from '@material-ui/styles';
-import {Notification} from 'react-admin';
+import {Notification, useLogout} from 'react-admin';
 import {useTranslate, useLogin, useNotify} from 'ra-core';
 import ForgotPasswordButton from "./CustomForgotPassword";
 import {authProvider} from "../firebase/firebaseConfig";
 import getCurrentUser from "../firebase/userService";
 import {connect} from 'react-redux';
-import {
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Snackbar,
-} from "@material-ui/core";
+import {Dialog, DialogActions, DialogTitle } from "@material-ui/core";
+
+import { useRedirect } from 'react-admin';
 
 export const lightTheme = {
     palette: {
@@ -148,40 +144,39 @@ const {Form} = withTypes();
 
 const LoginComponent = (props) => {
     const [loading, setLoading] = useState(false);
+    const [openAlert, setOpenAlert] = useState(false);
+    const reference = useRef();
+    reference.current = openAlert;
     const translate = useTranslate();
     const classes = useStyles();
     const notify = useNotify();
+    const redirect = useRedirect();
     const login = useLogin();
     const location = useLocation();
-    const [toastOpen, setToastOpen] = useState(false);
-
-
+    const logout = useLogout();
+    const context = useContext(AppContext);
+    
     const handleSubmit = async (auth) => {
         setLoading(true);
-        login(auth, location.state ? location.state.nextPathname : '/')
-            .then(() => {
-                authProvider.checkAuth().then(data => {
-                    getCurrentUser(data.email, props.onLogin).then(currentUser => {
-                        if(currentUser.role == 'Desempleado') {
-                            setToastOpen(true);
-                            alert('es usuario joven')
-                        }
-                    })                
-                }); 
-            })
-            .catch(
-                (error) => {
-                    setLoading(false);
-                    notify(
-                        typeof error === 'string'
-                            ? error
-                            : typeof error === 'undefined' || !error.message
-                            ? 'ra.auth.sign_in_error'
-                            : error.message,
-                        'warning'
-                    );
-                }
+        try {
+            await login(auth, location.state ? location.state.nextPathname : '/' );
+            let data = await authProvider.checkAuth();
+            const currentUser = await getCurrentUser(data.email, props.onLogin);
+            if (currentUser.role == 'Desempleado') {
+                context.setGobalMessage('Hemos detectado que esta cuenta busca trabajo, por favor pulse ACEPTAR para ir a la pagina principal y pulse "Acceder"');
+                logout();
+            }
+        } catch (error) {
+            setLoading(false);
+            notify(
+                typeof error === 'string'
+                    ? error
+                    : typeof error === 'undefined' || !error.message
+                    ? 'ra.auth.sign_in_error'
+                    : error.message,
+                'warning'
             );
+        }
     };
 
     const validate = (values) => {
@@ -196,11 +191,30 @@ const LoginComponent = (props) => {
     };
 
     const handleClose = () => {
-        setToastOpen(false);
+        redirect('https://www.enredas.org');
     };
+
+    useEffect(() => {
+        console.log(openAlert);
+     }, [openAlert]);
 
     return ( 
         <React.Fragment>
+            <Dialog
+                open={!!context.globalMessage}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title">
+                <DialogTitle id="alert-dialog-title">{context.globalMessage}</DialogTitle>
+                <DialogActions>
+                    <Button 
+                        variant="contained"
+                        type="submit"
+                        color="primary"
+                        onClick={handleClose}>
+                            Aceptar
+                    </Button>
+                </DialogActions>
+            </Dialog>
             <Form
                 onSubmit={handleSubmit}
                 validate={validate}
@@ -265,21 +279,6 @@ const LoginComponent = (props) => {
                             </Card>
                             <Notification/>
                         </div>
-                        <div>
-                            <Dialog
-                                open={toastOpen}
-                                //onClose={handleClose}
-                                aria-labelledby="alert-dialog-title"
-                                aria-describedby="alert-dialog-description"
-                                disabled={loading}
-                            >
-                                <DialogTitle id="alert-dialog-title">Usuario Joven por favor dirigirse a la web</DialogTitle>
-                                <DialogActions>
-                                    <Button onClick={handleClose}>Aceptar</Button>
-                                </DialogActions>
-                            </Dialog>
-                        </div>
-                        
                     </form>
                     
                 )}

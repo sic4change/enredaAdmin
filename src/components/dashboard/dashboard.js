@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -17,7 +18,6 @@ import Box from '@material-ui/core/Box';
 import InfoIcon from '@material-ui/icons/Info';
 
 
-
 const UserProfile = ({userId}) => {
     const { identity, loading: identityLoading } = useGetIdentity();
     const {data, loading, error} = useQuery({
@@ -31,8 +31,12 @@ const UserProfile = ({userId}) => {
     if (!data || !identity) return null;
 
     let role = data.role;
-    if (role === "Desempleado") {role = "Usuario"};
-
+    let toCloseIfDesempleado = false;
+    if (role === "Desempleado") {
+        role = "Usuario"
+        toCloseIfDesempleado = true
+    };
+    
     return (
         <React.Fragment>
             {role !== "Usuario" ?

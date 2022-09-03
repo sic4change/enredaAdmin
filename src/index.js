@@ -3,9 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './scripts/serviceWorker';
+import { AppContextProvider } from './components/appContext';
+
 
 ReactDOM.render(
+  <AppContextProvider>
     <App />,
+  </AppContextProvider>,
   document.getElementById('root')
 );
 
