@@ -1,13 +1,18 @@
+
 import {database} from "./firebaseConfig";
 
 export default function getCurrentUser(value, cb) {
-    database.collection('users').where( 'email', '==', value).get().then(
-        querySnapshot => {
-            const user = querySnapshot.docs.map(doc => doc.data())[0];
-            //if(user.role === 'Desempleado') throw new Error('Usuario sin privilegios');
-            cb(user);
-        });
+    return database.collection('users')
+        .where( 'email', '==', value)
+        .get()
+        .then(
+            querySnapshot => {
+                const user = querySnapshot.docs.map(doc => doc.data())[0];
+                cb(user);
+                return user;
+            });
 }
+
 
 /*export default function getUserById(id) {
     return new Observable(observer => {
@@ -18,3 +23,5 @@ export default function getCurrentUser(value, cb) {
         });
     });
 }*/
+
+
