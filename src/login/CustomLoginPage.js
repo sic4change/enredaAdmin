@@ -163,7 +163,7 @@ const LoginComponent = (props) => {
             let data = await authProvider.checkAuth();
             const currentUser = await getCurrentUser(data.email, props.onLogin);
             if (currentUser.role == 'Desempleado') {
-                context.setGobalMessage('Hemos detectado que esta cuenta busca trabajo, por favor pulse ACEPTAR para ir a la pagina principal y pulse "Acceder"');
+                context.setGobalMessage('Hemos detectado que esta cuenta busca recursos, por favor pulse ACEPTAR para ir a la pagina principal y luego diríjase al botón "Acceder" para ingresar a su cuenta');
                 logout();
             }
         } catch (error) {
