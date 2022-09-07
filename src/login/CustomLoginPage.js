@@ -163,7 +163,7 @@ const LoginComponent = (props) => {
             let data = await authProvider.checkAuth();
             const currentUser = await getCurrentUser(data.email, props.onLogin);
             if (currentUser.role == 'Desempleado') {
-                context.setGobalMessage('Hemos detectado que esta cuenta busca recursos, por favor pulse ACEPTAR para ir a la pagina principal y luego diríjase al botón "Acceder" para ingresar a su cuenta');
+                context.setGobalMessage('Hemos detectado que esta cuenta busca empleo o recursos, por favor pulse ACEPTAR para autenticarse en la página de recursos');
                 logout();
             }
         } catch (error) {
@@ -191,7 +191,7 @@ const LoginComponent = (props) => {
     };
 
     const handleClose = () => {
-        redirect('https://www.enredas.org');
+        redirect('https://enredawebapp.web.app/access');
     };
 
     useEffect(() => {
