@@ -15,6 +15,8 @@ import {
     ChipField,
     Create,
     AutocompleteInput,
+    CheckboxGroupInput,
+    RadioButtonGroupInput,
     Title,
     BooleanField,
     TextField,
@@ -62,7 +64,6 @@ Date.prototype.addHours = function (h) {
     this.setHours(this.getHours() + h);
     return this;
 }
-
 
 const validateStartDay = (value, allValues) => {
     if (!value) {
@@ -493,6 +494,77 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                                 validate={validateLink}/>;}}
             </FormDataConsumer>
 
+
+            {permissions && permissions['super-admin'] &&
+                <BooleanInput source="trust" label="Confianza" defaultValue="true" />
+            }
+
+            
+            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <BooleanInput source="myPictures" label="Escoger origen de imágenes" defaultValue={false}/>
+            }
+
+            {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
+                <FormDataConsumer>
+                    {({ formData, ...rest }) => 
+                        <ReferenceInput
+                            source="resourcePictureId"
+                            reference="resourcesPictures"
+                            label="Imágenes que yo subí"
+                            filterToQuery={searchText => ({ name: searchText })}
+                            filter={filterOrg}
+                            disabled={!formData.myPictures}
+                            sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                            {...rest}>
+                            <AutocompleteInput 
+                                optionText={<OptionRenderer/>} 
+                                inputText={inputText} 
+                                matchSuggestion={() => true}
+                                options={{
+                                    suggestionsContainerProps: {
+                                    modifiers: {
+                                        computeStyle: {
+                                        gpuAcceleration: false,
+                                        },
+                                    },
+                                    }
+                                }}
+                            />
+                        </ReferenceInput>
+                    }
+                </FormDataConsumer>
+
+            }
+
+            <FormDataConsumer>
+                {({ formData, ...rest }) => 
+                    <ReferenceInput
+                        source="resourcePictureId"
+                        reference="resourcesPictures"
+                        label="Banco de imágenes"
+                        filterToQuery={searchText => ({ name: searchText })}
+                        filter={filter}
+                        disabled={formData.myPictures}
+                        sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
+                        {...rest}>
+                        <AutocompleteInput 
+                                optionText={<OptionRenderer/>} 
+                                inputText={inputText} 
+                                matchSuggestion={() => true}
+                                options={{
+                                    suggestionsContainerProps: {
+                                    modifiers: {
+                                        computeStyle: {
+                                        gpuAcceleration: false,
+                                        },
+                                    },
+                                    }
+                                }}
+                            />
+                    </ReferenceInput>
+                }
+            </FormDataConsumer>
+
             <FormDataConsumer>
                 {({ formData }) => {
                     if (formData.organizer != null && formData.promotor != null)
@@ -508,87 +580,6 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                                             required={formData.organizer != null && formData.promotor != null && formData.contactPhone == null && formData.link == null} 
                                             validate={validateContactEmail} />;}}
             </FormDataConsumer>
-
-            {permissions && permissions['super-admin'] &&
-                <BooleanInput source="trust" label="Confianza" defaultValue="true" />
-            }
-
-            
-            <div>
-
-                    {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-                        <BooleanInput source="myPictures" label="Elegir mis imágenes" defaultValue={true}/>
-                    }
-
-                    {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-                        <FormDataConsumer>
-                        {({ formData, ...rest }) => formData.myPictures &&
-                            <ReferenceInput
-                                source="resourcePictureId"
-                                reference="resourcesPictures"
-                                label="Mis imágenes"
-                                filterToQuery={searchText => ({ name: searchText })}
-                                filter={filterOrg}
-                                sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                                {...rest}>
-                                <AutocompleteInput 
-                                    optionText={<OptionRenderer/>} 
-                                    inputText={inputText} 
-                                    matchSuggestion={() => true}
-                                    options={{
-                                        suggestionsContainerProps: {
-                                        modifiers: {
-                                            computeStyle: {
-                                            gpuAcceleration: false,
-                                            },
-                                        },
-                                        }
-                                    }}
-                                />
-                            </ReferenceInput>
-                        }
-                        </FormDataConsumer>
-                    }
-                    
-
-                    {permissions && (!permissions['super-admin'] && props.user.role === 'Organización') &&
-                        <FormDataConsumer>
-                            {({ formData, ...rest }) => !formData.myPictures &&
-                                <span>Elegir del banco de imágenes: </span>
-                            }
-                        </FormDataConsumer>   
-                    }
-
-                    <FormDataConsumer>
-                    {({ formData, ...rest }) => !formData.myPictures &&
-                        <ReferenceInput
-                            source="resourcePictureId"
-                            reference="resourcesPictures"
-                            label="Banco de imágenes"
-                            filterToQuery={searchText => ({ name: searchText })}
-                            filter={filter}
-                            sort={{ field: 'resourcePhoto.title', order: 'ASC' }}
-                            {...rest}>
-                            <AutocompleteInput 
-                                    optionText={<OptionRenderer/>} 
-                                    inputText={inputText} 
-                                    matchSuggestion={() => true}
-                                    options={{
-                                        suggestionsContainerProps: {
-                                        modifiers: {
-                                            computeStyle: {
-                                            gpuAcceleration: false,
-                                            },
-                                        },
-                                        }
-                                    }}
-                                />
-                        </ReferenceInput>
-                    }
-                    </FormDataConsumer>
-
-               
-            </div>
             
         </SimpleForm>
     </Create>
