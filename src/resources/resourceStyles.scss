@@ -17,6 +17,21 @@
     }
 }
 
+.resourceGridLayoutCreateTwo  {
+    display: grid;
+    grid-template-columns: 400px 400px;
+    column-gap: 10px;
+}
+.resourceGridLayoutCreateOne  {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+}
+.resourceGridLayoutCreateThree  {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 10px;
+}
+
 .hide {
     display: none !important;
 }
