@@ -323,6 +323,7 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                             source="resourcePictureId"
                             reference="resourcesPictures"
                             label="Banco de imágenes"
+                            validate={[required()]}
                             filterToQuery={searchText => ({ name: searchText })}
                             filter={filter}
                             disabled={props.user.role === 'Super Admin' ? !formData.myPictures : formData.myPictures }
@@ -354,6 +355,7 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                                 source="resourcePictureId"
                                 reference="resourcesPictures"
                                 label="Imágenes que yo subí"
+                                validate={[required()]}
                                 filterToQuery={searchText => ({ name: searchText })}
                                 filter={filterOrg}
                                 disabled={!formData.myPictures}
