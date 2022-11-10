@@ -536,7 +536,7 @@ exports.storage = functions.storage.object().onFinalize(async (object) => {
     else if (pathToCollection === 'users') {
         return adminFirebase.firestore().doc(path).set({ profilePic }, { merge: true })
             .then(() => {
-                console.log("User profile picture successfully updated");
+                console.log("User profile picture successfully updated after resize");
             });
     }
 });
