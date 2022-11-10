@@ -520,6 +520,9 @@ exports.storage = functions.storage.object().onFinalize(async (object) => {
     let logoPic = {
         src: url,
     }
+    let profilePic = {
+        src: url,
+    }
 
     const pathToCollection = pathToFile.substring(0, pathToFile.indexOf('/'));
     //console.log(`Path to collection: ${pathToCollection}`);
@@ -532,6 +535,12 @@ exports.storage = functions.storage.object().onFinalize(async (object) => {
         return adminFirebase.firestore().doc(path).set({ logoPic }, { merge: true })
             .then(() => {
                 console.log("Organization Logo successfully updated");
+            });
+    }
+    else if (pathToCollection === 'users') {
+        return adminFirebase.firestore().doc(path).set({ profilePic }, { merge: true })
+            .then(() => {
+                console.log("User profile picture successfully updated");
             });
     }
 });
