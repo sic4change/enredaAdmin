@@ -2203,6 +2203,27 @@ exports.deleteResource = functions.firestore
         });
     });
     
+    exports.updateCertificationRequest = functions.firestore.document('certificationsRequests/{certificationRequestId}')
+    .onUpdate((change, context) => {
+        const certificationRequestId = context.params.certificationRequestId;
+        const newValue = change.after.data();
+        const previousValue = change.before.data();
+        const userId = newValue.unemployedRequesterId;
+        const competencyId = newValue.competencyId;
+        if (newValue.certified !== previousValue.certified) {
+            return adminFirebase.firestore().collection('users').where("userId", "==",userId).get().then(
+                (snapshot) => {
+                    snapshot.forEach((user) => {
+                        const competencies = user.get('competencies');
+                        competencies[competencyId] = "certified";
+                        return adminFirebase.firestore().doc(`users/${userId}`).set({competencies}, {merge: true})
+                        .then(() => {
+                            console.log("Successfully change certified competency status");
+                        })
+                    })
+                });
+        }
+    });
 
     exports.certificationRequestForm = functions.firestore
     .document('certificationsRequests/{certificationRequestId}')
@@ -2379,7 +2400,7 @@ exports.deleteResource = functions.firestore
         <w:anchorlock></w:anchorlock>
         <center style='color:#ffffff; font-family:arial, "helvetica neue", helvetica, "sans-serif"; font-size:14px; font-weight:400; line-height:14px; mso-text-raise:1px'>Formulario</center>
         </v:roundrect></a>
-        <![endif]--><!--[if !mso]><!-- --><span class="msohide es-button-border" style="border-style:solid;border-color:#FFFFFF;background:#00d0ce;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a href="https://enredawebapp.web.app/access" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:16px;border-style:solid;border-color:#00d0ce;border-width:10px 20px 10px 20px;display:inline-block;background:#00d0ce;border-radius:5px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:19px;width:auto;text-align:center">Formulario</a></span><!--<![endif]--></td>
+        <![endif]--><!--[if !mso]><!-- --><span class="msohide es-button-border" style="border-style:solid;border-color:#FFFFFF;background:#00d0ce;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a href="https://enredawebapp.web.app/competencies/${certificationRequestId}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:16px;border-style:solid;border-color:#00d0ce;border-width:10px 20px 10px 20px;display:inline-block;background:#00d0ce;border-radius:5px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:19px;width:auto;text-align:center">Formulario</a></span><!--<![endif]--></td>
         </tr>
         </table></td>
         </tr>
