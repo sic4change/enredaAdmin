@@ -2208,6 +2208,11 @@ exports.deleteResource = functions.firestore
     .document('certificationsRequests/{certificationRequestId}')
     .onCreate((snapshot, context) => {
         const certificationRequestId = context.params.certificationRequestId;
+        const certificatorFirstName = snapshot.get('certificatorFirstName');
+        const certificatorLastName = snapshot.get('certificatorLastName');
+        const competencyName = snapshot.get('competencyName');
+        const unemployedRequesterName = snapshot.get('unemployedRequesterName');
+
         return adminFirebase.firestore().doc(`certificationsRequests/${certificationRequestId}`).set({certificationRequestId}, {
             merge:true
         })
@@ -2217,16 +2222,15 @@ exports.deleteResource = functions.firestore
                     message: {
                         subject: 'Enreda: Solicitud de certificación de competencia',
                         html:
-                            createCertificationRequestTemplate(snapshot.get('certificatorFirstName'), snapshot.get('certificatorLastName'),
-                            snapshot.get('competencyName'), snapshot.get('unemployedRequesterName'),  ),
+                            createCertificationRequestTemplate(certificatorFirstName, certificatorLastName,
+                                competencyName, unemployedRequesterName, certificationRequestId ),
                     }
                 }).then(() => console.log('Queued email!'));
                 });
             });
     
-    
 
-    function createCertificationRequestTemplate(certificatorFirstName, certificatorLastName, competencyName, unemployedRequesterName, ) {
+    function createCertificationRequestTemplate(certificatorFirstName, certificatorLastName, competencyName, unemployedRequesterName, certificationRequestId ) {
         const certificationRequestTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
         <head>
@@ -2369,8 +2373,8 @@ exports.deleteResource = functions.firestore
         <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px"><h3 style="Margin:0;line-height:24px;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;font-style:normal;font-weight:normal;color:#333333">Certificar competencia:</h3></td>
         </tr>
         <tr style="border-collapse:collapse">
-        <td align="center" style="padding:0;Margin:0;padding-top:10px"><!--[if mso]><a href="https://enredawebapp.web.app/access" target="_blank" hidden>
-        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="https://enredawebapp.web.app/access"
+        <td align="center" style="padding:0;Margin:0;padding-top:10px"><!--[if mso]><a href="https://enredawebapp.web.app/competencies/${certificationRequestId}" target="_blank" hidden>
+        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="https://enredawebapp.web.app/competencies/${certificationRequestId}"
         style="height:39px; v-text-anchor:middle; width:117px" arcsize="13%" stroke="f" fillcolor="#00d0ce">
         <w:anchorlock></w:anchorlock>
         <center style='color:#ffffff; font-family:arial, "helvetica neue", helvetica, "sans-serif"; font-size:14px; font-weight:400; line-height:14px; mso-text-raise:1px'>Formulario</center>
