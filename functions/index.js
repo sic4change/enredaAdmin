@@ -2444,7 +2444,7 @@ exports.deleteResource = functions.firestore
     .document('certificationsRequests/{certificationRequestId}')
     .onCreate((snapshot, context) => {
         const certificationRequestId = context.params.certificationRequestId;
-        const certificatorName = snapshot.get('certificatorName');
+        const certifierName = snapshot.get('certifierName');
         const competencyName = snapshot.get('competencyName');
         const unemployedRequesterName = snapshot.get('unemployedRequesterName');
 
@@ -2457,7 +2457,7 @@ exports.deleteResource = functions.firestore
                     message: {
                         subject: 'Enreda: Solicitud de certificación de competencia',
                         html:
-                            createCertificationRequestTemplate(certificatorName,
+                            createCertificationRequestTemplate(certifierName,
                                 competencyName, unemployedRequesterName, certificationRequestId ),
                     }
                 }).then(() => console.log('Queued email!'));
@@ -2465,7 +2465,7 @@ exports.deleteResource = functions.firestore
             });
     
 
-    function createCertificationRequestTemplate(certificatorName, competencyName, unemployedRequesterName, certificationRequestId ) {
+    function createCertificationRequestTemplate(certifierName, competencyName, unemployedRequesterName, certificationRequestId ) {
         const certificationRequestTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
         <head>
@@ -2585,7 +2585,7 @@ exports.deleteResource = functions.firestore
         <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
         <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
         <tr style="border-collapse:collapse">
-        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:24px;color:#333333;font-size:16px">Hola ${certificatorName},<br><br>Desde la web&nbsp;<strong>enREDa</strong>,<strong>&nbsp;</strong>${unemployedRequesterName} está solicitando<strong>&nbsp;<br></strong>la certificación de la siguiente competencia:<br><br><strong>${competencyName}<br></strong><br></p></td>
+        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:24px;color:#333333;font-size:16px">Hola ${certifierName},<br><br>Desde la web&nbsp;<strong>enREDa</strong>,<strong>&nbsp;</strong>${unemployedRequesterName} está solicitando<strong>&nbsp;<br></strong>la certificación de la siguiente competencia:<br><br><strong>${competencyName}<br></strong><br></p></td>
         </tr>
         </table></td>
         </tr>
