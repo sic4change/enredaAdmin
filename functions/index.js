@@ -2585,7 +2585,7 @@ exports.deleteResource = functions.firestore
         <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
         <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
         <tr style="border-collapse:collapse">
-        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:24px;color:#333333;font-size:16px">Hola ${certifierName},<br><br>Desde la web&nbsp;<strong>enREDa</strong>,<strong>&nbsp;</strong>${unemployedRequesterName} está solicitando<strong>&nbsp;<br></strong>la certificación de la siguiente competencia:<br><br><strong>${competencyName}<br></strong><br></p></td>
+        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:24px;color:#333333;font-size:16px">Hola ${certifierName}<br><br>Desde la web&nbsp;<strong>enREDa</strong>,<strong>&nbsp;</strong>${unemployedRequesterName} está solicitando<strong>&nbsp;</strong><br>la certificación de la siguiente competencia:<br><br><strong>${competencyName}</strong><br><br></p></td>
         </tr>
         </table></td>
         </tr>
@@ -2642,54 +2642,6 @@ exports.deleteResource = functions.firestore
         </tr>
         </table></td>
         </tr>
-        </table>
-        <table cellpadding="0" cellspacing="0" class="es-footer" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%;background-color:transparent;background-repeat:repeat;background-position:center top">
-        <tr style="border-collapse:collapse">
-        <td align="center" style="padding:0;Margin:0">
-        <table class="es-footer-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#efefef;width:600px" cellspacing="0" cellpadding="0" bgcolor="#efefef" align="center">
-        <tr style="border-collapse:collapse">
-        <td align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-top:30px;padding-bottom:30px">
-        <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-        <tr style="border-collapse:collapse">
-        <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-        <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-        <tr style="border-collapse:collapse">
-        <td align="center" style="padding:0;Margin:0;font-size:0">
-        <table class="es-table-not-adapt es-social" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-        <tr style="border-collapse:collapse">
-        <td valign="top" align="center" style="padding:0;Margin:0;padding-right:10px"><a target="_blank" href="https://www.facebook.com/sic4change" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Facebook" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/rounded-gray/facebook-rounded-gray.png" alt="Fb" width="32" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-        <td valign="top" align="center" style="padding:0;Margin:0;padding-right:10px"><a target="_blank" href="https://twitter.com/sic4change?lang=es" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Twitter" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/rounded-gray/twitter-rounded-gray.png" alt="Tw" width="32" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-        <td valign="top" align="center" style="padding:0;Margin:0;padding-right:10px"><a target="_blank" href="https://www.linkedin.com/company/sic4change/" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Instagram" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/rounded-gray/instagram-rounded-gray.png" alt="Inst" width="32" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-        <td valign="top" align="center" style="padding:0;Margin:0;padding-right:10px"><a target="_blank" href="https://www.youtube.com/@sic4change315" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Youtube" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/rounded-gray/youtube-rounded-gray.png" alt="Yt" width="32" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-        </tr>
-        </table></td>
-        </tr>
-        </table></td>
-        </tr>
-        </table></td>
-        </tr>
-        </table></td>
-        </tr>
-        </table>
-        <table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-        <tr style="border-collapse:collapse">
-        <td align="center" style="padding:0;Margin:0">
-        <table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" cellspacing="0" cellpadding="0" align="center">
-        <tr style="border-collapse:collapse">
-        <td align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-top:30px;padding-bottom:30px">
-        <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-        <tr style="border-collapse:collapse">
-        <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-        <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-        <tr style="border-collapse:collapse">
-        <td class="es-infoblock made_with" align="center" style="padding:0;Margin:0;line-height:0px;font-size:0px;color:#CCCCCC"><a target="_blank" href="https://www.sic4change.org/" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"><img src="https://aouuxs.stripocdn.email/content/guids/CABINET_cbd55485e9b401f79b095573d9a47c75/images/sic4changec.png" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="125"></a></td>
-        </tr>
-        </table></td>
-        </tr>
-        </table></td>
-        </tr>
-        </table></td>
-        </tr>
         </table></td>
         </tr>
         </table>
@@ -2700,7 +2652,8 @@ exports.deleteResource = functions.firestore
         return certificationRequestTemplate;
     }
     
-           
+
+
 
     /*
     exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
