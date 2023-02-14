@@ -2455,7 +2455,7 @@ exports.deleteResource = functions.firestore
                 return adminFirebase.firestore().collection('mail').add({
                     to: snapshot.get('email'),
                     message: {
-                        subject: '${unemployedRequesterName} necesita que le certifiques una competencia.',
+                        subject: `${unemployedRequesterName} necesita que le certifiques una competencia.`,
                         html:
                             createCertificationRequestTemplate(certifierName,
                                 competencyName, unemployedRequesterName, certificationRequestId ),
