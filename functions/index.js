@@ -2455,7 +2455,7 @@ exports.deleteResource = functions.firestore
                 return adminFirebase.firestore().collection('mail').add({
                     to: snapshot.get('email'),
                     message: {
-                        subject: 'Enreda: Solicitud de certificación de competencia',
+                        subject: '${unemployedRequesterName} necesita que le certifiques una competencia.',
                         html:
                             createCertificationRequestTemplate(certifierName,
                                 competencyName, unemployedRequesterName, certificationRequestId ),
@@ -2634,7 +2634,7 @@ exports.deleteResource = functions.firestore
         <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
         <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
         <tr style="border-collapse:collapse">
-        <td class="es-m-txt-c" align="center" style="padding:0;Margin:0"><h3 style="Margin:0;line-height:24px;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;font-style:normal;font-weight:normal;color:#333333">Muchas gracias!</h3></td>
+        <td class="es-m-txt-c" align="center" style="padding:0;Margin:0"><h3 style="Margin:0;line-height:24px;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:20px;font-style:normal;font-weight:normal;color:#333333">¡Muchas gracias!</h3></td>
         </tr>
         </table></td>
         </tr>
