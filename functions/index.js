@@ -2654,6 +2654,31 @@ exports.deleteResource = functions.firestore
     
 
 
+    exports.updateResourceCategory = functions.firestore.document('testOne/{testOnetId}')
+    .onUpdate((change, context) => {
+        const testOnetId = context.params.testOnetIdId;
+        const newValue = change.after.data();
+        const previousValue = change.before.data();
+        if (newValue.run !== previousValue.run) {
+            return adminFirebase.firestore().collection('resources').get().then(
+                (snapshot) => {
+                    snapshot.forEach((resource) => {
+                        resourceId = resource.get('resourceId');
+                        if (resource.get('resourceType') === 'kUM5r4lSikIPLMZlQ7FD') {
+                            return adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({resourceCategory: 'POUBGFk5gU6c5X1DKo1b'}, {merge: true})
+                            .then(() => {
+                                console.log("Successfully added resource category");
+                            }).catch(err => {
+                                console.error(err);
+                                throw new Error('Export resource category operation failed:'+ err);
+                            });
+                        }
+                    })
+                });
+        }
+    });
+
+
 
     /*
     exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')

@@ -394,6 +394,9 @@ export const ResourceListView = ({permissions, ...props}) => {
             <ReferenceField link={referenceLink} source="resourceType" reference="resourcesTypes" label="Tipo de recurso">
                 <TextField source="name"/>
             </ReferenceField>
+            <ReferenceField link={referenceLink} source="resourceCategory" reference="resourcesCategories" label="Categoría del recurso">
+                <TextField source="name"/>
+            </ReferenceField>
             <ChipFieldAvailability source="status" label="Disponibilidad"/>
             <ReferenceArrayField reference="interests" source="interests" label="Intereses">
                 <SingleFieldList >

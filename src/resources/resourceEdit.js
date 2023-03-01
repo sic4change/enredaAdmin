@@ -233,6 +233,10 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                     validate={[required()]}>
                     <SelectInput optionText="name" />
                 </ResourceTypeInput>
+                <ResourceTypeInput source="resourceCategory" label="Categoría de recurso" reference="resourcesCategories" sort={{ field: 'name', order: 'ASC' }}
+                    validate={[required()]}>
+                    <SelectInput optionText="name" />
+                </ResourceTypeInput>
                 <FormDataConsumer>
                     {({ formData, ...rest }) => {
                         if (formData.resourceType === 'N9KdlBYmxUp82gOv8oJC') {
