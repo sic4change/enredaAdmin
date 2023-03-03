@@ -257,6 +257,19 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                     }
                 </FormDataConsumer>
                 <FormDataConsumer>
+                    {({ formDataProps }) =>
+                        <ReferenceInput source="resourceCategory" label="Categoría del recurso  " reference="resourcesCategories" sort={{ field: 'name', order: 'ASC' }}
+                            validate={[required()]}>
+                            <SelectInput optionText="name" />
+                        </ReferenceInput>
+                    }
+                </FormDataConsumer>
+                <ReferenceArrayInput reference="interests" source="interests" label="Intereses" sort={{ field: 'name', order: 'ASC' }} fullWidth>
+                    <SelectArrayInput>
+                        <ChipField source="name" validate={[required()]} />
+                    </SelectArrayInput>
+                </ReferenceArrayInput>
+                <FormDataConsumer>
                     {({ formData, ...rest }) => {
                         if (formData.resourceType === 'N9KdlBYmxUp82gOv8oJC') {
                             return (
@@ -383,13 +396,6 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                 
             </div>
 
-            <div className={'resourceGridLayoutCreateOne'} fullWidth>
-                <ReferenceArrayInput reference="interests" source="interests" label="Intereses" sort={{ field: 'name', order: 'ASC' }} fullWidth>
-                    <SelectArrayInput>
-                        <ChipField source="name" validate={[required()]} />
-                    </SelectArrayInput>
-                </ReferenceArrayInput>
-            </div>
             <hr fullWidth></hr>
 
             <Typography variant="h6" color="primary" fontWeight="800" fullWidth>Fechas y duración</Typography>

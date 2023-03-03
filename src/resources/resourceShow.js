@@ -228,6 +228,10 @@ const ResourceShow = ({permissions, ...props}) => {
                                         label="Tipo de recurso">
                             <TextField source="name"/>
                         </ReferenceField>
+                        <ReferenceField link={referenceLink} source="resourceCategory" reference="resourcesCategories"
+                                        label="Categoría del recurso">
+                            <TextField source="name"/>
+                        </ReferenceField>
                         {controllerProps.record && controllerProps.record.contractType &&
                             <TextField label="Tipo contrato" source="contractType"/>
                         }
