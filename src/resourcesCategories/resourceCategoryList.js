@@ -7,7 +7,8 @@ import {
     DeleteButton,
     TextInput,
     Filter,
-    RichTextField
+    RichTextField,
+    NumberField
 }
     from 'react-admin';
 import './resourceCategoryStyles.scss';
@@ -23,10 +24,10 @@ const ResourceCategoryTitle = () => {
 };
 
 export const ResourceCategoryList = ({permissions, ...props}) => {
-        return (<List {...props} filters={<ResourceCategoryFilter/>} title={<ResourceCategoryTitle/>} sort={{ field: 'name', order: 'ASC' }}>
+        return (<List {...props} filters={<ResourceCategoryFilter/>} title={<ResourceCategoryTitle/>} sort={{ field: 'order', order: 'ASC' }}>
             <Datagrid className="resourcesCategories">
+                <NumberField source="order" label="Orden" />
                 <TextField source="name" label="Categoría"/>
-                <RichTextField source="description" label="Descripción" />
                 {permissions && permissions['super-admin'] && <EditButton/>}
                 {permissions && permissions['super-admin'] && <DeleteButton/>}
             </Datagrid>

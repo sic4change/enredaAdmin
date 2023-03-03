@@ -3,7 +3,8 @@ import {
     TextInput,
     SimpleForm,
     Create,
-    required
+    required,
+    NumberInput
 } from 'react-admin';
 import './resourceCategoryStyles.scss';
 
@@ -14,8 +15,8 @@ const CreateTitle = () => {
 export const ResourceCategoryCreate = props => (
     <Create {...props} title={<CreateTitle/>}>
         <SimpleForm className={'resourceCategoryGridLayoutCreateEdit'} redirect="list">
+            <NumberInput source="order" label="Orden" validate={[required()]}/>
             <TextInput source="name" label="Categoría" validate={[required()]}/>
-            <TextInput multiline source="description" label="Descripción"/>
         </SimpleForm>
     </Create>
 );

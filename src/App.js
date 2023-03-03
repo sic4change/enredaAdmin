@@ -45,9 +45,9 @@ import ResourceCreate from "./resources/resourceCreate"
 import ResourceTypeList from "./resourcesTypes/resourceTypeList";
 import ResourceTypeEdit from "./resourcesTypes/resourceTypeEdit";
 import ResourceTypeCreate from "./resourcesTypes/resourceTypeCreate";
-import ResourceCategoryList from "./resourcesTypes/resourceTypeList";
-import ResourceCategoryEdit from "./resourcesTypes/resourceTypeEdit";
-import ResourceCategoryCreate from "./resourcesTypes/resourceTypeCreate";
+import ResourceCategoryList from "./resourcesCategories/resourceCategoryList";
+import ResourceCategoryEdit from "./resourcesCategories/resourceCategoryEdit";
+import ResourceCategoryCreate from "./resourcesCategories/resourceCategoryCreate";
 import ResourceEdit from "./resources/resourceEdit";
 import ResourcePicturesList from "./resourcesPictures/picturesList";
 import ResourcePicturesCreate from "./resourcesPictures/picturesCreate";
@@ -208,7 +208,7 @@ export default class App extends Component {
                                       list={ResourceCategoryList}
                                       edit={ResourceCategoryEdit}
                                       create={ResourceCategoryCreate}
-                            /> : <Resource name="resourcesTypes"/>,
+                            /> : <Resource name="resourcesCategories"/>,
                         permissions['super-admin'] || permissions['organization'] ?
                             <Resource name="resourcesPictures"
                                       options={{label: "Fotos de recursos"}}

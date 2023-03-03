@@ -10,8 +10,8 @@ const EditTitle = ({record}) => {
 export const ResourceCategoryEdit = props => (
     <Edit {...props} title={<EditTitle/>}>
         <SimpleForm className={'resourceCategoryGridLayoutCreateEdit'} redirect="list">
+            <NumberInput source="order" label="Orden" validate={[required()]}/>
             <TextInput source="name" label="Categoría" validate={[required()]}/>
-            <TextInput multiline source="description" label="Descripción"/>
         </SimpleForm>
     </Edit>
 );

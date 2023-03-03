@@ -237,6 +237,11 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                     validate={[required()]}>
                     <SelectInput optionText="name" />
                 </ResourceTypeInput>
+                <ReferenceArrayInput reference="interests" source="interests" label="Intereses" sort={{ field: 'name', order: 'ASC' }}>
+                    <SelectArrayInput>
+                        <ChipField source="name" validate={[required()]} />
+                    </SelectArrayInput>
+                </ReferenceArrayInput>
                 <FormDataConsumer>
                     {({ formData, ...rest }) => {
                         if (formData.resourceType === 'N9KdlBYmxUp82gOv8oJC') {
@@ -363,13 +368,7 @@ export const ResourceEditView = ({ permissions, ...props }) => {
                 }
 
             </div>
-            <div className={'resourceGridLayoutCreateOne'} fullWidth>
-                <ReferenceArrayInput reference="interests" source="interests" label="Intereses" sort={{ field: 'name', order: 'ASC' }}>
-                    <SelectArrayInput>
-                        <ChipField source="name" validate={[required()]} />
-                    </SelectArrayInput>
-                </ReferenceArrayInput>
-            </div>
+            
             <hr fullWidth></hr>
 
             

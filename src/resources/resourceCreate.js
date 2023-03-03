@@ -250,18 +250,18 @@ export const ResourceCreateView = ({ permissions, ...props }) => {
                 <TextInput multiline source="description" label="Descripción" validate={[required()]} fullWidth/>
                 <FormDataConsumer>
                     {({ formDataProps }) =>
-                        <ReferenceInput source="resourceCategory" label="Categoría del recurso  " reference="resourcesCategories" sort={{ field: 'name', order: 'ASC' }}
-                            validate={[required()]}>
-                            <SelectInput optionText="name" />
-                        </ReferenceInput>
-                    }
-                </FormDataConsumer>
-                <FormDataConsumer>
-                    {({ formDataProps }) =>
                         <ResourceTypeInput source="resourceType" onChange={props.onResourceTypeChange} label="Tipo de recurso  " reference="resourcesTypes" sort={{ field: 'name', order: 'ASC' }}
                             validate={[required()]}>
                             <SelectInput optionText="name" />
                         </ResourceTypeInput>
+                    }
+                </FormDataConsumer>
+                <FormDataConsumer>
+                    {({ formDataProps }) =>
+                        <ReferenceInput source="resourceCategory" label="Categoría del recurso  " reference="resourcesCategories" sort={{ field: 'name', order: 'ASC' }}
+                            validate={[required()]}>
+                            <SelectInput optionText="name" />
+                        </ReferenceInput>
                     }
                 </FormDataConsumer>
                 <ReferenceArrayInput reference="interests" source="interests" label="Intereses" sort={{ field: 'name', order: 'ASC' }} fullWidth>
