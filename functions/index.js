@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer');
 const functions = require('firebase-functions');
+const axios = require('axios'); // Axios version more than 0.21.1 will fail
+const cheerio = require('cheerio');
 const adminFirebase = require('firebase-admin');
 adminFirebase.initializeApp(functions.config().firebase);
 
@@ -2122,6 +2124,74 @@ const findResourcesFromSPEGC = async () => {
     await browser.close()
     return data
 }
+
+exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(/*async*/ (message) => {
+    console.log("Comienzo del Scrapping");
+    const url = 'https://gestionandote.com/agencia/camaratoledo/ofertas';
+    // const html = await axios(url).data; TODO: Using await???
+    axios(url).then(response => {
+        const html = response.data;
+        const $ = cheerio.load(html);
+        const jobCards = $('.card-ofertas');
+        console.log(`Nº de ofertas: ${jobCards.length}`);
+        //let jobOffers = [];
+        jobCards.each((index, element) => {
+          let jobID = $(element).find('.c-titulo span').first().text();
+          let jobTitle = $(element).find('.c-titulo a').text();
+          let jobLink = $(element).find('.c-titulo a').attr('href');
+          let jobLocation = $(element).find('.c-lugar span').first().text();
+          let jobDate = $(element).find('.c-fecha').text();
+          let jobDescription = $(element).find('.c-desc').text();
+          let jobOffer = {
+            address: {
+                city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
+                country: "i0GHKqdCWBYeAYcAMa7I",
+                place: jobLocation,
+                province: "r7WT8mAsUdTAlPCKWstT",
+            },
+            assistants: 0,
+            //capacity: ???,
+            contractType: "",
+            createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
+            //createby: "",
+            description: jobDescription,
+            duration: "",
+            enable: true,
+            //end: Timestamp ???,
+            interests: {},
+            lastupdate: adminFirebase.firestore.Timestamp.now(),
+            link: `https://gestionandote.com${jobLink}`,
+            //maximumDate: Timestamp??,
+            modality: "Presencial",
+            notExpire: true,
+            online: false,
+            organizer: "VrpgKatmJG4h4pxgvpZZ",
+            organizerType: "Organización",
+            //promotor: null,
+            resourceCategory: "POUBGFk5gU6c5X1DKo1b",
+            //resourceLink: Cloud Function???,
+            //resourcePhoto: ???,
+            //resourcePictureId: ???,
+            resourceType: "kUM5r4lSikIPLMZlQ7FD",
+            salary: "",
+            //searchText: Cloud Function???,
+            //start: Timestamp???,
+            status: "Disponible",
+            //temporality: null,
+            title: jobTitle,
+            //titulation: "Sin titulación",
+            trust: true,
+            //updatedby: "???",
+            //date: jobDate,
+            scrappingId: jobID,
+          };
+          //jobOffers.push(jobOffer); 
+          return db.collection("resourcesTEST").doc(jobID).set(jobOffer);
+          //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDate: ${jobDate}\nDescription: ${jobDescription}`);
+        });
+        //res.status(200).send(jobOffers);
+      });
+});
 
 exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(() => {
     return findResourcesFromSPEGC().then(res => {
