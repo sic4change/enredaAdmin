@@ -9,7 +9,7 @@ const db = adminFirebase.firestore();
 const resourceToCreate = db.collection('resources')
 const scrapToCreate = db.collection('scrapps')
 
-var options={ memory: '2GB', timeoutSeconds: 540, }
+var options = { memory: '2GB', timeoutSeconds: 540, }
 
 const firestore = require('@google-cloud/firestore');
 const client = new firestore.v1.FirestoreAdminClient();
@@ -45,90 +45,90 @@ exports.createUser = functions.firestore
                         birthday = adminFirebase.firestore.Timestamp.now();
                     }
                     //Controlamos inactivos en Peru
-                    if (active === undefined) { 
+                    if (active === undefined) {
                         if (country === 'WMHqCzqISX6KNVs9b3iN' && role !== 'Desempleado') {
                             active = false
                         } else {
                             active = true
                         }
-                    }  else {
+                    } else {
                         active = (snapshot.get('active') === 'true') ? true : false
                     }
                     let photoURL = (snapshot.get('profilePic') !== undefined) ? snapshot.get('profilePic').src : photoUserDefault
                     if (role === 'Mentor') {
                         let trust = snapshot.data().trust !== undefined ? snapshot.data().trust : false;
-                        return adminFirebase.firestore().doc(`users/${userId}`).set({userId, role, email, active, trust, birthday}, {merge: true})
-                        .then(() => {
-                            return adminFirebase.auth().createUser({
-                                uid: userId,
-                                email: email,
-                                displayName: `${snapshot.get('firstName')} ${snapshot.get('lastName')}`,
-                                password: 'enreda_' + userId.slice(-3),
-                                //password:'enreda_1234',
-                                photoURL: photoURL ,
-                                disabled: !active
-                            }).then(() => {
-                                const claims = {};
-                                switch (snapshot.get('role')) {
-                                    case 'Mentor':
-                                        claims['mentor'] = true;
-                                        break;
-                                    case 'Desempleado':
-                                        claims['unemployed'] = true;
-                                        break;
-                                    case 'Organización':
-                                        claims['organization'] = true;
-                                        break;
-                                    case 'Admin Zona':
-                                        claims['admin'] = true;
-                                        break;
-                                    case 'Super Admin':
-                                        claims['super-admin'] = true;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                return adminFirebase.auth().setCustomUserClaims(userId, claims);
-                            })
-                        });
+                        return adminFirebase.firestore().doc(`users/${userId}`).set({ userId, role, email, active, trust, birthday }, { merge: true })
+                            .then(() => {
+                                return adminFirebase.auth().createUser({
+                                    uid: userId,
+                                    email: email,
+                                    displayName: `${snapshot.get('firstName')} ${snapshot.get('lastName')}`,
+                                    password: 'enreda_' + userId.slice(-3),
+                                    //password:'enreda_1234',
+                                    photoURL: photoURL,
+                                    disabled: !active
+                                }).then(() => {
+                                    const claims = {};
+                                    switch (snapshot.get('role')) {
+                                        case 'Mentor':
+                                            claims['mentor'] = true;
+                                            break;
+                                        case 'Desempleado':
+                                            claims['unemployed'] = true;
+                                            break;
+                                        case 'Organización':
+                                            claims['organization'] = true;
+                                            break;
+                                        case 'Admin Zona':
+                                            claims['admin'] = true;
+                                            break;
+                                        case 'Super Admin':
+                                            claims['super-admin'] = true;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    return adminFirebase.auth().setCustomUserClaims(userId, claims);
+                                })
+                            });
                     } else {
-                        return adminFirebase.firestore().doc(`users/${userId}`).set({userId, role, email, active, birthday}, {merge: true})
-                        .then(() => {
-                            return adminFirebase.auth().createUser({
-                                uid: userId,
-                                email: email,
-                                displayName: `${snapshot.get('firstName')} ${snapshot.get('lastName')}`,
-                                password: 'enreda_' + userId.slice(-3),
-                                //password:'enreda_1234',
-                                photoURL: photoURL ,
-                                disabled: !active
-                            }).then(() => {
-                                const claims = {};
-                                switch (snapshot.get('role')) {
-                                    case 'Mentor':
-                                        claims['mentor'] = true;
-                                        break;
-                                    case 'Desempleado':
-                                        claims['unemployed'] = true;
-                                        break;
-                                    case 'Organización':
-                                        claims['organization'] = true;
-                                        break;
-                                    case 'Super Admin':
-                                        claims['super-admin'] = true;
-                                        break;
-                                    case 'Admin Zona':
-                                        claims['admin'] = true;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                return adminFirebase.auth().setCustomUserClaims(userId, claims);
-                            })
-                        });
+                        return adminFirebase.firestore().doc(`users/${userId}`).set({ userId, role, email, active, birthday }, { merge: true })
+                            .then(() => {
+                                return adminFirebase.auth().createUser({
+                                    uid: userId,
+                                    email: email,
+                                    displayName: `${snapshot.get('firstName')} ${snapshot.get('lastName')}`,
+                                    password: 'enreda_' + userId.slice(-3),
+                                    //password:'enreda_1234',
+                                    photoURL: photoURL,
+                                    disabled: !active
+                                }).then(() => {
+                                    const claims = {};
+                                    switch (snapshot.get('role')) {
+                                        case 'Mentor':
+                                            claims['mentor'] = true;
+                                            break;
+                                        case 'Desempleado':
+                                            claims['unemployed'] = true;
+                                            break;
+                                        case 'Organización':
+                                            claims['organization'] = true;
+                                            break;
+                                        case 'Super Admin':
+                                            claims['super-admin'] = true;
+                                            break;
+                                        case 'Admin Zona':
+                                            claims['admin'] = true;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    return adminFirebase.auth().setCustomUserClaims(userId, claims);
+                                })
+                            });
                     }
                 }
-        })
+            })
     });
 
 exports.updateUser = functions.firestore.document('users/{userId}')
@@ -142,7 +142,7 @@ exports.updateUser = functions.firestore.document('users/{userId}')
             }).then(() =>
                 console.log("Changed email from " + previousValue.email + ' to ' + newValue.email)
             )
-        } 
+        }
         if ((newValue.firstName !== previousValue.firstName) || (newValue.lastName !== previousValue.lastName)) {
             return adminFirebase.auth().updateUser(userId, {
                 displayName: `${newValue.firstName} ${newValue.lastName}`,
@@ -163,10 +163,10 @@ exports.updateUser = functions.firestore.document('users/{userId}')
             return adminFirebase.firestore().collection('resources').where("organizer", "==", newValue.userId).get().then(
                 (snapshot) => {
                     snapshot.forEach((resource) => {
-                        return adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({trust}, {merge: true})
-                        .then(() => {
-                            console.log("Successfully change trust values in resources after change trust value in user mentor");
-                        })
+                        return adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({ trust }, { merge: true })
+                            .then(() => {
+                                console.log("Successfully change trust values in resources after change trust value in user mentor");
+                            })
                     })
                 });
         }
@@ -199,23 +199,23 @@ exports.createOrganization = functions.firestore
         const organizationId = context.params.organizationId;
         const email = snapshot.data().email;
         let trust = snapshot.data().trust !== undefined ? snapshot.data().trust : false;
-        
-        return adminFirebase.firestore().doc(`organizations/${organizationId}`).set({organizationId, trust }, {merge: true})
+
+        return adminFirebase.firestore().doc(`organizations/${organizationId}`).set({ organizationId, trust }, { merge: true })
             .then(() => {
                 console.log("Successfully added organizationId to new organization");
                 return adminFirebase.firestore().collection('users').where("email", "==", email).get().then(
                     (snapshot) => {
                         snapshot.forEach((user) => {
-                            return adminFirebase.firestore().collection("users").doc(user.id).set({organization: organizationId}, {merge: true})
-                            .then(() => {
-                                console.log("Successfully add organizationId in organization user");
-                            })
+                            return adminFirebase.firestore().collection("users").doc(user.id).set({ organization: organizationId }, { merge: true })
+                                .then(() => {
+                                    console.log("Successfully add organizationId in organization user");
+                                })
                         })
                     });
             });
     });
 
-    exports.updateOrganization = functions.firestore.document('organizations/{organizationId}')
+exports.updateOrganization = functions.firestore.document('organizations/{organizationId}')
     .onUpdate(async (change, context) => {
         const organizationId = context.params.organizationId;
         const newValue = change.after.data();
@@ -281,7 +281,7 @@ exports.createCountry = functions.firestore
     .onCreate((snapshot, context) => {
         const countryId = context.params.countryId;
         //return adminFirebase.firestore().collection('resources').where("organizer", "==", countryId).get().then()
-        return adminFirebase.firestore().doc(`countries/${countryId}`).set({countryId, active:true}, {merge: true})
+        return adminFirebase.firestore().doc(`countries/${countryId}`).set({ countryId, active: true }, { merge: true })
             .then(() => {
                 console.log("Successfully added countryId to new country");
             });
@@ -319,7 +319,7 @@ exports.createProvince = functions.firestore
     .document('provinces/{provinceId}')
     .onCreate((snapshot, context) => {
         const provinceId = context.params.provinceId;
-        return adminFirebase.firestore().doc(`provinces/${provinceId}`).set({provinceId, active:true}, {merge: true})
+        return adminFirebase.firestore().doc(`provinces/${provinceId}`).set({ provinceId, active: true }, { merge: true })
             .then(() => {
                 console.log("Successfully added provinceId to new province");
             });
@@ -358,7 +358,7 @@ exports.createCity = functions.firestore
     .document('cities/{cityId}')
     .onCreate((snapshot, context) => {
         const cityId = context.params.cityId;
-        return adminFirebase.firestore().doc(`cities/${cityId}`).set({cityId, active:true}, {merge: true})
+        return adminFirebase.firestore().doc(`cities/${cityId}`).set({ cityId, active: true }, { merge: true })
             .then(() => {
                 console.log("Successfully added cityId to new city");
             });
@@ -570,7 +570,7 @@ exports.createResourceType = functions.firestore
     .document('resourcesTypes/{resourceTypeId}')
     .onCreate((snapshot, context) => {
         const resourceTypeId = context.params.resourceTypeId;
-        return adminFirebase.firestore().doc(`resourcesTypes/${resourceTypeId}`).set({resourceTypeId}, {merge: true})
+        return adminFirebase.firestore().doc(`resourcesTypes/${resourceTypeId}`).set({ resourceTypeId }, { merge: true })
             .then(() => {
                 console.log("Successfully added resourceTypeId to new resourceType");
             });
@@ -837,7 +837,7 @@ exports.createAbility = functions.firestore
     .document('abilities/{abilityId}')
     .onCreate((snapshot, context) => {
         const abilityId = context.params.abilityId;
-        return adminFirebase.firestore().doc(`abilities/${abilityId}`).set({abilityId}, {merge: true})
+        return adminFirebase.firestore().doc(`abilities/${abilityId}`).set({ abilityId }, { merge: true })
             .then(() => {
                 console.log("Successfully added abilityId to new ability");
             });
@@ -847,7 +847,7 @@ exports.createInterest = functions.firestore
     .document('interests/{interestId}')
     .onCreate((snapshot, context) => {
         const interestId = context.params.interestId;
-        return adminFirebase.firestore().doc(`interests/${interestId}`).set({interestId}, {merge: true})
+        return adminFirebase.firestore().doc(`interests/${interestId}`).set({ interestId }, { merge: true })
             .then(() => {
                 console.log("Successfully added interestId to new interest");
             });
@@ -857,19 +857,19 @@ exports.createSpecificInterest = functions.firestore
     .document('specificInterests/{specificInterestId}')
     .onCreate((snapshot, context) => {
         const specificInterestId = context.params.specificInterestId;
-        return adminFirebase.firestore().doc(`specificInterests/${specificInterestId}`).set({specificInterestId}, {merge: true})
+        return adminFirebase.firestore().doc(`specificInterests/${specificInterestId}`).set({ specificInterestId }, { merge: true })
             .then(() => {
                 console.log("Successfully added specificInterestId to new specificInterest");
             });
     });
 
 exports.sendEmailActiveUsers = functions.firestore.document('users/{userId}')
-.onUpdate((change, context) => {
-    const userId = context.params.userId;
-    const newValue = change.after.data();
-    const beforeValue = change.before.data();
-        if (!beforeValue.active && newValue.active && newValue.address.country == 'WMHqCzqISX6KNVs9b3iN' && newValue.role !== 'Desempleado' ) {
-            let htmlToSendToNewUser = createWelcomeToUserTemplate(newValue.firstName, newValue.email.trim().toLowerCase(), 'enreda_' + userId.slice(-3) );
+    .onUpdate((change, context) => {
+        const userId = context.params.userId;
+        const newValue = change.after.data();
+        const beforeValue = change.before.data();
+        if (!beforeValue.active && newValue.active && newValue.address.country == 'WMHqCzqISX6KNVs9b3iN' && newValue.role !== 'Desempleado') {
+            let htmlToSendToNewUser = createWelcomeToUserTemplate(newValue.firstName, newValue.email.trim().toLowerCase(), 'enreda_' + userId.slice(-3));
             return adminFirebase.firestore().collection('mail').add({
                 to: newValue.email,
                 message: {
@@ -899,7 +899,7 @@ exports.sendEmailNewUsers = functions.firestore
                 active = true
             }
         }
-        let htmlToSendToNewUser = (active) ?  createWelcomeToUserTemplate(snapshot.get('firstName'), snapshot.get('email').trim().toLowerCase(), 'enreda_' + userId.slice(-3)) : createWelcomeToInactiveUserTemplate(snapshot.get('firstName'));
+        let htmlToSendToNewUser = (active) ? createWelcomeToUserTemplate(snapshot.get('firstName'), snapshot.get('email').trim().toLowerCase(), 'enreda_' + userId.slice(-3)) : createWelcomeToInactiveUserTemplate(snapshot.get('firstName'));
         return adminFirebase.firestore().collection('mail').add({
             to: snapshot.get('email'),
             message: {
@@ -1601,7 +1601,7 @@ exports.contactFormHandler = functions.firestore
     .document('contact/{contactId}')
     .onCreate((snapshot, context) => {
         const contactId = context.params.contactId;
-        return adminFirebase.firestore().doc(`contact/${contactId}`).set({contactId}, {
+        return adminFirebase.firestore().doc(`contact/${contactId}`).set({ contactId }, {
             merge:
                 true
         })
@@ -1935,95 +1935,95 @@ exports.sendEmailOnCreateResource = functions.firestore
         const resourceType = snapshot.get('resourceType');
         const resourceStatus = snapshot.get('status');
         if (resourceStatus !== 'A actualizar') {
-                return adminFirebase.firestore().collection('users').get().then((snapshot) => {
-                    snapshot.forEach((user) => {
-                        if (user.get('role') === 'Desempleado') {
+            return adminFirebase.firestore().collection('users').get().then((snapshot) => {
+                snapshot.forEach((user) => {
+                    if (user.get('role') === 'Desempleado') {
 
-                            const payload = {
-                                notification: {
-                                    title: 'enREDa',
-                                    body: `Nuevo recurso: ${title}`,
-                                    sound: "default"
-                                },
-                                data: {
-                                    resourceId: resourceId,
-                                    click_action: "FLUTTER_NOTIFICATION_CLICK",
-                                    title: 'enREDa',
-                                    body: `Nuevos recursos basados en tus intereses`,
+                        const payload = {
+                            notification: {
+                                title: 'enREDa',
+                                body: `Nuevo recurso: ${title}`,
+                                sound: "default"
+                            },
+                            data: {
+                                resourceId: resourceId,
+                                click_action: "FLUTTER_NOTIFICATION_CLICK",
+                                title: 'enREDa',
+                                body: `Nuevos recursos basados en tus intereses`,
+                            }
+                        };
+                        const options = {
+                            priority: "high",
+                            timeToLive: 60 * 60 * 24
+                        };
+
+                        // Si el recurso es de ocio, se envia a todo los desempleados
+                        if (resourceType === 'iGkqdz7uiWuXAFz1O8PY') {
+                            return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                        }
+                        else {
+                            if (user.get('unemployedType') === 'T1' || user.get('unemployedType') === 'T2') {
+                                return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                            }
+                            // Si el recurso es de habilidades sociales 
+                            else if (resourceType === 'GOw01m2HPro4I8xd6rSj') {
+                                // Si el desempleado tiene la habilidad "Habilidades sociales"
+                                if (user.get('motivation').abilities.includes('kv0ZGalD2ViPdTx0BMm6')) {
+                                    return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
                                 }
-                            };
-                            const options = {
-                                priority: "high",
-                                timeToLive: 60 * 60 * 24
-                            };
-                            
-                            // Si el recurso es de ocio, se envia a todo los desempleados
-                            if (resourceType === 'iGkqdz7uiWuXAFz1O8PY') {
-                                return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
+                            }
+                            // Si el recurso es de Financación
+                            else if (resourceType === 'PPX3Ufeg9YfzH4YA0SkU') {
+                                // Si el desempleado tiene la habilidad "Financiacion"
+                                if (user.get('motivation').abilities.includes('5X4lcOCqMTAZ4UwQLl03')) {
+                                    return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                                }
+                            }
+                            // Si el recurso es de mentoria
+                            else if (resourceType === 'lUubulxiAGo4llxFJrkl') {
+                                // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral" 
+                                if (user.get('motivation').abilities.includes('3ywxTQBRJ6wzgMiVx9GE')) {
+                                    return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                                }
+                            }
+                            // Si el recurso es de Apoyo y orientacion para el empleo
+                            else if (resourceType === 'MvCHSFzASskxlkBzPElb') {
+                                // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral"
+                                if (user.get('motivation').abilities.includes('RrBucTiz917syI4jyJKz')) {
+                                    return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                                }
+                            }
+                            // Si el recurso es de programa para la emprendeduria 
+                            else if (resourceType === '4l9BLhP7cwXohUvQzMOT') {
+                                // Si el desempleado tiene la habilidad "Emprenduderia"
+                                if (user.get('motivation').abilities.includes('0m7igV4HhWcXwWabBKK5')) {
+                                    return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                                }
+                            }
+                            // Si el recurso es de formacion
+                            else if (resourceType === 'N9KdlBYmxUp82gOv8oJC') {
+                                // Si el desempleado tiene la habilidad "Formacion"
+                                if (user.get('motivation').abilities.includes('nMWfKP0yOqQf8Zv4A3n6')) {
+                                    return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
+                                }
                             }
                             else {
-                                if (user.get('unemployedType') === 'T1' || user.get('unemployedType') === 'T2') {
-                                    return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                } 
-                                // Si el recurso es de habilidades sociales 
-                                else if (resourceType === 'GOw01m2HPro4I8xd6rSj'){
-                                    // Si el desempleado tiene la habilidad "Habilidades sociales"
-                                    if (user.get('motivation').abilities.includes('kv0ZGalD2ViPdTx0BMm6')) {
-                                        return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                    }  
-                                } 
-                                // Si el recurso es de Financación
-                                else if (resourceType === 'PPX3Ufeg9YfzH4YA0SkU'){
-                                    // Si el desempleado tiene la habilidad "Financiacion"
-                                    if (user.get('motivation').abilities.includes('5X4lcOCqMTAZ4UwQLl03')) {
-                                        return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                    }  
-                                } 
-                                // Si el recurso es de mentoria
-                                else if (resourceType === 'lUubulxiAGo4llxFJrkl'){
-                                    // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral" 
-                                    if (user.get('motivation').abilities.includes('3ywxTQBRJ6wzgMiVx9GE')) {
-                                        return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
+                                const interestsUser = [];
+                                user.get('interests').interests.forEach((i) => {
+                                    interestsUser.push(i);
+                                });
+                                interestsUser.forEach((interestUser) => {
+                                    if (interests.indexOf(interestUser) > -1) {
+                                        return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
                                     }
-                                }
-                                // Si el recurso es de Apoyo y orientacion para el empleo
-                                else if (resourceType === 'MvCHSFzASskxlkBzPElb'){ 
-                                    // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral"
-                                    if (user.get('motivation').abilities.includes('RrBucTiz917syI4jyJKz')) {
-                                        return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                    }
-                                } 
-                                // Si el recurso es de programa para la emprendeduria 
-                                else if (resourceType === '4l9BLhP7cwXohUvQzMOT'){
-                                    // Si el desempleado tiene la habilidad "Emprenduderia"
-                                    if (user.get('motivation').abilities.includes('0m7igV4HhWcXwWabBKK5')) {
-                                        return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                    }  
-                                } 
-                                // Si el recurso es de formacion
-                                else if (resourceType === 'N9KdlBYmxUp82gOv8oJC'){
-                                    // Si el desempleado tiene la habilidad "Formacion"
-                                    if (user.get('motivation').abilities.includes('nMWfKP0yOqQf8Zv4A3n6')) {
-                                        return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                    }  
-                                }  
-                                else {
-                                    const interestsUser = [];
-                                    user.get('interests').interests.forEach((i) => {
-                                        interestsUser.push(i);
-                                    });
-                                    interestsUser.forEach((interestUser) => {
-                                        if (interests.indexOf(interestUser) > -1) {
-                                            return adminFirebase.messaging().sendToTopic(user.get('userId'),payload, options);
-                                        }
-                                    })
-                                }
+                                })
                             }
                         }
-                    });
-                })
-        } 
-});
+                    }
+                });
+            })
+        }
+    });
 
 // Web Scrapping
 const findResourcesFromSPEGC = async () => {
@@ -2050,99 +2050,98 @@ const findResourcesFromSPEGC = async () => {
     const data = await page.evaluate(() => {
         let dataResources = []
         document.querySelectorAll('.spegc-event-item')
-        .forEach(element => {
+            .forEach(element => {
 
-            let name = element.querySelector('.spegc-event-details h3').textContent;
-            let interest = element.querySelector('.spegc-event-details h4').textContent;
-            let resourceType = element.querySelector('.spegc-event-details h5').textContent;
-            let description = element.querySelector('.spegc-event-details p').textContent;
-            let href = element.querySelector('.spegc-event-details a').getAttribute("href");
-            
-            if (resourceType === 'Cursos y talleres') {
-                resourceType = 'N9KdlBYmxUp82gOv8oJC'
-            } else if (resourceType === 'Eventos profesionales') {
-                resourceType = 'EsV5yvTXtyIrVobpefB6'
-            } else {
-                resourceType = 'E19QFsYBxlcw3edEF2Qp'
-            }
+                let name = element.querySelector('.spegc-event-details h3').textContent;
+                let interest = element.querySelector('.spegc-event-details h4').textContent;
+                let resourceType = element.querySelector('.spegc-event-details h5').textContent;
+                let description = element.querySelector('.spegc-event-details p').textContent;
+                let href = element.querySelector('.spegc-event-details a').getAttribute("href");
 
-            if (interest === 'Emprendimiento') {
-                interest = 'BVBV4H4mrghFRnQK3tOA' 
-            } else if (interest === 'Innovación turística') {
-                interest = 'TRVa15HNc516NCdCOAeG' 
-            } else if (interest === 'Gestión empresarial') {
-                interest = 'BVBV4H4mrghFRnQK3tOA' 
-            } else if (interest === 'Internacionalización') {
-                interest = 'BVBV4H4mrghFRnQK3tOA'
-            } else if (interest === 'Competencias digitales avanzadas') {
-                interest = 'GTe4CPQHW0yIgVgRt03k' 
-            } else if (interest === 'Audiovisual') {
-                interest = '8lOJhlXeeTsbsDqy8DTk' 
-            } else if (interest === 'Datos y analítica') {
-                interest = 'eKoGjUxkRY1AqTZR3Tky' 
-            } else if (interest === 'i+D+i') {
-                interest = 'GTe4CPQHW0yIgVgRt03k' 
-            } else if (interest === 'Innovación rural') {
-                interest = 'GTe4CPQHW0yIgVgRt03k'
-            } else if (interest === 'Marketing y diseño') {
-                interest = '8lOJhlXeeTsbsDqy8DTk' 
-            } else if (interest === 'Sostenibilidad') {
-                interest = 'eKoGjUxkRY1AqTZR3Tky' 
-            } else {
-                interest = 'ecLsXVpU4GOnYQpSCL8y' 
-            }
+                if (resourceType === 'Cursos y talleres') {
+                    resourceType = 'N9KdlBYmxUp82gOv8oJC'
+                } else if (resourceType === 'Eventos profesionales') {
+                    resourceType = 'EsV5yvTXtyIrVobpefB6'
+                } else {
+                    resourceType = 'E19QFsYBxlcw3edEF2Qp'
+                }
 
-            let resource = {
-                title: name,
-                description: description,
-                resourceType: resourceType,
-                interests: [interest],
-                createdby: 'SPEGC Scrapper',
-                updatedby: 'SPEGC Scrapper',
-                capacity: 100,
-                assistants: '0',
-                link: href,
-                duration: '-',
-                organizer: 'btTAIYUkGSgqlEAnaZJB',
-                organizationType: 'Organización',
-                status:'A actualizar',
-                address: {
-                    city: 'U39M922HHR5FEVJtN3hN',
-                    country: 'i0GHKqdCWBYeAYcAMa7I',
-                    place: '-',
-                    province: 'mi3tu6DK1GU4yZIQJ1dZ',
-                    street: '-'
-        
-                },
-            }
-            dataResources.push(resource)
-            
-        });
+                if (interest === 'Emprendimiento') {
+                    interest = 'BVBV4H4mrghFRnQK3tOA'
+                } else if (interest === 'Innovación turística') {
+                    interest = 'TRVa15HNc516NCdCOAeG'
+                } else if (interest === 'Gestión empresarial') {
+                    interest = 'BVBV4H4mrghFRnQK3tOA'
+                } else if (interest === 'Internacionalización') {
+                    interest = 'BVBV4H4mrghFRnQK3tOA'
+                } else if (interest === 'Competencias digitales avanzadas') {
+                    interest = 'GTe4CPQHW0yIgVgRt03k'
+                } else if (interest === 'Audiovisual') {
+                    interest = '8lOJhlXeeTsbsDqy8DTk'
+                } else if (interest === 'Datos y analítica') {
+                    interest = 'eKoGjUxkRY1AqTZR3Tky'
+                } else if (interest === 'i+D+i') {
+                    interest = 'GTe4CPQHW0yIgVgRt03k'
+                } else if (interest === 'Innovación rural') {
+                    interest = 'GTe4CPQHW0yIgVgRt03k'
+                } else if (interest === 'Marketing y diseño') {
+                    interest = '8lOJhlXeeTsbsDqy8DTk'
+                } else if (interest === 'Sostenibilidad') {
+                    interest = 'eKoGjUxkRY1AqTZR3Tky'
+                } else {
+                    interest = 'ecLsXVpU4GOnYQpSCL8y'
+                }
+
+                let resource = {
+                    title: name,
+                    description: description,
+                    resourceType: resourceType,
+                    interests: [interest],
+                    createdby: 'SPEGC Scrapper',
+                    updatedby: 'SPEGC Scrapper',
+                    capacity: 100,
+                    assistants: '0',
+                    link: href,
+                    duration: '-',
+                    organizer: 'btTAIYUkGSgqlEAnaZJB',
+                    organizationType: 'Organización',
+                    status: 'A actualizar',
+                    address: {
+                        city: 'U39M922HHR5FEVJtN3hN',
+                        country: 'i0GHKqdCWBYeAYcAMa7I',
+                        place: '-',
+                        province: 'mi3tu6DK1GU4yZIQJ1dZ',
+                        street: '-'
+
+                    },
+                }
+                dataResources.push(resource)
+
+            });
         return dataResources
     })
-    
+
     await browser.close()
     return data
 }
 
-exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(/*async*/ (message) => {
-    console.log("Comienzo del Scrapping");
+exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(async (message) => {
     const url = 'https://gestionandote.com/agencia/camaratoledo/ofertas';
-    // const html = await axios(url).data; TODO: Using await???
-    axios(url).then(response => {
-        const html = response.data;
-        const $ = cheerio.load(html);
-        const jobCards = $('.card-ofertas');
-        console.log(`Nº de ofertas: ${jobCards.length}`);
-        //let jobOffers = [];
-        jobCards.each((index, element) => {
-          let jobID = $(element).find('.c-titulo span').first().text();
-          let jobTitle = $(element).find('.c-titulo a').text();
-          let jobLink = $(element).find('.c-titulo a').attr('href');
-          let jobLocation = $(element).find('.c-lugar span').first().text();
-          let jobDate = $(element).find('.c-fecha').text();
-          let jobDescription = $(element).find('.c-desc').text();
-          let jobOffer = {
+    const axiosUrl = await axios(url);
+    const html = axiosUrl.data;
+    const $ = cheerio.load(html);
+    const jobCards = $('.card-ofertas');
+    console.log(`Nº de ofertas: ${jobCards.length}`);
+
+    jobCards.each(async (index, element) => {
+        let jobID = $(element).find('.c-titulo span').first().text();
+        let jobTitle = $(element).find('.c-titulo a').text();
+        let jobLink = $(element).find('.c-titulo a').attr('href');
+        let jobLocation = $(element).find('.c-lugar span').first().text();
+        let jobDate = $(element).find('.c-fecha').text();
+        let jobDescription = $(element).find('.c-desc').text();
+        const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+        let jobOffer = {
             address: {
                 city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
                 country: "i0GHKqdCWBYeAYcAMa7I",
@@ -2153,15 +2152,15 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
             //capacity: ???,
             contractType: "",
             createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
-            //createby: "",
+            createdby: "Web scrapping",
             description: jobDescription,
-            duration: "",
+            duration: "Indefinido",
             enable: true,
-            //end: Timestamp ???,
+            end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
             interests: {},
             lastupdate: adminFirebase.firestore.Timestamp.now(),
             link: `https://gestionandote.com${jobLink}`,
-            //maximumDate: Timestamp??,
+            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
             modality: "Presencial",
             notExpire: true,
             online: false,
@@ -2175,36 +2174,37 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
             resourceType: "kUM5r4lSikIPLMZlQ7FD",
             salary: "",
             //searchText: Cloud Function???,
-            //start: Timestamp???,
+            start: adminFirebase.firestore.Timestamp.now(),
             status: "Disponible",
             //temporality: null,
             title: jobTitle,
             //titulation: "Sin titulación",
             trust: true,
-            //updatedby: "???",
+            updatedby: "Web scrapping",
             //date: jobDate,
             scrappingId: jobID,
-          };
-          //jobOffers.push(jobOffer); 
-          return db.collection("resourcesTEST").doc(jobID).set(jobOffer);
-          //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDate: ${jobDate}\nDescription: ${jobDescription}`);
-        });
-        //res.status(200).send(jobOffers);
-      });
+        };
+        //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDate: ${jobDate}\nDescription: ${jobDescription}`);
+        const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
+        if (query.empty) {
+            console.log(`Insertando recurso ${jobTitle}`);
+            return db.collection("resources").add(jobOffer);
+        }
+    });
 });
 
 exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(() => {
     return findResourcesFromSPEGC().then(res => {
-        res.forEach( resource => {
+        res.forEach(resource => {
             return resourceToCreate.where("title", "==", resource.title).get().then(
                 (snapshot) => {
                     if (snapshot.size === 0) {
                         resourceToCreate.add(resource)
-                    } 
+                    }
                 })
-            })
         })
-    });
+    })
+});
 
 exports.updateResourceFromSPEG = functions.runWith(options).pubsub.topic('updatingSPEG').onPublish(() => {
     return adminFirebase.firestore().collection('resources').where("status", "==", 'A actualizar').limit(1).get()
@@ -2216,8 +2216,8 @@ exports.updateResourceFromSPEG = functions.runWith(options).pubsub.topic('updati
                     updated: false
                 })
             });
-                
-         })
+
+        })
 });
 
 exports.createScrapp = functions.runWith(options).firestore
@@ -2227,7 +2227,7 @@ exports.createScrapp = functions.runWith(options).firestore
         return findResourceDetailFromSPEGC(scrap.link).then(res => {
             const doc = adminFirebase.firestore().doc(`resources/${scrap.resource}`);
             doc.update({
-                modality:'Semipresencial',
+                modality: 'Semipresencial',
                 address: {
                     city: 'U39M922HHR5FEVJtN3hN',
                     country: 'i0GHKqdCWBYeAYcAMa7I',
@@ -2235,14 +2235,14 @@ exports.createScrapp = functions.runWith(options).firestore
                     province: 'mi3tu6DK1GU4yZIQJ1dZ',
                     street: '-'
                 },
-                maximumDate: adminFirebase.firestore.Timestamp.fromMillis(res[0].limit) ,
+                maximumDate: adminFirebase.firestore.Timestamp.fromMillis(res[0].limit),
                 start: adminFirebase.firestore.Timestamp.fromMillis(res[0].start),
                 end: adminFirebase.firestore.Timestamp.fromMillis(res[0].end),
                 status: 'Disponible',
                 enable: true
-         });
+            });
         });
-});
+    });
 
 
 const findResourceDetailFromSPEGC = async (url) => {
@@ -2287,7 +2287,7 @@ const findResourceDetailFromSPEGC = async (url) => {
         var datePartsLimitHour = datePartsLimit[2].split(" ");
         var datePartsLimitMin = datePartsLimitHour[1].split(":");
         var dateObjectLimit = new Date(+datePartsLimitHour[0], datePartsLimit[1] - 1, +datePartsLimit[0], +datePartsLimitMin[0], +datePartsLimitMin[1]);
-        var limitDate = new Date( Date.parse(dateObjectLimit.toString()) );
+        var limitDate = new Date(Date.parse(dateObjectLimit.toString()));
 
         var dateStart = date.slice(0, date.indexOf(' - '));
         var dateEnd = date.slice(date.indexOf(' - ') + 3);
@@ -2300,13 +2300,13 @@ const findResourceDetailFromSPEGC = async (url) => {
         var datePartsStartHour = datePartsStart[2].split(" ");
         var datePartsStartMin = datePartsStartHour[1].split(":");
         var dateObjectStart = new Date(+datePartsStartHour[0], datePartsStart[1] - 1, +datePartsStart[0], +datePartsStartMin[0], +datePartsStartMin[1]);
-        var startDate = new Date( Date.parse(dateObjectStart.toString()) );
+        var startDate = new Date(Date.parse(dateObjectStart.toString()));
 
         var datePartsEnd = dateEnd.split("/");
         var datePartsEndHour = datePartsEnd[2].split(" ");
         var datePartsEndMin = datePartsEndHour[1].split(":");
         var dateObjectEnd = new Date(+datePartsEndHour[0], datePartsEnd[1] - 1, +datePartsEnd[0], +datePartsEndMin[0], +datePartsEndMin[1]);
-        var endDate = new Date( Date.parse(dateObjectEnd.toString()) );
+        var endDate = new Date(Date.parse(dateObjectEnd.toString()));
 
         const extractDetailObject = {
             limit: limitDate.getTime(),
@@ -2330,28 +2330,28 @@ exports.deleteResource = functions.firestore
         const deletedResource = snapshot.data();
         if (deletedResource.participants !== undefined && deletedResource.participants.length > 0) {
             deletedResource.participants.forEach((user) => {
-                        const payload = {
-                            notification: {
-                                title: 'enREDa',
-                                body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
-                                sound: "default"
-                            },
-                            data: {
-                                click_action: "FLUTTER_NOTIFICATION_CLICK",
-                                title: 'enREDa',
-                                body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
-                            }
-                        };
-                        const options = {
-                            priority: "high",
-                            timeToLive: 60 * 60 * 24
-                        };
-                        return adminFirebase.messaging().sendToTopic(user, payload, options);
-                    })
-            } 
+                const payload = {
+                    notification: {
+                        title: 'enREDa',
+                        body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
+                        sound: "default"
+                    },
+                    data: {
+                        click_action: "FLUTTER_NOTIFICATION_CLICK",
+                        title: 'enREDa',
+                        body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
+                    }
+                };
+                const options = {
+                    priority: "high",
+                    timeToLive: 60 * 60 * 24
+                };
+                return adminFirebase.messaging().sendToTopic(user, payload, options);
+            })
+        }
     });
 
-    exports.updateResourceEmail = functions.firestore
+exports.updateResourceEmail = functions.firestore
     .document('resources/{resourceId}')
     .onUpdate((change, context) => {
         const newValue = change.after.data();
@@ -2379,116 +2379,116 @@ exports.deleteResource = functions.firestore
                 return adminFirebase.messaging().sendToTopic(user, payload, options);
             })
         }
-        
+
     });
 
-    exports.scheduleWeekEmail = functions.runWith(options).pubsub.topic('scheduleWeekEmail').onPublish(() => {
-        const payload = {
-            notification: {
-                title: 'enREDa',
-                body: `Nuevos recursos basados en tus intereses`,
-                sound: "default"
-            },
-            data: {
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-                title: 'enREDa',
-                body: `Nuevos recursos basados en tus intereses`,
-            }
-        };
-        const options = {
-            priority: "high",
-            timeToLive: 60 * 60 * 24
-        };
-        return adminFirebase.messaging().sendToTopic('weeknotification',payload, options);
-    });
+exports.scheduleWeekEmail = functions.runWith(options).pubsub.topic('scheduleWeekEmail').onPublish(() => {
+    const payload = {
+        notification: {
+            title: 'enREDa',
+            body: `Nuevos recursos basados en tus intereses`,
+            sound: "default"
+        },
+        data: {
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+            title: 'enREDa',
+            body: `Nuevos recursos basados en tus intereses`,
+        }
+    };
+    const options = {
+        priority: "high",
+        timeToLive: 60 * 60 * 24
+    };
+    return adminFirebase.messaging().sendToTopic('weeknotification', payload, options);
+});
 
-    exports.createCertificate = functions.firestore
+exports.createCertificate = functions.firestore
     .document('certificates/{certificateId}')
     .onCreate((snapshot, context) => {
         const certificateId = context.params.certificateId;
-        return adminFirebase.firestore().doc(`certificates/${certificateId}`).set({certificateId}, {merge: true})
+        return adminFirebase.firestore().doc(`certificates/${certificateId}`).set({ certificateId }, { merge: true })
             .then(() => {
                 let creator = snapshot.get('creator');
                 if (creator === '') {
                     let resource = snapshot.get('resource');
                     return adminFirebase.firestore().collection('resources').where("resourceId", "==", resource).get()
-                    .then((snapshot2) => {
-                        snapshot2.forEach((resourceEach) => {
-                            let organizer = resourceEach.data().organizer;
-                            return adminFirebase.firestore().doc(`certificates/${certificateId}`).set({
-                                creator: organizer
-                            }, {merge: true})
-                                .then(() => {
-                                    console.log("Successfully added certificateId to new certificate");
-                                });
+                        .then((snapshot2) => {
+                            snapshot2.forEach((resourceEach) => {
+                                let organizer = resourceEach.data().organizer;
+                                return adminFirebase.firestore().doc(`certificates/${certificateId}`).set({
+                                    creator: organizer
+                                }, { merge: true })
+                                    .then(() => {
+                                        console.log("Successfully added certificateId to new certificate");
+                                    });
                             });
-                    });
+                        });
                 }
                 console.log("Successfully added certificateId to new certificate");
             });
-    }); 
+    });
 
-    async function updateResourceSearchText(resource, resourceId) {
-        //console.log('Calling async updateResourceSearchText()');
-        let resourceTypeName = '';
-        let organizerName = '';
-        let countryName = '';
-        let provinceName = '';
-        let cityName = '';
-        let document;
-    
-        if (resource.data().resourceType) {
-            document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
-            resourceTypeName = document.data().name;
-            //console.log(`Tipo de recurso: ${resourceTypeName}`)
-        }
-    
-        if (resource.data().organizer) {
-            document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
-            organizerName = document.data().name;
-            //console.log(`Organizador: ${organizerName}`)
-        }
-    
-        if (resource.data().address.country) {
-            document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
-            countryName = document.data().name;
-            //console.log(`País: ${countryName}`)
-        }
-    
-        if (resource.data().address.province) {
-            document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
-            provinceName = document.data().name;
-            //console.log(`Provincia: ${provinceName}`)
-        }
-    
-        if (resource.data().address.city) {
-            document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
-            cityName = document.data().name;
-            //console.log(`Provincia: ${cityName}`)
-        }
-    
-        await adminFirebase.firestore().doc(`resources/${resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
-            console.log(`Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
-        });
+async function updateResourceSearchText(resource, resourceId) {
+    //console.log('Calling async updateResourceSearchText()');
+    let resourceTypeName = '';
+    let organizerName = '';
+    let countryName = '';
+    let provinceName = '';
+    let cityName = '';
+    let document;
+
+    if (resource.data().resourceType) {
+        document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
+        resourceTypeName = document.data().name;
+        //console.log(`Tipo de recurso: ${resourceTypeName}`)
     }
 
-    exports.scheduledFirestoreExport = functions.pubsub.schedule('every 24 hours').onRun((context) => {
-        const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT;
-        const databaseName = client.databasePath(projectId, '(default)');
-        return client.exportDocuments({
-            name: databaseName,
-            outputUriPrefix: bucket,
-            collectionIds: []
-        }).then(responses => {
-            const response = responses[0];
-            console.log(`Operation Name: ${response['name']}`);
-        }).catch(err => {
-            console.error(err);
-            throw new Error('Export operation failed');
-        });
+    if (resource.data().organizer) {
+        document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
+        organizerName = document.data().name;
+        //console.log(`Organizador: ${organizerName}`)
+    }
+
+    if (resource.data().address.country) {
+        document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
+        countryName = document.data().name;
+        //console.log(`País: ${countryName}`)
+    }
+
+    if (resource.data().address.province) {
+        document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
+        provinceName = document.data().name;
+        //console.log(`Provincia: ${provinceName}`)
+    }
+
+    if (resource.data().address.city) {
+        document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
+        cityName = document.data().name;
+        //console.log(`Provincia: ${cityName}`)
+    }
+
+    await adminFirebase.firestore().doc(`resources/${resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
+        console.log(`Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
     });
-    
-    exports.updateCertificationRequest = functions.firestore.document('certificationsRequests/{certificationRequestId}')
+}
+
+exports.scheduledFirestoreExport = functions.pubsub.schedule('every 24 hours').onRun((context) => {
+    const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT;
+    const databaseName = client.databasePath(projectId, '(default)');
+    return client.exportDocuments({
+        name: databaseName,
+        outputUriPrefix: bucket,
+        collectionIds: []
+    }).then(responses => {
+        const response = responses[0];
+        console.log(`Operation Name: ${response['name']}`);
+    }).catch(err => {
+        console.error(err);
+        throw new Error('Export operation failed');
+    });
+});
+
+exports.updateCertificationRequest = functions.firestore.document('certificationsRequests/{certificationRequestId}')
     .onUpdate((change, context) => {
         const certificationRequestId = context.params.certificationRequestId;
         const newValue = change.after.data();
@@ -2496,21 +2496,21 @@ exports.deleteResource = functions.firestore
         const userId = newValue.unemployedRequesterId;
         const competencyId = newValue.competencyId;
         if (newValue.certified !== previousValue.certified) {
-            return adminFirebase.firestore().collection('users').where("userId", "==",userId).get().then(
+            return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
                 (snapshot) => {
                     snapshot.forEach((user) => {
                         const competencies = user.get('competencies');
                         competencies[competencyId] = "certified";
-                        return adminFirebase.firestore().doc(`users/${userId}`).set({competencies}, {merge: true})
-                        .then(() => {
-                            console.log("Successfully change certified competency status");
-                        })
+                        return adminFirebase.firestore().doc(`users/${userId}`).set({ competencies }, { merge: true })
+                            .then(() => {
+                                console.log("Successfully change certified competency status");
+                            })
                     })
                 });
         }
     });
 
-    exports.certificationRequestForm = functions.firestore
+exports.certificationRequestForm = functions.firestore
     .document('certificationsRequests/{certificationRequestId}')
     .onCreate((snapshot, context) => {
         const certificationRequestId = context.params.certificationRequestId;
@@ -2518,8 +2518,8 @@ exports.deleteResource = functions.firestore
         const competencyName = snapshot.get('competencyName');
         const unemployedRequesterName = snapshot.get('unemployedRequesterName');
 
-        return adminFirebase.firestore().doc(`certificationsRequests/${certificationRequestId}`).set({certificationRequestId}, {
-            merge:true
+        return adminFirebase.firestore().doc(`certificationsRequests/${certificationRequestId}`).set({ certificationRequestId }, {
+            merge: true
         })
             .then(() => {
                 return adminFirebase.firestore().collection('mail').add({
@@ -2528,15 +2528,15 @@ exports.deleteResource = functions.firestore
                         subject: `${unemployedRequesterName} necesita que le certifiques una competencia.`,
                         html:
                             createCertificationRequestTemplate(certifierName,
-                                competencyName, unemployedRequesterName, certificationRequestId ),
+                                competencyName, unemployedRequesterName, certificationRequestId),
                     }
                 }).then(() => console.log('Queued email!'));
-                });
             });
-    
+    });
 
-    function createCertificationRequestTemplate(certifierName, competencyName, unemployedRequesterName, certificationRequestId ) {
-        const certificationRequestTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+function createCertificationRequestTemplate(certifierName, competencyName, unemployedRequesterName, certificationRequestId) {
+    const certificationRequestTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
         <head>
         <meta charset="UTF-8">
@@ -2719,12 +2719,12 @@ exports.deleteResource = functions.firestore
         </body>
         </html>
         `;
-        return certificationRequestTemplate;
-    }
-    
+    return certificationRequestTemplate;
+}
 
 
-    exports.updateResourceCategory = functions.firestore.document('testOne/{testOnetId}')
+
+exports.updateResourceCategory = functions.firestore.document('testOne/{testOnetId}')
     .onUpdate((change, context) => {
         const testOnetId = context.params.testOnetIdId;
         const newValue = change.after.data();
@@ -2735,13 +2735,13 @@ exports.deleteResource = functions.firestore
                     snapshot.forEach((resource) => {
                         resourceId = resource.get('resourceId');
                         if (resource.get('resourceType') === 'kUM5r4lSikIPLMZlQ7FD') {
-                            return adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({resourceCategory: 'POUBGFk5gU6c5X1DKo1b'}, {merge: true})
-                            .then(() => {
-                                console.log("Successfully added resource category");
-                            }).catch(err => {
-                                console.error(err);
-                                throw new Error('Export resource category operation failed:'+ err);
-                            });
+                            return adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({ resourceCategory: 'POUBGFk5gU6c5X1DKo1b' }, { merge: true })
+                                .then(() => {
+                                    console.log("Successfully added resource category");
+                                }).catch(err => {
+                                    console.error(err);
+                                    throw new Error('Export resource category operation failed:' + err);
+                                });
                         }
                     })
                 });
@@ -2750,59 +2750,59 @@ exports.deleteResource = functions.firestore
 
 
 
-    /*
-    exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
-        .onUpdate(async (change, context) => {
-    
-            const resources = await adminFirebase.firestore().collection('resources').get();
-    
-            console.log(`Recursos: ${resources.size}`);
-    
-            var i = 1;
-            for (const resource of resources.docs) {
-                //console.log(`Recurso: ${resource.data().title}`);
-                let resourceTypeName = '';
-                let organizerName = '';
-                let countryName = '';
-                let provinceName = '';
-                let cityName = '';
-                let document;
-    
-                if (resource.data().resourceType) {
-                    document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
-                    resourceTypeName = document.data().name;
-                    //console.log(`Tipo de recurso: ${resourceTypeName}`)
-                }
-    
-                if (resource.data().organizer) {
-                    document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
-                    organizerName = document.data().name;
-                    //console.log(`Organizador: ${organizerName}`)
-                }
-    
-                if (resource.data().address.country) {
-                    document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
-                    countryName = document.data().name;
-                    //console.log(`País: ${countryName}`)
-                }
-    
-                if (resource.data().address.province) {
-                    document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
-                    provinceName = document.data().name;
-                    //console.log(`Provincia: ${provinceName}`)
-                }
-    
-                if (resource.data().address.city) {
-                    document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
-                    cityName = document.data().name;
-                    //console.log(`Provincia: ${cityName}`)
-                }
-    
-                await adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
-                    console.log(`${i++} - Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
-                });
+/*
+exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
+    .onUpdate(async (change, context) => {
+ 
+        const resources = await adminFirebase.firestore().collection('resources').get();
+ 
+        console.log(`Recursos: ${resources.size}`);
+ 
+        var i = 1;
+        for (const resource of resources.docs) {
+            //console.log(`Recurso: ${resource.data().title}`);
+            let resourceTypeName = '';
+            let organizerName = '';
+            let countryName = '';
+            let provinceName = '';
+            let cityName = '';
+            let document;
+ 
+            if (resource.data().resourceType) {
+                document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
+                resourceTypeName = document.data().name;
+                //console.log(`Tipo de recurso: ${resourceTypeName}`)
             }
-    
-            console.log('FUNCIÓN COMPLETADA CORRECTAMENTE');
-        });
-    */
+ 
+            if (resource.data().organizer) {
+                document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
+                organizerName = document.data().name;
+                //console.log(`Organizador: ${organizerName}`)
+            }
+ 
+            if (resource.data().address.country) {
+                document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
+                countryName = document.data().name;
+                //console.log(`País: ${countryName}`)
+            }
+ 
+            if (resource.data().address.province) {
+                document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
+                provinceName = document.data().name;
+                //console.log(`Provincia: ${provinceName}`)
+            }
+ 
+            if (resource.data().address.city) {
+                document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
+                cityName = document.data().name;
+                //console.log(`Provincia: ${cityName}`)
+            }
+ 
+            await adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
+                console.log(`${i++} - Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
+            });
+        }
+ 
+        console.log('FUNCIÓN COMPLETADA CORRECTAMENTE');
+    });
+*/
