@@ -2149,7 +2149,7 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
                 province: "r7WT8mAsUdTAlPCKWstT",
             },
             assistants: 0,
-            //capacity: ???,
+            capacity: 99,
             contractType: "",
             createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
             createdby: "Web scrapping",
