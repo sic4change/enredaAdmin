@@ -15,6 +15,23 @@ const firestore = require('@google-cloud/firestore');
 const client = new firestore.v1.FirestoreAdminClient();
 const bucket = 'gs://enreda_bucket_eu';
 
+let randomImages = ['https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom1_900x503.png?alt=media&token=a2d3ee76-d2f2-4995-87ad-f40664c18c77',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom2_900x503.png?alt=media&token=ad799b1d-dbf5-462d-bc44-603fb022558b',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom3_900x503.jpeg?alt=media&token=19d9b695-a66b-4f37-94ed-265d9366b828',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom4_900x503.jpeg?alt=media&token=7921a55b-df81-4610-b317-895b21abb97c',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom5_900x503.jpeg?alt=media&token=04a51582-6286-4c05-ab7c-8dd5326202c7',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom6_900x503.png?alt=media&token=ef0e854b-10b9-4780-832b-e74b3a164839',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom7_900x503.png?alt=media&token=bf0c4e7b-34ad-4e82-8361-14179c287cc0',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom8_900x503.png?alt=media&token=3d99fff9-668e-4c54-8207-8c950b2692dd',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom9_900x503_900x503.png?alt=media&token=cb467ba0-5bcb-46c5-a0d9-823614a242ba',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom10_900x503.png?alt=media&token=cffc6844-7b46-4d1f-ac40-ec4e31c39c6b',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom11_900x503.png?alt=media&token=84e21fe2-5f01-4758-add6-df6828b4a915',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom12_900x503.png?alt=media&token=80df0c4d-315c-4a9b-bfc8-3acdd884cea0',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom13_900x503.jpeg?alt=media&token=e5919c65-3180-46c6-87e4-342233ac7eab',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom14_900x503.png?alt=media&token=9502e094-8d1d-4a43-bd0a-b73ef66cda14',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom15_900x503.png?alt=media&token=58a20f56-7c98-41a0-b7ed-aa01741d47f3',
+            'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom16_900x503.png_900x503.png?alt=media&token=c1938799-c628-44ac-855e-72678b591d08'];  
+
 exports.createUser = functions.firestore
     .document('users/{userId}')
     .onCreate((snapshot, context) => {
@@ -2141,6 +2158,7 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
         let jobDate = $(element).find('.c-fecha').text();
         let jobDescription = $(element).find('.c-desc').text();
         const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
         let jobOffer = {
             address: {
                 city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
@@ -2169,7 +2187,7 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
             //promotor: null,
             resourceCategory: "POUBGFk5gU6c5X1DKo1b",
             //resourceLink: Cloud Function???,
-            //resourcePhoto: ???,
+            resourcePhoto: randomImage,
             //resourcePictureId: ???,
             resourceType: "kUM5r4lSikIPLMZlQ7FD",
             salary: "",
