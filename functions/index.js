@@ -2211,6 +2211,31 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
     });
 });
 
+exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scrappingIPETA').onPublish(async (message) => {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+  const page = await browser.newPage();
+  await page.goto('https://ipetalavera.es/instituto/empleo/ofertas-de-empleo/');
+  // Espera hasta que aparezcan las ofertas de trabajo en la página
+  await page.waitForSelector('.jet-listing-grid__items');
+  const html = await page.content();
+  const $ = cheerio.load(html);
+  const jobCards = $('.jet-listing-grid__item');
+  console.log(`Nº de ofertas: ${jobCards.length}`);
+
+  jobCards.each((index, element) => {
+    const title = $(element).find('.elementor-element-e13832e').find('div').find('h2').text();
+    const description = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
+    const date = $(element).find('.elementor-element-084441b').find('div').find('p').text();
+    
+    console.log(`${title} (${date}): ${description}`);
+  });
+
+  await browser.close();
+});
+
 exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(() => {
     return findResourcesFromSPEGC().then(res => {
         res.forEach(resource => {
