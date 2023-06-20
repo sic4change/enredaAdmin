@@ -2226,11 +2226,17 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
   console.log(`Nº de ofertas: ${jobCards.length}`);
 
   jobCards.each((index, element) => {
+    const jobId = $(element).attr('data-post-id');
     const title = $(element).find('.elementor-element-e13832e').find('div').find('h2').text();
     const description = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
     const date = $(element).find('.elementor-element-084441b').find('div').find('p').text();
+    const location = $(element).find('.elementor-icon-list-text').eq(0).text().toUpperCase();
+    const capacityText = $(element).find('.elementor-icon-list-text').eq(1).text();
+    const capacity = parseInt(capacityText.match(/\d+/)[0]);
+    const tag = $(element).find('.elementor-icon-list-text').eq(2).text();
     
-    console.log(`${title} (${date}): ${description}`);
+    console.log(`ID: ${jobId} --> ${title} (${date}): ${description}`);
+    console.log(`Se imparte en ${location} y hay ${capacity} vacantes`);
   });
 
   await browser.close();
