@@ -2151,7 +2151,8 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
     console.log(`Nº de ofertas: ${jobCards.length}`);
 
     jobCards.each(async (index, element) => {
-        let jobID = $(element).find('.c-titulo span').first().text();
+        let postID = $(element).find('.c-titulo span').first().text();
+        let jobID = `camemp_${postID}`;
         let jobTitle = $(element).find('.c-titulo a').text();
         let jobLink = $(element).find('.c-titulo a').attr('href');
         let jobLocation = $(element).find('.c-lugar span').first().text();
@@ -2225,18 +2226,73 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
   const jobCards = $('.jet-listing-grid__item');
   console.log(`Nº de ofertas: ${jobCards.length}`);
 
-  jobCards.each((index, element) => {
-    const jobId = $(element).attr('data-post-id');
-    const title = $(element).find('.elementor-element-e13832e').find('div').find('h2').text();
-    const description = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
-    const date = $(element).find('.elementor-element-084441b').find('div').find('p').text();
-    const location = $(element).find('.elementor-icon-list-text').eq(0).text().toUpperCase();
+  jobCards.each(async (index, element) => {
+    const postId = $(element).attr('data-post-id');
+    const jobID = `ipeta_${postId}`;
+    const jobTitle = $(element).find('.elementor-element-e13832e').find('div').find('h2').text();
+    const jobDescription = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
+    const jobDate = $(element).find('.elementor-element-084441b').find('div').find('p').text();
+    const jobLocation = $(element).find('.elementor-icon-list-text').eq(0).text().toUpperCase();
     const capacityText = $(element).find('.elementor-icon-list-text').eq(1).text();
-    const capacity = parseInt(capacityText.match(/\d+/)[0]);
-    const tag = $(element).find('.elementor-icon-list-text').eq(2).text();
+    const jobCapacity = parseInt(capacityText.match(/\d+/)[0]);
+    const jobTag = $(element).find('.elementor-icon-list-text').eq(2).text();
+    let jobLink = $(element).find('.elementor-button-link').attr('href');
+    const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+    let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
     
-    console.log(`ID: ${jobId} --> ${title} (${date}): ${description}`);
-    console.log(`Se imparte en ${location} y hay ${capacity} vacantes`);
+    let jobOffer = {
+        address: {
+            city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
+            country: "i0GHKqdCWBYeAYcAMa7I",
+            place: jobLocation,
+            province: "r7WT8mAsUdTAlPCKWstT",
+        },
+        assistants: 0,
+        capacity: jobCapacity,
+        contractType: "",
+        createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
+        createdby: "Web scrapping",
+        description: jobDescription,
+        duration: "Indefinido",
+        enable: true,
+        end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+        interests: {},
+        lastupdate: adminFirebase.firestore.Timestamp.now(),
+        link: jobLink,
+        maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+        modality: "Presencial",
+        notExpire: true,
+        online: false,
+        organizer: "VrpgKatmJG4h4pxgvpZZ",
+        organizerType: "Organización",
+        //promotor: null,
+        resourceCategory: "POUBGFk5gU6c5X1DKo1b",
+        //resourceLink: Cloud Function???,
+        resourcePhoto: randomImage,
+        //resourcePictureId: ???,
+        resourceType: "kUM5r4lSikIPLMZlQ7FD",
+        salary: "",
+        //searchText: Cloud Function???,
+        start: adminFirebase.firestore.Timestamp.now(),
+        status: "Disponible",
+        //temporality: null,
+        title: jobTitle,
+        //titulation: "Sin titulación",
+        trust: true,
+        updatedby: "Web scrapping",
+        //date: jobDate,
+        scrappingId: jobID,
+    };
+
+    const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
+    if (query.empty) {
+        console.log(`Insertando recurso ${jobTitle}`);
+        return db.collection("resources").add(jobOffer);
+    }
+
+    /*console.log(`ID: ${jobID} --> ${jobTitle} (${jobDate}): ${jobDescription}`);
+    console.log(`Se imparte en ${jobLocation} y hay ${jobCapacity} vacantes`);
+    console.log(`LINK: ${jobLink}`);*/
   });
 
   await browser.close();
