@@ -2142,6 +2142,54 @@ const findResourcesFromSPEGC = async () => {
     return data
 }
 
+exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).pubsub.topic('scrappingFormacionCamaraToledo').onPublish(async (message) => {
+    const url = 'https://camaratoledo.com/formacion-espana-emprende/';
+    const axiosUrl = await axios(url);
+    const html = axiosUrl.data;
+    const $ = cheerio.load(html);
+    const jobLinks = $('.elementor-button-link');
+    console.log(`Nº de ofertas: ${jobLinks.length}`);
+
+    jobLinks.each(async (index, element) => {
+        const jobLink = $(element).attr('href'); 
+        if (jobLink && jobLink.startsWith('https://camaratoledo.com/formacion')) {
+            console.log(`Link: ${jobLink}`);
+            const axiosJobUrl = await axios(jobLink);
+            const jobHtml = axiosJobUrl.data;
+            const $$ = cheerio.load(jobHtml);
+
+            //ID
+            const body = $$('body').attr('class');
+            const postIdMatch = body.match(/postid-(\d+)/);
+            /*if (postIdMatch) {
+                const postId = postIdMatch[1];
+                console.log('Número después de "postid-":', postId);
+              } else {
+                console.log('No se encontró el número después de "postid-"');
+              }*/
+            const postID = postIdMatch[1];
+            const jobID = `camfor_${postID}`; 
+            //Title
+            const jobTitle = $$('h1').first().text();
+            //Place
+            var jobPlace = '';
+            const sections = $$('.elementor-inner-section');
+            sections.each((index, section) => {
+                //Comprobar si contiene un span con el texto "Lugar"
+                if ($$(section).find('span').filter((index, span) => $$(span).text() === 'Lugar').length > 0) {
+                    //const placeSpan = $(element).find('p').filter((index, element) => $(element).text() !== 'Lugar');
+                    jobPlace = $$(section).find('p').text();
+                }
+            });
+            //const jobDuration = $('.elementor-element-ba36254')/*.find('.elementor-element-ba36254')*/.find('div').find('p').text();
+            const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+            let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+
+            console.log(`ID: ${jobID} ---> ${jobTitle} SE IMPARTE EN ---> ${jobPlace}`);
+        }
+    });
+});
+
 exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(async (message) => {
     const url = 'https://gestionandote.com/agencia/camaratoledo/ofertas';
     const axiosUrl = await axios(url);
@@ -2152,7 +2200,7 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
 
     jobCards.each(async (index, element) => {
         let postID = $(element).find('.c-titulo span').first().text();
-        let jobID = `camemp_${postID}`;
+        let jobID = `camemp_${postID}`; 
         let jobTitle = $(element).find('.c-titulo a').text();
         let jobLink = $(element).find('.c-titulo a').attr('href');
         let jobLocation = $(element).find('.c-lugar span').first().text();
