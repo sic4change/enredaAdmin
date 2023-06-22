@@ -2147,13 +2147,12 @@ exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).p
     const axiosUrl = await axios(url);
     const html = axiosUrl.data;
     const $ = cheerio.load(html);
-    const jobLinks = $('.elementor-button-link');
-    console.log(`Nº de ofertas: ${jobLinks.length}`);
-
-    jobLinks.each(async (index, element) => {
-        const jobLink = $(element).attr('href'); 
+    const items = $('div[data-elementor-type="loop-item"]').filter((index, element) => $(element).find('h2').text().trim().toUpperCase() === 'PRÓXIMAMENTE');
+    console.log(`Nº de ofertas: ${items.length}`);
+    items.each(async (index, item) => {
+        const jobLink = $(item).find('.elementor-button-link').attr('href');
         if (jobLink && jobLink.startsWith('https://camaratoledo.com/formacion')) {
-            console.log(`Link: ${jobLink}`);
+            //console.log(`Link: ${jobLink}`);
             const axiosJobUrl = await axios(jobLink);
             const jobHtml = axiosJobUrl.data;
             const $$ = cheerio.load(jobHtml);
@@ -2161,31 +2160,75 @@ exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).p
             //ID
             const body = $$('body').attr('class');
             const postIdMatch = body.match(/postid-(\d+)/);
-            /*if (postIdMatch) {
-                const postId = postIdMatch[1];
-                console.log('Número después de "postid-":', postId);
-              } else {
-                console.log('No se encontró el número después de "postid-"');
-              }*/
             const postID = postIdMatch[1];
             const jobID = `camfor_${postID}`; 
             //Title
             const jobTitle = $$('h1').first().text();
             //Place
-            var jobPlace = '';
+            var jobLocation = '';
             const sections = $$('.elementor-inner-section');
             sections.each((index, section) => {
                 //Comprobar si contiene un span con el texto "Lugar"
                 if ($$(section).find('span').filter((index, span) => $$(span).text() === 'Lugar').length > 0) {
-                    //const placeSpan = $(element).find('p').filter((index, element) => $(element).text() !== 'Lugar');
-                    jobPlace = $$(section).find('p').text();
+                    jobLocation = $$(section).find('p').text();
                 }
             });
-            //const jobDuration = $('.elementor-element-ba36254')/*.find('.elementor-element-ba36254')*/.find('div').find('p').text();
+            //const jobDuration = $('.elementor-element-ba36254').find('div').find('p').text();
+            //Description
+            var jobDescription = '';
+            const divs = $$('div');
+            divs.each((index, div) => {
+                //Comprobar si contiene un h3 con el texto "Dirigido"
+                if ($$(div).find('h3').filter((index, h3) => $$(h3).text().toUpperCase() === 'DIRIGIDO').length > 0) {
+                    jobDescription = $$(div).parent().next('div').find('p').text();
+                }
+            });
+
             const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
             let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
 
-            console.log(`ID: ${jobID} ---> ${jobTitle} SE IMPARTE EN ---> ${jobPlace}`);
+            let jobOffer = {
+                address: {
+                    city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
+                    country: "i0GHKqdCWBYeAYcAMa7I",
+                    place: jobLocation,
+                    province: "r7WT8mAsUdTAlPCKWstT",
+                },
+                assistants: 0,
+                capacity: 99,
+                contractType: "",
+                createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
+                createdby: "Web scrapping",
+                description: jobDescription,
+                duration: "Indefinido",
+                enable: true,
+                end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+                interests: {},
+                lastupdate: adminFirebase.firestore.Timestamp.now(),
+                link: jobLink,
+                maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+                modality: "Presencial",
+                notExpire: true,
+                online: false,
+                organizer: "VrpgKatmJG4h4pxgvpZZ",
+                organizerType: "Organización",
+                resourceCategory: "6ag9Px7zkFpHgRe17PQk", // Formación
+                resourcePhoto: randomImage,
+                resourceType: "N9KdlBYmxUp82gOv8oJC", // Formación
+                salary: "",
+                start: adminFirebase.firestore.Timestamp.now(),
+                status: "Disponible",
+                title: jobTitle,
+                trust: true,
+                updatedby: "Web scrapping",
+                scrappingId: jobID,
+            };
+            //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDescription: ${jobDescription}`);
+            const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
+            if (query.empty) {
+                console.log(`Insertando recurso ${jobTitle}`);
+                return db.collection("resources").add(jobOffer);
+            }
         }
     });
 });
@@ -2233,22 +2276,15 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
             online: false,
             organizer: "VrpgKatmJG4h4pxgvpZZ",
             organizerType: "Organización",
-            //promotor: null,
             resourceCategory: "POUBGFk5gU6c5X1DKo1b",
-            //resourceLink: Cloud Function???,
             resourcePhoto: randomImage,
-            //resourcePictureId: ???,
             resourceType: "kUM5r4lSikIPLMZlQ7FD",
             salary: "",
-            //searchText: Cloud Function???,
             start: adminFirebase.firestore.Timestamp.now(),
             status: "Disponible",
-            //temporality: null,
             title: jobTitle,
-            //titulation: "Sin titulación",
             trust: true,
             updatedby: "Web scrapping",
-            //date: jobDate,
             scrappingId: jobID,
         };
         //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDate: ${jobDate}\nDescription: ${jobDescription}`);
@@ -2313,22 +2349,15 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
         online: false,
         organizer: "VrpgKatmJG4h4pxgvpZZ",
         organizerType: "Organización",
-        //promotor: null,
         resourceCategory: "POUBGFk5gU6c5X1DKo1b",
-        //resourceLink: Cloud Function???,
         resourcePhoto: randomImage,
-        //resourcePictureId: ???,
         resourceType: "kUM5r4lSikIPLMZlQ7FD",
         salary: "",
-        //searchText: Cloud Function???,
         start: adminFirebase.firestore.Timestamp.now(),
         status: "Disponible",
-        //temporality: null,
         title: jobTitle,
-        //titulation: "Sin titulación",
         trust: true,
         updatedby: "Web scrapping",
-        //date: jobDate,
         scrappingId: jobID,
     };
 
