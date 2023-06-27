@@ -2297,10 +2297,10 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
 });
 
 exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scrappingIPETA').onPublish(async (message) => {
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
+  const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+  })
   const page = await browser.newPage();
   await page.goto('https://ipetalavera.es/instituto/empleo/ofertas-de-empleo/');
   // Espera hasta que aparezcan las ofertas de trabajo en la página
@@ -2311,16 +2311,24 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
   console.log(`Nº de ofertas: ${jobCards.length}`);
 
   jobCards.each(async (index, element) => {
+    const jobLink = $(element).find('.elementor-button-link').attr('href');
+    var jobDescription = '';
+    if (jobLink && jobLink.startsWith('https://ipetalavera.es/ofertas-de-trabajo')) { 
+        const axiosJobUrl = await axios(jobLink);
+        const jobHtml = axiosJobUrl.data;
+        const $$ = cheerio.load(jobHtml);
+
+        jobDescription = $$('.elementor-element-bd55b8f').find('div').find('div').text();
+    }
     const postId = $(element).attr('data-post-id');
     const jobID = `ipeta_${postId}`;
     const jobTitle = $(element).find('.elementor-element-e13832e').find('div').find('h2').text();
-    const jobDescription = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
+    //const jobDescription = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
     const jobDate = $(element).find('.elementor-element-084441b').find('div').find('p').text();
     const jobLocation = $(element).find('.elementor-icon-list-text').eq(0).text().toUpperCase();
     const capacityText = $(element).find('.elementor-icon-list-text').eq(1).text();
     const jobCapacity = parseInt(capacityText.match(/\d+/)[0]);
     const jobTag = $(element).find('.elementor-icon-list-text').eq(2).text();
-    let jobLink = $(element).find('.elementor-button-link').attr('href');
     const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
     let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
     
