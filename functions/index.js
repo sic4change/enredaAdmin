@@ -2379,19 +2379,19 @@ exports.deleteResource = functions.firestore
             //console.log(`Organizador: ${organizerName}`)
         }
     
-        if (resource.data().address.country != null || resource.data().address.country != "undefined") {
+        if (resource.data().address.country && resource.data().address.country != "undefined") {
             document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
             countryName = document.data().name;
             //console.log(`País: ${countryName}`)
         }
     
-        if (resource.data().address.province != null || resource.data().address.province != "undefined") {
+        if (resource.data().address.province && resource.data().address.province != "undefined") {
             document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
             provinceName = document.data().name;
             //console.log(`Provincia: ${provinceName}`)
         }
     
-        if (resource.data().address.city != null || resource.data().address.city != "undefined") {
+        if (resource.data().address.city && resource.data().address.city != "undefined") {
             document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
             cityName = document.data().name;
             //console.log(`Provincia: ${cityName}`)
