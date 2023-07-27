@@ -2616,51 +2616,53 @@ exports.createCertificate = functions.firestore
                 }
                 console.log("Successfully added certificateId to new certificate");
             });
-    });
+
+    }); 
 
 async function updateResourceSearchText(resource, resourceId) {
-    //console.log('Calling async updateResourceSearchText()');
-    let resourceTypeName = '';
-    let organizerName = '';
-    let countryName = '';
-    let provinceName = '';
-    let cityName = '';
-    let document;
-
-    if (resource.data().resourceType) {
-        document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
-        resourceTypeName = document.data().name;
-        //console.log(`Tipo de recurso: ${resourceTypeName}`)
+        //console.log('Calling async updateResourceSearchText()');
+        let resourceTypeName = '';
+        let organizerName = '';
+        let countryName = '';
+        let provinceName = '';
+        let cityName = '';
+        let document;
+    
+        if (resource.data().resourceType) {
+            document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
+            resourceTypeName = document.data().name;
+            //console.log(`Tipo de recurso: ${resourceTypeName}`)
+        }
+    
+        if (resource.data().organizer) {
+            document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
+            organizerName = document.data().name;
+            //console.log(`Organizador: ${organizerName}`)
+        }
+    
+        if (resource.data().address.country && resource.data().address.country != "undefined") {
+            document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
+            countryName = document.data().name;
+            //console.log(`País: ${countryName}`)
+        }
+    
+        if (resource.data().address.province && resource.data().address.province != "undefined") {
+            document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
+            provinceName = document.data().name;
+            //console.log(`Provincia: ${provinceName}`)
+        }
+    
+        if (resource.data().address.city && resource.data().address.city != "undefined") {
+            document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
+            cityName = document.data().name;
+            //console.log(`Provincia: ${cityName}`)
+        }
+    
+        await adminFirebase.firestore().doc(`resources/${resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
+            console.log(`Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
+        });
     }
 
-    if (resource.data().organizer) {
-        document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
-        organizerName = document.data().name;
-        //console.log(`Organizador: ${organizerName}`)
-    }
-
-    if (resource.data().address.country) {
-        document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
-        countryName = document.data().name;
-        //console.log(`País: ${countryName}`)
-    }
-
-    if (resource.data().address.province) {
-        document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
-        provinceName = document.data().name;
-        //console.log(`Provincia: ${provinceName}`)
-    }
-
-    if (resource.data().address.city) {
-        document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
-        cityName = document.data().name;
-        //console.log(`Provincia: ${cityName}`)
-    }
-
-    await adminFirebase.firestore().doc(`resources/${resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
-        console.log(`Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
-    });
-}
 
 exports.scheduledFirestoreExport = functions.pubsub.schedule('every 24 hours').onRun((context) => {
     const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT;
