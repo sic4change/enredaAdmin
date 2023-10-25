@@ -2042,10 +2042,9 @@ exports.sendEmailOnCreateResource = functions.firestore
         }
     });
 
-// Web Scrapping
+/*
 const findResourcesFromSPEGC = async () => {
     let url = 'https://www.spegc.org/formacion-y-eventos/'
-
     let browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -2062,13 +2061,12 @@ const findResourcesFromSPEGC = async () => {
         }
     });
     await page.goto(url)
-
+    await page.waitForSelector('.spegc-event-item');
     //let resourcesUpdated = []
     const data = await page.evaluate(() => {
         let dataResources = []
         document.querySelectorAll('.spegc-event-item')
             .forEach(element => {
-
                 let name = element.querySelector('.spegc-event-details h3').textContent;
                 let interest = element.querySelector('.spegc-event-details h4').textContent;
                 let resourceType = element.querySelector('.spegc-event-details h5').textContent;
@@ -2141,6 +2139,7 @@ const findResourcesFromSPEGC = async () => {
     await browser.close()
     return data
 }
+*/
 
 exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).pubsub.topic('scrappingFormacionCamaraToledo').onPublish(async (message) => {
     const url = 'https://camaratoledo.com/formacion-espana-emprende/';
@@ -2383,17 +2382,124 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
   await browser.close();
 });
 
-exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(() => {
-    return findResourcesFromSPEGC().then(res => {
-        res.forEach(resource => {
-            return resourceToCreate.where("title", "==", resource.title).get().then(
-                (snapshot) => {
-                    if (snapshot.size === 0) {
-                        resourceToCreate.add(resource)
-                    }
-                })
-        })
+exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(async (message) => {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
+    const page = await browser.newPage();
+    await page.goto('https://www.spegc.org/formacion-y-eventos/');
+    // Espera hasta que aparezcan las ofertas de trabajo en la página
+    await page.waitForSelector('.spegc-event-item');
+    const html = await page.content();
+    const $ = cheerio.load(html);
+    const jobCards = $('.spegc-event-item').filter(function () {
+        return !$(this).has('a:contains("Plazo finalizado")').length;
+      });
+    console.log(`Nº de ofertas: ${jobCards.length}`);
+
+    for (let i = 0; i < jobCards.length; i++) {
+        let jobCard = jobCards[i];
+        const jobLink = $(jobCard).find('.spegc-event-details a').attr('href');
+        var jobDescription = '';
+        var jobID = '';
+        var jobLocation = '';
+        var jobDuration = 'Indefinido';
+        var jobModality = 'Presencial';
+        var maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+        if (jobLink && jobLink.startsWith('https://www.spegc.org/formacion-y-eventos/')) { 
+            const axiosJobUrl = await axios(jobLink);
+            const jobHtml = axiosJobUrl.data;
+            const $$ = cheerio.load(jobHtml);
+
+            jobDescription = $$('article').find('div:has(p:first-child)').first().text();
+
+            const postId = $$('article').attr('id').split('-')[1];
+            jobID = `spegc_${postId}`;
+
+            const locationElement = $$('li:contains("Lugar:")').first().text();
+            if (locationElement) {
+                jobLocation = locationElement.trim().split('Lugar:')[1].toUpperCase();
+            }
+
+            const durationElement = $$('li:contains("Duración:")').first().text();
+            if (durationElement) {
+                jobDuration = durationElement.trim().split('Duración:')[1];
+            }
+
+            const moadiltyElement = $$('li:contains("Modalidad:")').first().text();
+            if (moadiltyElement) {
+                jobModality = moadiltyElement.trim().split('Modalidad:')[1];
+            }
+
+            const maxDateElement = $$('li:contains("Límite de inscripción:")').first().text();
+            if (maxDateElement) {
+                const maxDateText = maxDateElement.trim().split('Límite de inscripción:')[1]; // DD/MM/AAAA HH:MM
+                var dateTextSplit = maxDateText.trim().split(" "); // Split in date and hours
+                var date = dateTextSplit[0].split("/");
+                var hour = dateTextSplit[1].split(":");
+                maximumDate = new Date(
+                    parseInt(date[2]),
+                    parseInt(date[1]) - 1, // January is 0
+                    parseInt(date[0]),
+                    parseInt(hour[1]),
+                    parseInt(hour[0])
+                );
+            }
+        }
+        
+        const jobTitle = $(jobCard).find('h3').text();
+        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+
+        let jobOffer = {
+            address: {
+                city: "U39M922HHR5FEVJtN3hN", 
+                country: "i0GHKqdCWBYeAYcAMa7I",
+                place: jobLocation,
+                province: "mi3tu6DK1GU4yZIQJ1dZ",
+            },
+            assistants: 0,
+            capacity: 99, 
+            contractType: "",
+            createdate: adminFirebase.firestore.Timestamp.now(),
+            createdby: "Web scrapping",
+            description: jobDescription,
+            duration: jobDuration,
+            enable: true,
+            end: maximumDate,
+            interests: [],
+            lastupdate: adminFirebase.firestore.Timestamp.now(),
+            link: jobLink,
+            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+            modality: jobModality,
+            notExpire: true,
+            online: false,
+            organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
+            organizerType: "Organización",
+            resourceCategory: "6ag9Px7zkFpHgRe17PQk", // Formación?
+            resourcePhoto: randomImage,
+            resourceType: "N9KdlBYmxUp82gOv8oJC", // Formación?
+            salary: "", 
+            start: adminFirebase.firestore.Timestamp.now(),
+            status: "Disponible",
+            title: jobTitle,
+            trust: true,
+            updatedby: "Web scrapping",
+            scrappingId: jobID,
+        };
+         
+        const query = await db.collection("resourcesTestSPEGC").where("scrappingId", "==", jobID).get();
+        if (query.empty) {
+            console.log(`Insertando recurso ${jobTitle}`);
+            db.collection("resourcesTestSPEGC").add(jobOffer);
+        }
+    
+        /*console.log(`ID: ${jobID} --> ${jobTitle}`);
+        console.log(`Se imparte en ${jobLocation}`);
+        console.log(`LINK: ${jobLink}`);*/
+    }
+
+    await browser.close();
 });
 
 exports.updateResourceFromSPEG = functions.runWith(options).pubsub.topic('updatingSPEG').onPublish(() => {
