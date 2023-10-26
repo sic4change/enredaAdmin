@@ -2383,6 +2383,8 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
 });
 
 exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(async (message) => {
+    // Esto probablemente se podría hacer solo con axios y cheerio como "extractResourcesFromEmpleoCamaraToledo"
+    // Porque no se están haciendo clicks ni nada dinámico, solo cargando htmls con enlaces
     const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -2515,6 +2517,138 @@ exports.updateResourceFromSPEG = functions.runWith(options).pubsub.topic('updati
 
         })
 });
+
+exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scrappingSEPE').onPublish(async (message) => {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+    const page = await browser.newPage();
+    await page.goto('https://www.gobiernodecanarias.org/empleo/sce/principal/componentes/buscadores_angular/index_ofertas_empleo.jsp?Title_prop=null&cod_buscar=null');
+    await page.waitForSelector('.article');
+    // Go to last page (newest offers)
+    const ULPaginationElement = await page.$('.ngx-pagination');
+    const LIPaginationElements = await ULPaginationElement.$$('li');
+    const lastPageElement = await LIPaginationElements[6].$('a');
+    await lastPageElement.evaluate(b => b.click());
+    await page.waitForTimeout(1000);
+    const previousPageElement = await LIPaginationElements[0].$('a');
+    var searching = true;
+
+    while (searching) {
+        const jobCards = await page.$$('.article');
+        console.log(`Nº de ofertas en esta página: ${jobCards.length}`);
+        for (let i = 0; i < jobCards.length; i++) {
+            let jobCard = jobCards[i];
+            var jobID = '';
+            var jobDescription = '';
+            var jobLocation = '';
+            var jobCapacity = 99;
+            const h6element = await jobCard.$('h6');
+            const jobTitle = await h6element.evaluate(element => element.textContent);
+            const dialogLink = await jobCard.$('a');
+            await dialogLink.evaluate(b => b.click());
+            await page.waitForTimeout(1000);
+            const dialog = await page.$('.mdc-dialog__container');
+            // Dialog 
+            const tdElements = await dialog.$$('td');
+            const offerId = await tdElements[1].evaluate(element => element.textContent);
+            jobID = `sepeemp_${offerId}`;
+            jobLocation = await tdElements[3].evaluate(element => element.textContent);
+            const date = await tdElements[5].evaluate(element => element.textContent);
+            const capacityText = await tdElements[7].evaluate(element => element.textContent);
+            jobCapacity = parseInt(capacityText);
+    
+            // Format description string
+            const tableElements = await dialog.$$('table');
+            const tableTDElements = await tableElements[1].$$('td');
+            var tableStrings = [];
+            for (let i = 0; i < tableTDElements.length; i++) {
+                const tdString = await tableTDElements[i].evaluate(element => element.textContent);
+                tableStrings.push(tdString);
+            }
+            for (let i = 0; i < tableStrings.length; i++) {
+                jobDescription = `${jobDescription}· ${tableStrings[i++]}${tableStrings[i]}\n`
+            }
+            //console.log(`DESCRIPCIÓN: ${jobDescription}`);
+    
+            const jobLink = await dialog.evaluate(() => {
+                const links = Array.from(document.querySelectorAll('a'));
+                for (const link of links) {
+                  if (link.textContent.trim() === 'enlace') {
+                    return link.getAttribute('href');
+                  }
+                }
+                return null;
+              });
+            const closeButton = await dialog.$('button');
+            await closeButton.click();
+            await page.waitForTimeout(1000);
+    
+            var maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+            let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+            var provinceId = "mi3tu6DK1GU4yZIQJ1dZ";
+            var cityId = "U39M922HHR5FEVJtN3hN";
+            let island = jobLocation.split(",")[1].trim().toUpperCase();
+            if (island === 'TENERIFE' || island === 'LA GOMERA' || island === 'EL HIERRO' || island === 'LA PALMA') {
+                provinceId = "XFtEq16heJenhrEid57m";
+                cityId = 'RtnVLp0Ziuu5jYHVTyzM';
+            }
+    
+            let jobOffer = {
+                address: {
+                    // TODO: Ahora mismo solo guarda Las Palmas o Sta. Cruz, en la Base de Datos faltarían muchísimas ciudadaes
+                    city: cityId, 
+                    country: "i0GHKqdCWBYeAYcAMa7I",
+                    place: jobLocation, 
+                    province: provinceId,
+                },
+                assistants: 0,
+                capacity: jobCapacity, 
+                contractType: "",
+                createdate: adminFirebase.firestore.Timestamp.now(),
+                createdby: "Web scrapping",
+                description: jobDescription,
+                duration: 'Indefinido',
+                enable: true,
+                end: maximumDate,
+                interests: [],
+                lastupdate: adminFirebase.firestore.Timestamp.now(),
+                link: jobLink,
+                maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+                modality: 'Presencial',
+                notExpire: true,
+                online: false,
+                organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
+                organizerType: "Organización",
+                resourceCategory: "POUBGFk5gU6c5X1DKo1b",
+                resourcePhoto: randomImage,
+                resourceType: "kUM5r4lSikIPLMZlQ7FD",
+                salary: "", 
+                start: adminFirebase.firestore.Timestamp.now(),
+                status: "Disponible",
+                title: jobTitle,
+                trust: true,
+                updatedby: "Web scrapping",
+                scrappingId: jobID,
+            };
+    
+            const query = await db.collection("resourcesTestSEPE").where("scrappingId", "==", jobID).get();
+            if (query.empty) {
+                console.log(`Insertando recurso ${jobTitle}`);
+                db.collection("resourcesTestSEPE").add(jobOffer);
+            } else {
+                searching = false;
+            }
+        }
+        // Go previous page
+        await previousPageElement.evaluate(b => b.click());
+    }
+
+    
+  
+    await browser.close();
+  });
 
 exports.createScrapp = functions.runWith(options).firestore
     .document('scrapps/{scrapId}')
