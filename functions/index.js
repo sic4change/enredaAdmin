@@ -2649,7 +2649,7 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
     await browser.close();
   });
 
-  exports.extractEmployabilityFromSEPE = functions.region('europe-west1').runWith(options).pubsub.topic('scrappingEmployabilitySEPE').onPublish(async () => {
+exports.extractEmployabilityFromSEPE = functions.region('europe-west1').runWith(options).pubsub.topic('scrappingEmployabilitySEPE').onPublish(async () => {
     const months = {
         enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
         julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
@@ -2821,6 +2821,166 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
             }
     }
 
+    await browser.close();
+  });
+
+exports.extractResourcesFromFundaula = functions.runWith(options).pubsub.topic('scrappingFundaula').onPublish(async (message) => {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+    const page = await browser.newPage();
+    await page.goto('https://www.fundaula.es/cursos/digitales?p=12354&locale=es-ES');
+    const links = [];
+
+    // "Conocimientos Digitales" tab
+    await page.waitForSelector('.box-filtro-size');
+    await page.waitForTimeout(2000);
+    var filterButtons = await page.$$('.box-filtro-size');
+    for (let i = 0; i < filterButtons.length; i++) {
+        let button = filterButtons[i];  
+        await button.evaluate(b => b.click());
+        await page.waitForTimeout(2000);
+    }
+    await page.waitForSelector('box-curso');
+    var jobCards = await page.$$('box-curso');
+    console.log(`Nº de ofertas TAB 1: ${jobCards.length}`);
+    for (let i = 0; i < jobCards.length; i++) {
+        let jobCard = jobCards[i];    
+        const a = await jobCard.$('a');
+        const href = await a.getProperty('href');
+        const link = await href.jsonValue();
+        links.push(link);
+    }
+
+    // "Conocimientos Técnicos" tab
+    const tabButtons = await page.$$('.menu_fund span');
+    await tabButtons[1].evaluate(b => b.click());
+    await page.waitForTimeout(2000);
+    await page.waitForSelector('.box-filtro-size');
+    await page.waitForTimeout(2000);
+    filterButtons = await page.$$('.box-filtro-size');
+    for (let i = 0; i < filterButtons.length; i++) {
+        let button = filterButtons[i];  
+        await button.evaluate(b => b.click());
+        await page.waitForTimeout(2000);
+    }
+    await page.waitForSelector('box-curso');
+    jobCards = await page.$$('box-curso');
+    console.log(`Nº de tarjetas desplegables TAB 2: ${jobCards.length}`);
+    for (let i = 0; i < jobCards.length; i++) {
+        let jobCard = jobCards[i];    
+        const detailsButton = await jobCard.$('.box-curso-tercerafila-2');
+        await detailsButton.evaluate(b => b.click());
+        await page.waitForTimeout(2000);
+        const aElements = await page.$$('.subcomponente-container-new a');
+        for (let j = 0; j < aElements.length; j++) {
+            const href = await aElements[j].getProperty('href');
+            const link = await href.jsonValue();
+            links.push(link);
+        }
+        await detailsButton.evaluate(b => b.click());
+        await page.waitForTimeout(2000);
+    }
+
+    // "Conocimientos Técnicos" tab
+    await tabButtons[2].evaluate(b => b.click());
+    await page.waitForTimeout(2000);
+    await page.waitForSelector('.box-filtro-size');
+    await page.waitForTimeout(2000);
+    filterButtons = await page.$$('.box-filtro-size');
+    for (let i = 0; i < filterButtons.length; i++) {
+        let button = filterButtons[i];  
+        await button.evaluate(b => b.click());
+        await page.waitForTimeout(2000);
+    }
+    await page.waitForSelector('box-curso');
+    jobCards = await page.$$('box-curso');
+    console.log(`Nº de ofertas TAB 3: ${jobCards.length}`);
+    for (let i = 0; i < jobCards.length; i++) {
+        let jobCard = jobCards[i];    
+        const a = await jobCard.$('a');
+        const href = await a.getProperty('href');
+        const link = await href.jsonValue();
+        links.push(link);
+    }
+
+    // All jobs
+    console.log(`Nº de ofertas TOTALES: ${links.length}`);
+    for (let i = 0; i < links.length; i++) {
+        //console.log('----------------------------------');
+        const jobLink = links[i];
+        await page.goto(links[i]);
+        //console.log(`LINK ---> ${jobLink}`);
+        const mainDiv = await page.waitForSelector('.subcontainer');
+
+        const titleElement = await mainDiv.waitForSelector('h1');
+        var jobTitle = await titleElement.evaluate(element => element.textContent.trim());
+        //console.log(`TÍTULO ---> ${jobTitle}`);
+
+        const pElements = await mainDiv.$$('p');
+        var jobDescription = '';
+        for (let j = 0; j < pElements.length; j++) {
+            text = await pElements[j].evaluate(element => element.textContent.trim());
+            var jobDescription = `${jobDescription} ${text}`;
+        }
+        //console.log(`DESCRIPCIÓN ---> ${jobDescription}`);
+
+        const infoSpanElements = await mainDiv.$$('.text_courseaddinfo');
+        const jobDuration = await infoSpanElements[0].evaluate(e => e.textContent);
+        //console.log(`DURACIÓN ---> ${jobDuration}`);
+
+        const jobModality = await infoSpanElements[1].evaluate(e => e.textContent);
+        //console.log(`MODALIDAD ---> ${jobModality}`);
+
+        const jobID = `fundaula_${jobLink}`;
+        const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+
+        let jobOffer = {
+            address: {
+                city: "U39M922HHR5FEVJtN3hN", 
+                country: "i0GHKqdCWBYeAYcAMa7I",
+                place: "", 
+                province: "mi3tu6DK1GU4yZIQJ1dZ",
+            },
+            assistants: 0,
+            capacity: 99, 
+            contractType: "",
+            createdate: adminFirebase.firestore.Timestamp.now(),
+            createdby: "Web scrapping",
+            description: jobDescription,
+            duration: jobDuration,
+            enable: true,
+            end: adminFirebase.firestore.Timestamp.fromDate(maximumDate), 
+            interests: [],
+            lastupdate: adminFirebase.firestore.Timestamp.now(),
+            link: jobLink,
+            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+            modality: jobModality,
+            notExpire: true,
+            online: false,
+            organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
+            organizerType: "Organización",
+            resourceCategory: "6ag9Px7zkFpHgRe17PQk",
+            resourcePhoto: randomImage,
+            resourceType: "N9KdlBYmxUp82gOv8oJC",
+            salary: "", 
+            start: adminFirebase.firestore.Timestamp.now(),
+            status: "Disponible",
+            title: jobTitle,
+            trust: true,
+            updatedby: "Web scrapping",
+            scrappingId: jobID,
+        };
+
+        const query = await db.collection("resourcesTestFundaula").where("scrappingId", "==", jobID).get();
+        if (query.empty) {
+            console.log(`Insertando recurso ${jobTitle}`);
+            db.collection("resourcesTestFundaula").add(jobOffer);
+        }
+    }
+    
     await browser.close();
   });
 
