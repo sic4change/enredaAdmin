@@ -2489,10 +2489,10 @@ exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scra
             scrappingId: jobID,
         };
          
-        const query = await db.collection("resourcesTestSPEGC").where("scrappingId", "==", jobID).get();
+        const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
         if (query.empty) {
             console.log(`Insertando recurso ${jobTitle}`);
-            db.collection("resourcesTestSPEGC").add(jobOffer);
+            db.collection("resources").add(jobOffer);
         }
     
         /*console.log(`ID: ${jobID} --> ${jobTitle}`);
@@ -2632,20 +2632,17 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
                 scrappingId: jobID,
             };
     
-            const query = await db.collection("resourcesTestSEPE").where("scrappingId", "==", jobID).get();
+            const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
             if (query.empty) {
                 console.log(`Insertando recurso ${jobTitle}`);
-                db.collection("resourcesTestSEPE").add(jobOffer);
+                db.collection("resources").add(jobOffer);
             } else {
                 searching = false;
             }
         }
         // Go previous page
         await previousPageElement.evaluate(b => b.click());
-    }
-
-    
-  
+    }  
     await browser.close();
   });
 
@@ -2812,10 +2809,10 @@ exports.extractEmployabilityFromSEPE = functions.region('europe-west1').runWith(
                 scrappingId: jobID,
             };
     
-            const query = await db.collection("resourcesTestSEPEEMP").where("scrappingId", "==", jobID).get();
+            const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
             if (query.empty) {
                 console.log(`Insertando recurso ${jobTitle}`);
-                db.collection("resourcesTestSEPEEMP").add(jobOffer);
+                db.collection("resources").add(jobOffer);
             } else {
                 searching = false;
             }
