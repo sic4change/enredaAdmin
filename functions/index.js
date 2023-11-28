@@ -2727,6 +2727,376 @@ exports.certificationRequestForm = functions.firestore
     });
 
 
+    exports.updateCompetencyCategories = functions.firestore.document('write/{writeId}')
+    .onUpdate(async (change, context) => {
+        const newValue = change.after.data();
+        const previousValue = change.before.data();
+        if (newValue.on !== previousValue.on) {
+
+            // return adminFirebase.firestore().collection('competencies').where("name", "==", userId).get().then(
+            //     (snapshot) => {
+            //         snapshot.forEach((user) => {
+            //             const competencies = user.get('competencies');
+            //             competencies[competencyId] = "certified";
+            //             return adminFirebase.firestore().doc(`competencies/${userId}`).set({ competencies }, { merge: true })
+            //                 .then(() => {
+            //                     console.log("Successfully change certified competency status");
+            //                 })
+            //         })
+            //     });
+
+            const competenciesCollection = admin.firestore().collection('competencies');
+
+            const updatePromises = competencies.map((competency) => {
+                return competenciesCollection
+                    .where('name', '==', competency.name)
+                    .get()
+                    .then((querySnapshot) => {
+                        const promises = [];
+                        querySnapshot.forEach((doc) => {
+                            promises.push(doc.ref.update({
+                                competencyCategoryId: competency.competencyCategoryId,
+                                competencySubCategoryId: competency.competencySubCategoryId
+                            }));
+                        });
+                        return Promise.all(promises);
+                    });
+            });
+    
+            await Promise.all(updatePromises);
+        }
+    });
+    
+
+    const competencies = [
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "COMUNICACIÓN",
+          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
+          "name": "Manejo del estrés"
+        },
+    ]
+
+
+/*     const competencies = [
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "COMUNICACIÓN",
+          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
+          "name": "Comunicación escrita"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "COMUNICACIÓN",
+          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
+          "name": "Comunicación oral"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "COMUNICACIÓN",
+          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
+          "name": "Comunicación visual"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "COMUNICACIÓN",
+          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
+          "name": "Comunicación no verbal"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "COMUNICACIÓN",
+          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
+          "name": "Comunicación digital"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "TRABAJO EN EQUIPO",
+          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
+          "name": "Integración en el grupo"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "TRABAJO EN EQUIPO",
+          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
+          "name": "Coordinación grupal"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "TRABAJO EN EQUIPO",
+          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
+          "name": "Rigor y confiabilidad"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "TRABAJO EN EQUIPO",
+          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
+          "name": "Empatía"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "TRABAJO EN EQUIPO",
+          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
+          "name": "Compartir y recibir retroalimentación"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "GESTION DE CONFLICTOS",
+          "competencySubCategoryId": "sqI1W1PQXZ02rFEFCPUC",
+          "name": "Escucha activa."
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "GESTION DE CONFLICTOS",
+          "competencySubCategoryId": "sqI1W1PQXZ02rFEFCPUC",
+          "name": "Mediación"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "GESTION DE CONFLICTOS",
+          "competencySubCategoryId": "sqI1W1PQXZ02rFEFCPUC",
+          "name": "Objetividad"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "NEGOCIACIÓN",
+          "competencySubCategoryId": "gW4VYWyiyxgdF0a5UQix",
+          "name": "Influencia y persuasión."
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
+          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
+          "competencySubCategoryName": "NEGOCIACIÓN",
+          "competencySubCategoryId": "gW4VYWyiyxgdF0a5UQix",
+          "name": "Perseverancia"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "LIDERAZGO POSITIVO",
+          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
+          "name": "Autoconfianza"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "LIDERAZGO POSITIVO",
+          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
+          "name": "Responsabilidad"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "LIDERAZGO POSITIVO",
+          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
+          "name": "Autonomía"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "LIDERAZGO POSITIVO",
+          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
+          "name": "Motivación e implicación"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "LIDERAZGO POSITIVO",
+          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
+          "name": "Movilización de la red"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "AUTOEVALUACIÓN",
+          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
+          "name": "Introspección y reflexividad"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "AUTOEVALUACIÓN",
+          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
+          "name": "Ética"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "AUTOEVALUACIÓN",
+          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
+          "name": "Autocontrol"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "AUTOEVALUACIÓN",
+          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
+          "name": "Establecimiento de metas"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "ADAPTABILIDAD",
+          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
+          "name": "Gestión de la incertidumbre y el cambio"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "ADAPTABILIDAD",
+          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
+          "name": "Manejo del estrés"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
+          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
+          "competencySubCategoryName": "ADAPTABILIDAD",
+          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
+          "name": "Reactividad"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "APRENDER A APRENDER",
+          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
+          "name": "Aprendizaje individual"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "APRENDER A APRENDER",
+          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
+          "name": "Aprendizaje colectivo"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "APRENDER A APRENDER",
+          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
+          "name": "Apertura sociocultural"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "APRENDER A APRENDER",
+          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
+          "name": "Pedagogía"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
+          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
+          "name": "Recolección y procesamiento de datos"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
+          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
+          "name": "Problematización"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
+          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
+          "name": "Análisis de la información"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
+          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
+          "name": "Síntesis de información"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
+          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
+          "name": "Mente crítica"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "CREATIVIDAD",
+          "competencySubCategoryId": "QLt6N9yE4MMhyH7rUEt5",
+          "name": "Curiosidad"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "CREATIVIDAD",
+          "competencySubCategoryId": "QLt6N9yE4MMhyH7rUEt5",
+          "name": "Imaginación"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "CREATIVIDAD",
+          "competencySubCategoryId": "QLt6N9yE4MMhyH7rUEt5",
+          "name": "Iniciativa"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
+          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
+          "name": "Organización"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
+          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
+          "name": "Estrategia"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
+          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
+          "name": "Toma de decisiones"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
+          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
+          "name": "Gestión del tiempo"
+        },
+        {
+          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
+          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
+          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
+          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
+          "name": "Conciencia y retrospectiva"
+        },
+        {
+          "competencyCategoryName": "",
+          "competencyCategoryId": "",
+          "competencySubCategoryName": "",
+          "competencySubCategoryId": "",
+          "name": ""
+        }
+       ]; */
+
 function createCertificationRequestTemplate(certifierName, competencyName, unemployedRequesterName, certificationRequestId) {
     const certificationRequestTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
