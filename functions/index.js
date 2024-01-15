@@ -3743,6 +3743,17 @@ exports.updateResourceCategory = functions.firestore.document('testOne/{testOnet
         return resourceInvitationTemplate;
     }
 
+
+exports.createSocialEntity = functions.firestore
+    .document('socialEntities/{socialEntityId}')
+    .onCreate((snapshot, context) => {
+        const socialEntityId = context.params.socialEntityId;
+        return adminFirebase.firestore().doc(`socialEntities/${socialEntityId}`).set({ socialEntityId }, { merge: true })
+            .then(() => {
+                console.log("Successfully added socialEntityId to new socialEntity");
+            });
+    });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {

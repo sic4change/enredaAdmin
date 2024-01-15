@@ -1,6 +1,6 @@
 {
   "projects": {
-    "enreda-admin": "enreda-d3b41"
+    "default": "enreda-d3b41"
   },
   "targets": {
     "enreda-d3b41": {
