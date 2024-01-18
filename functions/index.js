@@ -3768,6 +3768,16 @@ exports.createSocialEntity = functions.firestore
             });
     });
 
+exports.createIpilEntry = functions.firestore
+    .document('ipilEntry/{ipilId}')
+    .onCreate((snapshot, context) => {
+        const ipilId = context.params.ipilId;
+        return adminFirebase.firestore().doc(`ipilEntry/${ipilId}`).set({ ipilId }, { merge: true })
+            .then(() => {
+                console.log("Successfully added ipilId to new ipilEntry");
+            });
+    });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
