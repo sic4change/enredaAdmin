@@ -3748,14 +3748,14 @@ exports.createChatQuestion = functions.firestore
     .document('chatQuestions/{id}')
     .onCreate((snapshot, context) => {
         const id = context.params.id;
-        return admin.firestore().doc(`chatQuestions/${id}`).set({ id: id }, { merge: true });
+        return adminFirebase.firestore().doc(`chatQuestions/${id}`).set({ id: id }, { merge: true });
     });
 
 exports.createExperience = functions.firestore
     .document('experiences/{id}')
     .onCreate((snapshot, context) => {
         const id = context.params.id;
-        return admin.firestore().doc(`experiences/${id}`).set({ id: id }, { merge: true });
+        return adminFirebase.firestore().doc(`experiences/${id}`).set({ id: id }, { merge: true });
     });
     
 exports.createSocialEntity = functions.firestore
