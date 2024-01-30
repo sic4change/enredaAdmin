@@ -801,51 +801,75 @@ exports.updateResource = functions.firestore.document('resources/{resourceId}')
             });
         }
         // Cuando se modifican los participantes (solo desde las apps)
-        console.log("Aqui desde el movil", newValue.participantsString);
         if ((newValue.participants !== previousValue.participants) && (newValue.participantsString === previousValue.participantsString)) {
             console.log("Aqui desde el movil");
+            let difference;
+            let addingParticipants;
+        
             if (previousValue.participants.length > newValue.participants.length) {
-                let participants = previousValue.participants.filter(x => !newValue.participants.includes(x));
-                let participant = participants[0];
-                return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ participantsString: newValue.participants.join() }, { merge: true })
-                    .then(() => {
-                        return adminFirebase.firestore().collection('users').where("userId", "==", participant).get()
-                            .then((snapshot) => {
-                                snapshot.forEach((user) => {
-                                    let resources = user.get('resources');
-                                    if (resources === undefined) {
-                                        resources = [];
-                                    }
-                                    resources = resources.filter(resource => resource !== newValue.resourceId);
-                                    return adminFirebase.firestore().doc(`users/${participant}`).set({ resources, resourcesString: resources.join() }, { merge: true })
-                                        .then(() => {
-                                            return console.log("Successfully updated removed resource in user");
-                                        });
-                                })
-                            });
-                    });
-
+                difference = previousValue.participants.filter(x => !newValue.participants.includes(x));
+                addingParticipants = false;
             } else {
-                let participants = newValue.participants.filter(x => !previousValue.participants.includes(x));
-                let participant = participants[0];
-                return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ participantsString: newValue.participants.join() }, { merge: true })
-                    .then(() => {
-                        return adminFirebase.firestore().collection('users').where("userId", "==", participant).get()
-                            .then((snapshot) => {
-                                snapshot.forEach((user) => {
-                                    let resources = user.get('resources');
-                                    if (resources === undefined) {
-                                        resources = [];
-                                    }
-                                    resources.push(newValue.resourceId);
-                                    return adminFirebase.firestore().doc(`users/${participant}`).set({ resources, resourcesString: resources.join() }, { merge: true })
-                                        .then(() => {
-                                            return console.log("Successfully updated added resources in user");
-                                        });
-                                });
-                            });
-                    });
+                difference = newValue.participants.filter(x => !previousValue.participants.includes(x));
+                addingParticipants = true;
             }
+        
+            let participant = difference[0];
+            if (participant) {
+                return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ participantsString: newValue.participants.join() }, { merge: true })
+                    .then(() => adminFirebase.firestore().collection('users').where("userId", "==", participant).get())
+                    .then((snapshot) => {
+                        let promises = [];
+                        snapshot.forEach((user) => {
+                            let resources = user.get('resources') || [];
+                            if (addingParticipants) {
+                                resources.push(resourceId);
+                            } else {
+                                resources = resources.filter(resource => resource !== resourceId);
+                            }
+                            promises.push(adminFirebase.firestore().doc(`users/${participant}`).set({ resources, resourcesString: resources.join() }, { merge: true }));
+                        });
+                        return Promise.all(promises);
+                    })
+                    .then(() => {
+                        console.log("Successfully updated resources in user");
+                    })
+                    .catch((error) => {
+                        console.error("Error updating resources:", error);
+                    });
+            } else {
+                console.log("No participants changed.");
+                // Handle the case where there is no change.
+            }
+        }   
+        if (newValue.invitationsList !== previousValue.invitationsList) {
+            // Eliminate duplicate emails from the list
+            const uniqueEmailList = [...new Set(newValue.invitationsList)];
+        
+            const resourceTitle = newValue.title;
+            const resourceDescription = newValue.description;
+            const sendInvitationPromises = [];
+        
+            for (const email of uniqueEmailList) {
+                let htmlToSendInvitationToUser = resourceInvitationTemplate(
+                    resourceTitle,
+                    resourceId,
+                    resourceDescription 
+                );
+                const sendPromise = adminFirebase.firestore().collection('mail').add({
+                    to: email,
+                    message: {
+                        subject: `Invitación: ${resourceTitle}`,
+                        html: htmlToSendInvitationToUser,
+                    }
+                }).then(() => {
+                    console.log(`Successfully sent ${email}`);
+                }).catch(error => {
+                    console.error(`Failed to send ${email}`, error);
+                });
+                sendInvitationPromises.push(sendPromise);
+            } 
+            return Promise.all(sendInvitationPromises);
         }
     });
 
@@ -3205,11 +3229,11 @@ async function updateResourceSearchText(resource, resourceId) {
             //console.log(`Tipo de recurso: ${resourceTypeName}`)
         }
     
-        if (resource.data().organizer) {
-            document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
-            organizerName = document.data().name;
-            //console.log(`Organizador: ${organizerName}`)
-        }
+        // if (resource.data().organizer) {
+        //     document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
+        //     organizerName = document.data().name;
+        //     //console.log(`Organizador: ${organizerName}`)
+        // }
     
         if (resource.data().address.country && resource.data().address.country != "undefined") {
             document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
@@ -3298,375 +3322,7 @@ exports.certificationRequestForm = functions.firestore
     });
 
 
-    exports.updateCompetencyCategories = functions.firestore.document('write/{writeId}')
-    .onUpdate(async (change, context) => {
-        const newValue = change.after.data();
-        const previousValue = change.before.data();
-        if (newValue.on !== previousValue.on) {
 
-            // return adminFirebase.firestore().collection('competencies').where("name", "==", userId).get().then(
-            //     (snapshot) => {
-            //         snapshot.forEach((user) => {
-            //             const competencies = user.get('competencies');
-            //             competencies[competencyId] = "certified";
-            //             return adminFirebase.firestore().doc(`competencies/${userId}`).set({ competencies }, { merge: true })
-            //                 .then(() => {
-            //                     console.log("Successfully change certified competency status");
-            //                 })
-            //         })
-            //     });
-
-            const competenciesCollection = admin.firestore().collection('competencies');
-
-            const updatePromises = competencies.map((competency) => {
-                return competenciesCollection
-                    .where('name', '==', competency.name)
-                    .get()
-                    .then((querySnapshot) => {
-                        const promises = [];
-                        querySnapshot.forEach((doc) => {
-                            promises.push(doc.ref.update({
-                                competencyCategoryId: competency.competencyCategoryId,
-                                competencySubCategoryId: competency.competencySubCategoryId
-                            }));
-                        });
-                        return Promise.all(promises);
-                    });
-            });
-    
-            await Promise.all(updatePromises);
-        }
-    });
-    
-
-    const competencies = [
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "COMUNICACIÓN",
-          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
-          "name": "Manejo del estrés"
-        },
-    ]
-
-
-/*     const competencies = [
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "COMUNICACIÓN",
-          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
-          "name": "Comunicación escrita"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "COMUNICACIÓN",
-          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
-          "name": "Comunicación oral"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "COMUNICACIÓN",
-          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
-          "name": "Comunicación visual"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "COMUNICACIÓN",
-          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
-          "name": "Comunicación no verbal"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "COMUNICACIÓN",
-          "competencySubCategoryId": "yi101cPfqJdALtdbrHxk",
-          "name": "Comunicación digital"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "TRABAJO EN EQUIPO",
-          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
-          "name": "Integración en el grupo"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "TRABAJO EN EQUIPO",
-          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
-          "name": "Coordinación grupal"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "TRABAJO EN EQUIPO",
-          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
-          "name": "Rigor y confiabilidad"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "TRABAJO EN EQUIPO",
-          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
-          "name": "Empatía"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "TRABAJO EN EQUIPO",
-          "competencySubCategoryId": "dTw337K0d1U5Vgck2Ksk",
-          "name": "Compartir y recibir retroalimentación"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "GESTION DE CONFLICTOS",
-          "competencySubCategoryId": "sqI1W1PQXZ02rFEFCPUC",
-          "name": "Escucha activa."
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "GESTION DE CONFLICTOS",
-          "competencySubCategoryId": "sqI1W1PQXZ02rFEFCPUC",
-          "name": "Mediación"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "GESTION DE CONFLICTOS",
-          "competencySubCategoryId": "sqI1W1PQXZ02rFEFCPUC",
-          "name": "Objetividad"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "NEGOCIACIÓN",
-          "competencySubCategoryId": "gW4VYWyiyxgdF0a5UQix",
-          "name": "Influencia y persuasión."
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS SOCIALES / INTERPERSONALES",
-          "competencyCategoryId": "gJnRv6pON4SIh8jWNUER",
-          "competencySubCategoryName": "NEGOCIACIÓN",
-          "competencySubCategoryId": "gW4VYWyiyxgdF0a5UQix",
-          "name": "Perseverancia"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "LIDERAZGO POSITIVO",
-          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
-          "name": "Autoconfianza"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "LIDERAZGO POSITIVO",
-          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
-          "name": "Responsabilidad"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "LIDERAZGO POSITIVO",
-          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
-          "name": "Autonomía"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "LIDERAZGO POSITIVO",
-          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
-          "name": "Motivación e implicación"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "LIDERAZGO POSITIVO",
-          "competencySubCategoryId": "cjLReWOy3GQMXfP4YN4q",
-          "name": "Movilización de la red"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "AUTOEVALUACIÓN",
-          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
-          "name": "Introspección y reflexividad"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "AUTOEVALUACIÓN",
-          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
-          "name": "Ética"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "AUTOEVALUACIÓN",
-          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
-          "name": "Autocontrol"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "AUTOEVALUACIÓN",
-          "competencySubCategoryId": "2JCtEdFNkQG1RH953YiC",
-          "name": "Establecimiento de metas"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "ADAPTABILIDAD",
-          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
-          "name": "Gestión de la incertidumbre y el cambio"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "ADAPTABILIDAD",
-          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
-          "name": "Manejo del estrés"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS PERSONALES / INTRAPERSONALES",
-          "competencyCategoryId": "52Btlw7ScRbg5rzer9yW",
-          "competencySubCategoryName": "ADAPTABILIDAD",
-          "competencySubCategoryId": "9l7ndhKMhNsdrPl85igF",
-          "name": "Reactividad"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "APRENDER A APRENDER",
-          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
-          "name": "Aprendizaje individual"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "APRENDER A APRENDER",
-          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
-          "name": "Aprendizaje colectivo"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "APRENDER A APRENDER",
-          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
-          "name": "Apertura sociocultural"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "APRENDER A APRENDER",
-          "competencySubCategoryId": "b1BiQVVhEZPcSu2mFtDR",
-          "name": "Pedagogía"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
-          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
-          "name": "Recolección y procesamiento de datos"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
-          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
-          "name": "Problematización"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
-          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
-          "name": "Análisis de la información"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
-          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
-          "name": "Síntesis de información"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "COMPETENCIAS ANALÍTICAS",
-          "competencySubCategoryId": "cCicRy1uL175QKItkF8n",
-          "name": "Mente crítica"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "CREATIVIDAD",
-          "competencySubCategoryId": "QLt6N9yE4MMhyH7rUEt5",
-          "name": "Curiosidad"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "CREATIVIDAD",
-          "competencySubCategoryId": "QLt6N9yE4MMhyH7rUEt5",
-          "name": "Imaginación"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "CREATIVIDAD",
-          "competencySubCategoryId": "QLt6N9yE4MMhyH7rUEt5",
-          "name": "Iniciativa"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
-          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
-          "name": "Organización"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
-          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
-          "name": "Estrategia"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
-          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
-          "name": "Toma de decisiones"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
-          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
-          "name": "Gestión del tiempo"
-        },
-        {
-          "competencyCategoryName": "COMPETENCIAS METODOLÓGICAS",
-          "competencyCategoryId": "Cd4BzusrzGwpxv6i1mqJ",
-          "competencySubCategoryName": "RESOLUCIÓN DE PROBLEMAS",
-          "competencySubCategoryId": "QRLfzAVnkklXRs6ZFvJV",
-          "name": "Conciencia y retrospectiva"
-        },
-        {
-          "competencyCategoryName": "",
-          "competencyCategoryId": "",
-          "competencySubCategoryName": "",
-          "competencySubCategoryId": "",
-          "name": ""
-        }
-       ]; */
 
 function createCertificationRequestTemplate(certifierName, competencyName, unemployedRequesterName, certificationRequestId) {
     const certificationRequestTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -4110,6 +3766,182 @@ exports.updateResourceCategory = functions.firestore.document('testOne/{testOnet
         </body>
         </html>
         `;
+        return resourceInvitationTemplate;
+    }
+
+
+    function resourceInvitationTemplate(resourceTitle, resourceId, resourceDescription ) {
+        const resourceInvitationTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es" style="padding:0;Margin:0">
+         <head>
+          <meta charset="UTF-8">
+          <meta content="width=device-width, initial-scale=1" name="viewport">
+          <meta name="x-apple-disable-message-reformatting">
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">
+          <meta content="telephone=no" name="format-detection">
+          <title>New Template</title><!--[if (mso 16)]>
+            <style type="text/css">
+            a {text-decoration: none;}
+            </style>
+            <![endif]--><!--[if gte mso 9]><style>sup { font-size: 100% !important; }</style><![endif]--><!--[if gte mso 9]>
+        <xml>
+            <o:OfficeDocumentSettings>
+            <o:AllowPNG></o:AllowPNG>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+        <![endif]--><!--[if !mso]><!-- -->
+          <link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,700i" rel="stylesheet"><!--<![endif]-->
+          <style type="text/css">
+        #outlook a {
+            padding:0;
+        }
+        .ExternalClass {
+            width:100%;
+        }
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+            line-height:100%;
+        }
+        .es-button {
+            mso-style-priority:100!important;
+            text-decoration:none!important;
+        }
+        a[x-apple-data-detectors] {
+            color:inherit!important;
+            text-decoration:none!important;
+            font-size:inherit!important;
+            font-family:inherit!important;
+            font-weight:inherit!important;
+            line-height:inherit!important;
+        }
+        .es-desk-hidden {
+            display:none;
+            float:left;
+            overflow:hidden;
+            width:0;
+            max-height:0;
+            line-height:0;
+            mso-hide:all;
+        }
+        @media only screen and (max-width:600px) {p, ul li, ol li, a { line-height:150%!important } h1, h2, h3, h1 a, h2 a, h3 a { line-height:120%!important } h1 { font-size:30px!important; text-align:center } h2 { font-size:26px!important; text-align:center } h3 { font-size:20px!important; text-align:center } .es-header-body h1 a, .es-content-body h1 a, .es-footer-body h1 a { font-size:30px!important } .es-header-body h2 a, .es-content-body h2 a, .es-footer-body h2 a { font-size:26px!important } .es-header-body h3 a, .es-content-body h3 a, .es-footer-body h3 a { font-size:20px!important } .es-menu td a { font-size:16px!important } .es-header-body p, .es-header-body ul li, .es-header-body ol li, .es-header-body a { font-size:16px!important } .es-content-body p, .es-content-body ul li, .es-content-body ol li, .es-content-body a { font-size:16px!important } .es-footer-body p, .es-footer-body ul li, .es-footer-body ol li, .es-footer-body a { font-size:12px!important } .es-infoblock p, .es-infoblock ul li, .es-infoblock ol li, .es-infoblock a { font-size:12px!important } *[class="gmail-fix"] { display:none!important } .es-m-txt-c, .es-m-txt-c h1, .es-m-txt-c h2, .es-m-txt-c h3 { text-align:center!important } .es-m-txt-r, .es-m-txt-r h1, .es-m-txt-r h2, .es-m-txt-r h3 { text-align:right!important } .es-m-txt-l, .es-m-txt-l h1, .es-m-txt-l h2, .es-m-txt-l h3 { text-align:left!important } .es-m-txt-r img, .es-m-txt-c img, .es-m-txt-l img { display:inline!important } .es-button-border { display:block!important } a.es-button, button.es-button { font-size:20px!important; display:block!important; padding-left:0px!important; padding-right:0px!important } .es-btn-fw { border-width:10px 0px!important; text-align:center!important } .es-adaptive table, .es-btn-fw, .es-btn-fw-brdr, .es-left, .es-right { width:100%!important } .es-content table, .es-header table, .es-footer table, .es-content, .es-footer, .es-header { width:100%!important; max-width:600px!important } .es-adapt-td { display:block!important; width:100%!important } .adapt-img { width:100%!important; height:auto!important } .es-m-p0 { padding:0px!important } .es-m-p0r { padding-right:0px!important } .es-m-p0l { padding-left:0px!important } .es-m-p0t { padding-top:0px!important } .es-m-p0b { padding-bottom:0!important } .es-m-p20b { padding-bottom:20px!important } .es-mobile-hidden, .es-hidden { display:none!important } tr.es-desk-hidden, td.es-desk-hidden, table.es-desk-hidden { width:auto!important; overflow:visible!important; float:none!important; max-height:inherit!important; line-height:inherit!important } tr.es-desk-hidden { display:table-row!important } table.es-desk-hidden { display:table!important } td.es-desk-menu-hidden { display:table-cell!important } .es-menu td { width:1%!important } table.es-table-not-adapt, .esd-block-html table { width:auto!important } table.es-social { display:inline-block!important } table.es-social td { display:inline-block!important } .es-desk-hidden { display:table-row!important; width:auto!important; overflow:visible!important; max-height:inherit!important } }
+        @media screen and (max-width:384px) {.mail-message-content { width:414px!important } }
+        </style>
+         </head>
+         <body style="font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
+          <div dir="ltr" class="es-wrapper-color" lang="es" style="background-color:#F6F6F6"><!--[if gte mso 9]>
+                    <v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
+                        <v:fill type="tile" color="#f6f6f6"></v:fill>
+                    </v:background>
+                <![endif]-->
+           <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#F6F6F6">
+             <tr style="border-collapse:collapse">
+              <td valign="top" style="padding:0;Margin:0">
+               <table class="es-content" cellspacing="0" cellpadding="0" align="center" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
+                 <tr style="border-collapse:collapse"></tr>
+                 <tr style="border-collapse:collapse">
+                  <td align="center" style="padding:0;Margin:0">
+                   <table class="es-header-body" cellspacing="0" cellpadding="0" align="center" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">
+                     <tr style="border-collapse:collapse">
+                      <td align="left" style="Margin:0;padding-left:10px;padding-right:10px;padding-top:25px;padding-bottom:25px">
+                       <table width="100%" cellspacing="0" cellpadding="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                         <tr style="border-collapse:collapse">
+                          <td valign="top" align="center" style="padding:0;Margin:0;width:580px">
+                           <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                             <tr style="border-collapse:collapse">
+                              <td align="center" style="padding:0;Margin:0;font-size:0px"><a href="https://enredawebapp.web.app/" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"><img src="https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/images%2Fenreda-logo_900x503.png?alt=media&token=c2dd6abb-d60a-46df-adf5-0c93849f12ce" alt="enREDa" width="224" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" title="enREDa"></a></td>
+                             </tr>
+                           </table></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table>
+               <table class="es-content" cellspacing="0" cellpadding="0" align="center" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
+                 <tr style="border-collapse:collapse">
+                  <td align="center" style="padding:0;Margin:0">
+                   <table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#ffffff;width:600px" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center" role="none">
+                     <tr style="border-collapse:collapse">
+                      <td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px">
+                       <table width="100%" cellspacing="0" cellpadding="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                         <tr style="border-collapse:collapse">
+                          <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
+                           <table style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;border-top:1px solid #efefef" width="100%" cellspacing="0" cellpadding="0" role="presentation">
+                             <tr style="border-collapse:collapse">
+                              <td align="center" style="padding:0;Margin:0;padding-bottom:10px;padding-top:25px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#333333;font-size:16px">Te invitamos al evento:</p></td>
+                             </tr>
+                             <tr style="border-collapse:collapse">
+                              <td align="center" style="padding:0;Margin:0;padding-top:25px;padding-bottom:25px"><h3 style="Margin:0;line-height:22px;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:18px;font-style:normal;font-weight:bold;color:#333333"><strong>${resourceTitle}</strong><br></h3></td>
+                             </tr>
+                           </table></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                     <tr style="border-collapse:collapse">
+                      <td align="left" style="padding:0;Margin:0;padding-left:20px;padding-right:20px">
+                       <table cellspacing="0" cellpadding="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                         <tr style="border-collapse:collapse">
+                          <td align="left" style="padding:0;Margin:0;width:560px">
+                           <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                             <tr style="border-collapse:collapse">
+                              <td align="left" style="padding:0;Margin:0;padding-left:25px;padding-right:25px;padding-bottom:30px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#333333;font-size:14px">${resourceDescription}</p></td>
+                             </tr>
+                           </table></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                     <tr style="border-collapse:collapse">
+                      <td align="left" style="padding:0;Margin:0;padding-left:20px;padding-right:20px;padding-bottom:30px">
+                       <table width="100%" cellspacing="0" cellpadding="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                         <tr style="border-collapse:collapse">
+                          <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
+                           <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                             <tr style="border-collapse:collapse">
+                              <td align="center" style="padding:0;Margin:0;padding-top:15px"><!--[if mso]><a href="https://enredawebapp.web.app/resources/${resourceId}" target="_blank" hidden>
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="https://enredawebapp.web.app/resources/${resourceId}" 
+                        style="height:41px; v-text-anchor:middle; width:192px" arcsize="12%" stroke="f"  fillcolor="#00d0ce">
+                <w:anchorlock></w:anchorlock>
+                <center style='color:#ffffff; font-family:arial, "helvetica neue", helvetica, "sans-serif"; font-size:15px; font-weight:400; line-height:15px;  mso-text-raise:1px'>Quiero participar</center>
+            </v:roundrect></a>
+        <![endif]--><!--[if !mso]><!-- --><span class="msohide es-button-border" style="border-style:solid;border-color:#FFFFFF;background:#00D0CE;border-width:0px;display:inline-block;border-radius:5px;width:auto;mso-hide:all"><a href="https://enredawebapp.web.app/resources/${resourceId}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;display:inline-block;background:#00D0CE;border-radius:5px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;padding:10px 20px 10px 20px;mso-padding-alt:0;mso-border-alt:10px solid #00D0CE">Quiero participar</a></span><!--<![endif]--></td>
+                             </tr>
+                           </table></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table>
+               <table cellpadding="0" cellspacing="0" class="es-footer" align="center" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%;background-color:transparent;background-repeat:repeat;background-position:center top">
+                 <tr style="border-collapse:collapse">
+                  <td align="center" style="padding:0;Margin:0">
+                   <table class="es-footer-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#efefef;width:600px" cellspacing="0" cellpadding="0" bgcolor="#efefef" align="center" role="none">
+                     <tr style="border-collapse:collapse">
+                      <td align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-top:30px;padding-bottom:30px">
+                       <table width="100%" cellspacing="0" cellpadding="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                         <tr style="border-collapse:collapse">
+                          <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
+                           <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                             <tr style="border-collapse:collapse">
+                              <td esdev-links-color="#333333" align="center" style="padding:0;Margin:0"><a name="enREDa" href="" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"></a><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;line-height:20px;color:#666666;font-size:13px">www.enredas.org</p></td>
+                             </tr>
+                           </table></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table>
+          </div>
+         </body>
+        </html>`;
         return resourceInvitationTemplate;
     }
 
