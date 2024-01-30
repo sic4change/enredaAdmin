@@ -3215,7 +3215,6 @@ exports.createCertificate = functions.firestore
     }); 
 
 async function updateResourceSearchText(resource, resourceId) {
-        //console.log('Calling async updateResourceSearchText()');
         let resourceTypeName = '';
         let organizerName = '';
         let countryName = '';
@@ -3229,11 +3228,17 @@ async function updateResourceSearchText(resource, resourceId) {
             //console.log(`Tipo de recurso: ${resourceTypeName}`)
         }
     
-        // if (resource.data().organizer) {
-        //     document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
-        //     organizerName = document.data().name;
-        //     //console.log(`Organizador: ${organizerName}`)
-        // }
+        if (resource.data().organizerType === "Organización" && resource.data().organizer) {
+            document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
+            organizerName = document.data().name;
+            //console.log(`Organizador: ${organizerName}`)
+        }
+
+        if (resource.data().organizerType === "Entidad Social" && resource.data().organizer) {
+            document = await adminFirebase.firestore().collection('socialEntities').doc(resource.data().organizer).get();
+            organizerName = document.data().name;
+            //console.log(`Organizador: ${organizerName}`)
+        }
     
         if (resource.data().address.country && resource.data().address.country != "undefined") {
             document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
