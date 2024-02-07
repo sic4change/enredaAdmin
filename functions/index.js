@@ -3985,6 +3985,27 @@ exports.createIpilEntry = functions.firestore
             });
     });
 
+exports.createInitialReport = functions.firestore
+    .document('initialReports/{initialReportId}')
+    .onCreate((snapshot, context) => {
+        const initialReportId = context.params.initialReportId;
+        const userId = snapshot.data().userId;
+
+        return adminFirebase.firestore().doc(`initialReports/${initialReportId}`).set({ initialReportId}, { merge: true })
+            .then(() => {
+                console.log("Successfully added initialReportId to new initialReport");
+                return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
+                    (snapshot) => {
+                        snapshot.forEach((user) => {
+                            return adminFirebase.firestore().collection("users").doc(user.id).set({ initialReportId: initialReportId }, { merge: true })
+                                .then(() => {
+                                    console.log("Successfully add initialReport in organization user");
+                                })
+                        })
+                    });
+            });
+    });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
