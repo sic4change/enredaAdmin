@@ -4006,6 +4006,27 @@ exports.createInitialReport = functions.firestore
             });
     });
 
+    exports.createClosureReport = functions.firestore
+        .document('closureReports/{closureReportId}')
+        .onCreate((snapshot, context) => {
+            const closureReportId = context.params.closureReportId;
+            const userId = snapshot.data().userId;
+
+            return adminFirebase.firestore().doc(`closureReports/${closureReportId}`).set({ closureReportId}, { merge: true })
+                .then(() => {
+                    console.log("Successfully added closureReportId to new closureReport");
+                    return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
+                        (snapshot) => {
+                            snapshot.forEach((user) => {
+                                return adminFirebase.firestore().collection("users").doc(user.id).set({ closureReportId: closureReportId }, { merge: true })
+                                    .then(() => {
+                                        console.log("Successfully add closureReport in organization user");
+                                    })
+                            })
+                        });
+                });
+        });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
