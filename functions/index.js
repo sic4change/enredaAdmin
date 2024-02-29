@@ -4027,6 +4027,27 @@ exports.createInitialReport = functions.firestore
                 });
         });
 
+    exports.createFollowReport = functions.firestore
+        .document('followReports/{followReportId}')
+        .onCreate((snapshot, context) => {
+            const followReportId = context.params.followReportId;
+            const userId = snapshot.data().userId;
+
+            return adminFirebase.firestore().doc(`followReports/${followReportId}`).set({ followReportId}, { merge: true })
+                .then(() => {
+                    console.log("Successfully added followReportId to new followReport");
+                    return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
+                        (snapshot) => {
+                            snapshot.forEach((user) => {
+                                return adminFirebase.firestore().collection("users").doc(user.id).set({ followReportId: followReportId }, { merge: true })
+                                    .then(() => {
+                                        console.log("Successfully add followReport in organization user");
+                                    })
+                            })
+                        });
+                });
+        });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
