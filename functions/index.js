@@ -744,7 +744,7 @@ exports.updateResource = functions.firestore.document('resources/{resourceId}')
 
         //Cuando se modifica la fecha limite de inscripcion
         if (newValue.maximumDate !== previousValue.maximumDate) {
-            if (newValue.maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()) {
+            if (!newValue.notExpire && newValue.maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()) {
                 if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo')) {
                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
                     doc.update({
