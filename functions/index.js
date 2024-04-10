@@ -4048,6 +4048,27 @@ exports.createInitialReport = functions.firestore
                 });
         });
 
+    exports.createDerivationReport = functions.firestore
+        .document('derivationReports/{derivationReportId}')
+        .onCreate((snapshot, context) => {
+            const derivationReportId = context.params.derivationReportId;
+            const userId = snapshot.data().userId;
+
+            return adminFirebase.firestore().doc(`derivationReports/${derivationReportId}`).set({ derivationReportId}, { merge: true })
+                .then(() => {
+                    console.log("Successfully added derivationReportId to new derivationReport");
+                    return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
+                        (snapshot) => {
+                            snapshot.forEach((user) => {
+                                return adminFirebase.firestore().collection("users").doc(user.id).set({ derivationReportId: derivationReportId }, { merge: true })
+                                    .then(() => {
+                                        console.log("Successfully add derivationReport in organization user");
+                                    })
+                            })
+                        });
+                });
+        });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
