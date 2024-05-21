@@ -3,6 +3,7 @@ const functions = require('firebase-functions');
 const axios = require('axios'); // Axios version more than 0.21.1 will fail
 const cheerio = require('cheerio');
 const adminFirebase = require('firebase-admin');
+const { setTimeout } = require('node:timers/promises');
 adminFirebase.initializeApp(functions.config().firebase);
 
 const db = adminFirebase.firestore();
@@ -2164,6 +2165,13 @@ const findResourcesFromSPEGC = async () => {
 }
 */
 
+/** INFO!:  Todas las funciones de Scraping que usan Puppeteer estaban fallando con "Could not find Chrome" 
+            Se añadió el archivo de configuración .puppeteerrc.cjs
+            Además cuando se hagan los deploy de estas Clouds, hay que eliminarlas primero en Firebase antes de hacer el deploy
+            Si vuelve a dar error, borramos la carpeta .cache, node_modules, hacemos npm install, borramos la Cloud en Firebase y volvemos a hacer el deploy
+*/         
+// TODO: Probar a hacer todo el scraping con la librería Playwright que es más actual y eficiente que Puppeteer
+// Web Scraping
 exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).pubsub.topic('scrappingFormacionCamaraToledo').onPublish(async (message) => {
     const url = 'https://camaratoledo.com/formacion-espana-emprende/';
     const axiosUrl = await axios(url);
@@ -2320,7 +2328,7 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
 
 exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scrappingIPETA').onPublish(async (message) => {
   const browser = await puppeteer.launch({
-      headless: true,
+      headless: "new",
       args: ['--no-sandbox', '--disable-setuid-sandbox']
   })
   const page = await browser.newPage();
@@ -2340,7 +2348,7 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
         const jobHtml = axiosJobUrl.data;
         const $$ = cheerio.load(jobHtml);
 
-        jobDescription = $$('.elementor-element-bd55b8f').find('div').find('div').text();
+        jobDescription = $$('.elementor-element-bd55b8f').find('div').text();
     }
     const postId = $(element).attr('data-post-id');
     const jobID = `ipeta_${postId}`;
@@ -2409,7 +2417,7 @@ exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scra
     // Esto probablemente se podría hacer solo con axios y cheerio como "extractResourcesFromEmpleoCamaraToledo"
     // Porque no se están haciendo clicks ni nada dinámico, solo cargando htmls con enlaces
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
     const page = await browser.newPage();
@@ -2543,7 +2551,7 @@ exports.updateResourceFromSPEG = functions.runWith(options).pubsub.topic('updati
 
 exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scrappingSEPE').onPublish(async (message) => {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
     const page = await browser.newPage();
@@ -2554,7 +2562,7 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
     const LIPaginationElements = await ULPaginationElement.$$('li');
     const lastPageElement = await LIPaginationElements[6].$('a');
     await lastPageElement.evaluate(b => b.click());
-    await page.waitForTimeout(1000);
+    await setTimeout(1000);
     const previousPageElement = await LIPaginationElements[0].$('a');
     var searching = true;
 
@@ -2571,7 +2579,7 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
             const jobTitle = await h6element.evaluate(element => element.textContent);
             const dialogLink = await jobCard.$('a');
             await dialogLink.evaluate(b => b.click());
-            await page.waitForTimeout(1000);
+            await setTimeout(1000);
             const dialog = await page.$('.mdc-dialog__container');
             // Dialog 
             const tdElements = await dialog.$$('td');
@@ -2606,7 +2614,7 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
               });
             const closeButton = await dialog.$('button');
             await closeButton.click();
-            await page.waitForTimeout(1000);
+            await setTimeout(1000);
     
             var maximumDate = new Date(2050, 12, 31, 23, 59, 0);
             let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
@@ -2670,14 +2678,14 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
     await browser.close();
   });
 
-exports.extractEmployabilityFromSEPE = functions.region('europe-west1').runWith(options).pubsub.topic('scrappingEmployabilitySEPE').onPublish(async () => {
+exports.extractEmployabilityFromSEPE = functions.runWith(options).pubsub.topic('scrappingEmployabilitySEPE').onPublish(async () => {
     const months = {
         enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
         julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
       };
 
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
  
@@ -2699,13 +2707,13 @@ exports.extractEmployabilityFromSEPE = functions.region('europe-west1').runWith(
             const buttons = await jobCard.$$('button');
             const lastButton = buttons[buttons.length - 1];
             await lastButton.evaluate(b => b.click());
-            await page.waitForTimeout(1000);
+            await setTimeout(1000);
 
             const titleElement = await jobCard.$('.title');
             const jobTitle = await titleElement.evaluate(element => element.textContent);
             //console.log(`TÍTULO: ${jobTitle}`);
             
-            const modalitySpan = await jobCard.$x('.//span[contains(text(), "Presencial")]');
+            const modalitySpan = await jobCard.$x('.//span[contains(text(), "resencial")]');
             modality = await modalitySpan[0].evaluate(element => element.textContent);
             modality = modality.trim();
             if (modality === 'No Presencial') {
@@ -2769,7 +2777,7 @@ exports.extractEmployabilityFromSEPE = functions.region('europe-west1').runWith(
                 const locationButton = await locationDiv[0].$('button');
                 if (locationButton) {
                     await locationButton.evaluate(b => b.click());
-                    await page.waitForTimeout(1000);
+                    await setTimeout(1000);
                     const dialog = await page.$('tbody');
                     const tdElements = await dialog.$$('td');
                     island = await tdElements[0].evaluate(element => element.textContent.trim());
@@ -2856,12 +2864,12 @@ exports.extractResourcesFromFundaula = functions.runWith(options).pubsub.topic('
 
     // "Conocimientos Digitales" tab
     await page.waitForSelector('.box-filtro-size');
-    await page.waitForTimeout(2000);
+    await setTimeout(2000);
     var filterButtons = await page.$$('.box-filtro-size');
     for (let i = 0; i < filterButtons.length; i++) {
         let button = filterButtons[i];  
         await button.evaluate(b => b.click());
-        await page.waitForTimeout(2000);
+        await setTimeout(2000);
     }
     await page.waitForSelector('box-curso');
     var jobCards = await page.$$('box-curso');
@@ -2877,14 +2885,14 @@ exports.extractResourcesFromFundaula = functions.runWith(options).pubsub.topic('
     // "Conocimientos Técnicos" tab
     const tabButtons = await page.$$('.menu_fund span');
     await tabButtons[1].evaluate(b => b.click());
-    await page.waitForTimeout(2000);
+    await setTimeout(2000);
     await page.waitForSelector('.box-filtro-size');
-    await page.waitForTimeout(2000);
+    await setTimeout(2000);
     filterButtons = await page.$$('.box-filtro-size');
     for (let i = 0; i < filterButtons.length; i++) {
         let button = filterButtons[i];  
         await button.evaluate(b => b.click());
-        await page.waitForTimeout(2000);
+        await setTimeout(2000);
     }
     await page.waitForSelector('box-curso');
     jobCards = await page.$$('box-curso');
@@ -2893,7 +2901,7 @@ exports.extractResourcesFromFundaula = functions.runWith(options).pubsub.topic('
         let jobCard = jobCards[i];    
         const detailsButton = await jobCard.$('.box-curso-tercerafila-2');
         await detailsButton.evaluate(b => b.click());
-        await page.waitForTimeout(2000);
+        await setTimeout(2000);
         const aElements = await page.$$('.subcomponente-container-new a');
         for (let j = 0; j < aElements.length; j++) {
             const href = await aElements[j].getProperty('href');
@@ -2901,19 +2909,19 @@ exports.extractResourcesFromFundaula = functions.runWith(options).pubsub.topic('
             links.push(link);
         }
         await detailsButton.evaluate(b => b.click());
-        await page.waitForTimeout(2000);
+        await setTimeout(2000);
     }
 
     // "Conocimientos Técnicos" tab
     await tabButtons[2].evaluate(b => b.click());
-    await page.waitForTimeout(2000);
+    await setTimeout(2000);
     await page.waitForSelector('.box-filtro-size');
-    await page.waitForTimeout(2000);
+    await setTimeout(2000);
     filterButtons = await page.$$('.box-filtro-size');
     for (let i = 0; i < filterButtons.length; i++) {
         let button = filterButtons[i];  
         await button.evaluate(b => b.click());
-        await page.waitForTimeout(2000);
+        await setTimeout(2000);
     }
     await page.waitForSelector('box-curso');
     jobCards = await page.$$('box-curso');
