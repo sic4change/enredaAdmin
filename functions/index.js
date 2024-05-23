@@ -1,3 +1,7 @@
+/* We need to use playwright with @sparticuz/chromium library to execute Chrome in Google Cloud Function server
+   Check the npm library page if it's deprecated some day */
+const { chromium: playwright } = require("playwright-core");
+const chromium = require("@sparticuz/chromium");
 const puppeteer = require('puppeteer');
 const functions = require('firebase-functions');
 const axios = require('axios'); // Axios version more than 0.21.1 will fail
@@ -2414,60 +2418,59 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
 });
 
 exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(async (message) => {
-    // Esto probablemente se podría hacer solo con axios y cheerio como "extractResourcesFromEmpleoCamaraToledo"
-    // Porque no se están haciendo clicks ni nada dinámico, solo cargando htmls con enlaces
-    const browser = await puppeteer.launch({
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
-    const page = await browser.newPage();
-    await page.goto('https://www.spegc.org/formacion-y-eventos/');
-    // Espera hasta que aparezcan las ofertas de trabajo en la página
-    await page.waitForSelector('.spegc-event-item');
-    const html = await page.content();
-    const $ = cheerio.load(html);
-    const jobCards = $('.spegc-event-item').filter(function () {
-        return !$(this).has('a:contains("Plazo finalizado")').length;
+    const browser = await playwright.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true, //chromium.headless,
       });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto('https://www.spegc.org/formacion-y-eventos/');
+    const jobCards = await page.getByRole('article').filter({ hasNotText: 'Plazo finalizado' }).all();
     console.log(`Nº de ofertas: ${jobCards.length}`);
 
-    for (let i = 0; i < jobCards.length; i++) {
-        let jobCard = jobCards[i];
-        const jobLink = $(jobCard).find('.spegc-event-details a').attr('href');
+    for (const jobCard of jobCards) {
         var jobDescription = '';
         var jobID = '';
         var jobLocation = '';
         var jobDuration = 'Indefinido';
         var jobModality = 'Presencial';
         var maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+        
+        const jobTitle = await jobCard.locator('h3').innerText();
+        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+        const jobLink = await jobCard.locator('.spegc-event-details a').getAttribute('href');
+
         if (jobLink && jobLink.startsWith('https://www.spegc.org/formacion-y-eventos/')) { 
-            const axiosJobUrl = await axios(jobLink);
-            const jobHtml = axiosJobUrl.data;
-            const $$ = cheerio.load(jobHtml);
+            await jobCard.locator('.spegc-event-details a').click();
+            const descriptionDiv = await page.locator('article > div').all();
+            jobDescription = await descriptionDiv[3].allInnerTexts();
 
-            jobDescription = $$('article').find('div:has(p:first-child)').first().text();
+            const postId = await page.getByRole('article').getAttribute('id');
+            jobID = `spegc_${postId.split('-')[1]}`;
 
-            const postId = $$('article').attr('id').split('-')[1];
-            jobID = `spegc_${postId}`;
-
-            const locationElement = $$('li:contains("Lugar:")').first().text();
-            if (locationElement) {
-                jobLocation = locationElement.trim().split('Lugar:')[1].toUpperCase();
+            const locationElement = page.getByText("Lugar:").first();
+            if (await locationElement.count() > 0) {
+                const locationText = await locationElement.innerText();
+                jobLocation = locationText.trim().split('Lugar:')[1].toUpperCase();
             }
 
-            const durationElement = $$('li:contains("Duración:")').first().text();
-            if (durationElement) {
-                jobDuration = durationElement.trim().split('Duración:')[1];
+            const durationElement = page.getByText("Duración:").first();
+            if (await durationElement.count() > 0) {
+                const durationText = await durationElement.innerText();
+                jobDuration = durationText.trim().split('Duración:')[1];
             }
 
-            const moadiltyElement = $$('li:contains("Modalidad:")').first().text();
-            if (moadiltyElement) {
-                jobModality = moadiltyElement.trim().split('Modalidad:')[1];
+            const modalityElement = page.getByText("Modalidad:").first();
+            if (await modalityElement.count() > 0) {
+                const modalityText = await modalityElement.innerText();
+                jobModality = modalityText.trim().split('Modalidad:')[1];
             }
 
-            const maxDateElement = $$('li:contains("Límite de inscripción:")').first().text();
-            if (maxDateElement) {
-                const maxDateText = maxDateElement.trim().split('Límite de inscripción:')[1]; // DD/MM/AAAA HH:MM
+            const maxDateElement = page.getByText("Límite de inscripción:").first();
+            if (await maxDateElement.count() > 0) {
+                var maxDateText = await maxDateElement.innerText();
+                maxDateText = maxDateText.trim().split('Límite de inscripción:')[1]; // DD/MM/AAAA HH:MM
                 var dateTextSplit = maxDateText.trim().split(" "); // Split in date and hours
                 var date = dateTextSplit[0].split("/");
                 var hour = dateTextSplit[1].split(":");
@@ -2479,10 +2482,8 @@ exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scra
                     parseInt(hour[0])
                 );
             }
+            await page.goBack();
         }
-        
-        const jobTitle = $(jobCard).find('h3').text();
-        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
 
         let jobOffer = {
             address: {
@@ -2520,16 +2521,14 @@ exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scra
             updatedby: "Web scrapping",
             scrappingId: jobID,
         };
-         
+
         const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
         if (query.empty) {
-            console.log(`Insertando recurso ${jobTitle}`);
+            console.log(`Insertando recurso: ${jobTitle}`);
             db.collection("resources").add(jobOffer);
+        } else {
+            console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
         }
-    
-        /*console.log(`ID: ${jobID} --> ${jobTitle}`);
-        console.log(`Se imparte en ${jobLocation}`);
-        console.log(`LINK: ${jobLink}`);*/
     }
 
     await browser.close();
