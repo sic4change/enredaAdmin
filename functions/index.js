@@ -2331,90 +2331,85 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
 });
 
 exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scrappingIPETA').onPublish(async (message) => {
-  const browser = await puppeteer.launch({
-      headless: "new",
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-  })
-  const page = await browser.newPage();
-  await page.goto('https://ipetalavera.es/instituto/empleo/ofertas-de-empleo/');
-  // Espera hasta que aparezcan las ofertas de trabajo en la página
-  await page.waitForSelector('.jet-listing-grid__items');
-  const html = await page.content();
-  const $ = cheerio.load(html);
-  const jobCards = $('.jet-listing-grid__item');
-  console.log(`Nº de ofertas: ${jobCards.length}`);
+    const browser = await playwright.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true, //chromium.headless,
+      });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto('https://ipetalavera.es/instituto/empleo/ofertas-de-empleo/');
+    await page.waitForSelector('.jet-listing-grid__items', { state: 'attached' });
+    const jobCards = await page.locator(".jet-listing-grid__item").all();
+    console.log(`Nº de ofertas: ${jobCards.length}`);
+  
+    for (const jobCard of jobCards) { 
+        const jobLink = await jobCard.locator(".elementor-button-link").getAttribute("href");
+        const postId = await jobCard.getAttribute('data-post-id');
+        const jobID = `ipeta_${postId}`;
+        const jobTitle = await jobCard.locator('.elementor-element-e13832e > div > h2 > a').textContent();
+        const jobDate = await jobCard.locator('.elementor-element-084441b > div > p').textContent();
+        const listItems = await jobCard.locator('.elementor-icon-list-text').all();
+        const jobLocation = await listItems[0].textContent();
+        const capacityText = await listItems[1].textContent();
+        const jobCapacity = parseInt(capacityText.match(/\d+/)[0]);
+        const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
 
-  jobCards.each(async (index, element) => {
-    const jobLink = $(element).find('.elementor-button-link').attr('href');
-    var jobDescription = '';
-    if (jobLink && jobLink.startsWith('https://ipetalavera.es/ofertas-de-trabajo')) { 
-        const axiosJobUrl = await axios(jobLink);
-        const jobHtml = axiosJobUrl.data;
-        const $$ = cheerio.load(jobHtml);
+        var jobDescription = '';
+        if (jobLink && jobLink.startsWith('https://ipetalavera.es/ofertas-de-trabajo')) { 
+            await page.goto(jobLink);
+            jobDescription = await page.locator('.elementor-element-bd55b8f > div').textContent();
+            await page.goBack();
+        }
 
-        jobDescription = $$('.elementor-element-bd55b8f').find('div').text();
+        let jobOffer = {
+            address: {
+                city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
+                country: "i0GHKqdCWBYeAYcAMa7I",
+                place: jobLocation.toUpperCase(),
+                province: "r7WT8mAsUdTAlPCKWstT",
+            },
+            assistants: 0,
+            capacity: jobCapacity,
+            contractType: "",
+            createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
+            createdby: "Web scrapping",
+            description: jobDescription,
+            duration: "Indefinido",
+            enable: true,
+            end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+            interests: [],
+            lastupdate: adminFirebase.firestore.Timestamp.now(),
+            link: jobLink,
+            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+            modality: "Presencial",
+            notExpire: true,
+            online: false,
+            organizer: "VrpgKatmJG4h4pxgvpZZ",
+            organizerType: "Organización",
+            resourceCategory: "POUBGFk5gU6c5X1DKo1b",
+            resourcePhoto: randomImage,
+            resourceType: "kUM5r4lSikIPLMZlQ7FD",
+            salary: "",
+            start: adminFirebase.firestore.Timestamp.now(),
+            status: "Disponible",
+            title: jobTitle,
+            trust: true,
+            updatedby: "Web scrapping",
+            scrappingId: jobID,
+        };
+
+        const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
+        if (query.empty) {
+            console.log(`Insertando recurso: ${jobTitle}`);
+            await db.collection("resources").add(jobOffer);
+        } else {
+            console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
+        }
     }
-    const postId = $(element).attr('data-post-id');
-    const jobID = `ipeta_${postId}`;
-    const jobTitle = $(element).find('.elementor-element-e13832e').find('div').find('h2').text();
-    //const jobDescription = $(element).find('.elementor-element-c11fb9f').find('div').find('div').text();
-    const jobDate = $(element).find('.elementor-element-084441b').find('div').find('p').text();
-    const jobLocation = $(element).find('.elementor-icon-list-text').eq(0).text().toUpperCase();
-    const capacityText = $(element).find('.elementor-icon-list-text').eq(1).text();
-    const jobCapacity = parseInt(capacityText.match(/\d+/)[0]);
-    const jobTag = $(element).find('.elementor-icon-list-text').eq(2).text();
-    const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
-    let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-    
-    let jobOffer = {
-        address: {
-            city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
-            country: "i0GHKqdCWBYeAYcAMa7I",
-            place: jobLocation,
-            province: "r7WT8mAsUdTAlPCKWstT",
-        },
-        assistants: 0,
-        capacity: jobCapacity,
-        contractType: "",
-        createdate: adminFirebase.firestore.Timestamp.now(), //jobDate??
-        createdby: "Web scrapping",
-        description: jobDescription,
-        duration: "Indefinido",
-        enable: true,
-        end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        interests: [],
-        lastupdate: adminFirebase.firestore.Timestamp.now(),
-        link: jobLink,
-        maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        modality: "Presencial",
-        notExpire: true,
-        online: false,
-        organizer: "VrpgKatmJG4h4pxgvpZZ",
-        organizerType: "Organización",
-        resourceCategory: "POUBGFk5gU6c5X1DKo1b",
-        resourcePhoto: randomImage,
-        resourceType: "kUM5r4lSikIPLMZlQ7FD",
-        salary: "",
-        start: adminFirebase.firestore.Timestamp.now(),
-        status: "Disponible",
-        title: jobTitle,
-        trust: true,
-        updatedby: "Web scrapping",
-        scrappingId: jobID,
-    };
-
-    const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
-    if (query.empty) {
-        console.log(`Insertando recurso ${jobTitle}`);
-        return db.collection("resources").add(jobOffer);
-    }
-
-    /*console.log(`ID: ${jobID} --> ${jobTitle} (${jobDate}): ${jobDescription}`);
-    console.log(`Se imparte en ${jobLocation} y hay ${jobCapacity} vacantes`);
-    console.log(`LINK: ${jobLink}`);*/
-  });
-
-  await browser.close();
+  
+    await browser.close();
 });
 
 exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scrappingSPEG').onPublish(async (message) => {
@@ -2852,6 +2847,7 @@ exports.extractEmployabilityFromSEPE = functions.runWith(options).pubsub.topic('
     await browser.close();
   });
 
+// No se está usando, si algún día se usa hay que migrar de Puppeteer a Playwright
 exports.extractResourcesFromFundaula = functions.runWith(options).pubsub.topic('scrappingFundaula').onPublish(async (message) => {
     const browser = await puppeteer.launch({
         headless: true,
