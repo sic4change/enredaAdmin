@@ -2177,46 +2177,41 @@ const findResourcesFromSPEGC = async () => {
 // TODO: Probar a hacer todo el scraping con la librería Playwright que es más actual y eficiente que Puppeteer
 // Web Scraping
 exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).pubsub.topic('scrappingFormacionCamaraToledo').onPublish(async (message) => {
-    const url = 'https://camaratoledo.com/formacion-espana-emprende/';
-    const axiosUrl = await axios(url);
-    const html = axiosUrl.data;
-    const $ = cheerio.load(html);
-    const items = $('div[data-elementor-type="loop-item"]').filter((index, element) => $(element).find('h2').text().trim().toUpperCase() === 'PRÓXIMAMENTE');
-    console.log(`Nº de ofertas: ${items.length}`);
-    items.each(async (index, item) => {
-        const jobLink = $(item).find('.elementor-button-link').attr('href');
-        if (jobLink && jobLink.startsWith('https://camaratoledo.com/formacion')) {
-            //console.log(`Link: ${jobLink}`);
-            const axiosJobUrl = await axios(jobLink);
-            const jobHtml = axiosJobUrl.data;
-            const $$ = cheerio.load(jobHtml);
+    const browser = await playwright.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true, //chromium.headless,
+      });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto('https://camaratoledo.com/formacion-espana-emprende/');
+    const jobCards = await page.locator('div[data-elementor-type="loop-item"]').filter({ hasNotText: 'PRÓXIMAMENTE' }).filter({ hasNotText: 'FINALIZADO' }).all();
+    console.log(`Nº de ofertas: ${jobCards.length}`);
 
+    for (const jobCard of jobCards) {
+        const jobLink = await jobCard.locator('.elementor-button-link').first().getAttribute('href');
+        if (jobLink && jobLink.startsWith('https://camaratoledo.com/formacion')) { 
+            await jobCard.locator('.elementor-button-link').first().click();
             //ID
-            const body = $$('body').attr('class');
+            const body = await page.locator('body').getAttribute('class');
             const postIdMatch = body.match(/postid-(\d+)/);
             const postID = postIdMatch[1];
             const jobID = `camfor_${postID}`; 
-            //Title
-            const jobTitle = $$('h1').first().text();
+            // Title
+            const jobTitle = await page.locator('h1').first().innerText();
             //Place
             var jobLocation = '';
-            const sections = $$('.elementor-inner-section');
-            sections.each((index, section) => {
-                //Comprobar si contiene un span con el texto "Lugar"
-                if ($$(section).find('span').filter((index, span) => $$(span).text() === 'Lugar').length > 0) {
-                    jobLocation = $$(section).find('p').text();
-                }
-            });
-            //const jobDuration = $('.elementor-element-ba36254').find('div').find('p').text();
-            //Description
-            var jobDescription = '';
-            const divs = $$('div');
-            divs.each((index, div) => {
-                //Comprobar si contiene un h3 con el texto "Dirigido"
-                if ($$(div).find('h3').filter((index, h3) => $$(h3).text().toUpperCase() === 'DIRIGIDO').length > 0) {
-                    jobDescription = $$(div).parent().next('div').find('p').text();
-                }
-            });
+            const locationElement = page.getByText("Lugar").first();
+            jobLocation = await locationElement.innerText();
+            jobLocation = jobLocation.replace("Lugar","").replace(":","").trim();
+            if (jobLocation.length == 0) {
+                const locationElement = page.locator('.elementor-inner-section').filter({hasText: 'Lugar'}).first();
+                jobLocation = await locationElement.innerText();
+                jobLocation = jobLocation.replace("Lugar", "").trim();
+            }
+            // Description
+            var descriptionElement = page.locator('.e-con-inner').filter({hasText: 'DIRIGIDO'}).first();
+            var jobDescription = await descriptionElement.innerText();
 
             const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
             let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
@@ -2257,14 +2252,19 @@ exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).p
                 updatedby: "Web scrapping",
                 scrappingId: jobID,
             };
-            //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDescription: ${jobDescription}`);
+
             const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
             if (query.empty) {
                 console.log(`Insertando recurso ${jobTitle}`);
-                return db.collection("resources").add(jobOffer);
+                await db.collection("resources").add(jobOffer);
+            } else {
+                console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
             }
+
+            await page.goBack();
         }
-    });
+    }
+    browser.close();
 });
 
 exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(async (message) => {
