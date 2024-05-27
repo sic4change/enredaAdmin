@@ -2268,23 +2268,28 @@ exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).p
 });
 
 exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(async (message) => {
-    const url = 'https://gestionandote.com/agencia/camaratoledo/ofertas';
-    const axiosUrl = await axios(url);
-    const html = axiosUrl.data;
-    const $ = cheerio.load(html);
-    const jobCards = $('.card-ofertas');
+    const browser = await playwright.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true, //chromium.headless,
+      });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto('https://gestionandote.com/agencia/camaratoledo/ofertas');
+    const jobCards = await page.locator('.card-ofertas').all();
     console.log(`Nº de ofertas: ${jobCards.length}`);
 
-    jobCards.each(async (index, element) => {
-        let postID = $(element).find('.c-titulo span').first().text();
-        let jobID = `camemp_${postID}`; 
-        let jobTitle = $(element).find('.c-titulo a').text();
-        let jobLink = $(element).find('.c-titulo a').attr('href');
-        let jobLocation = $(element).find('.c-lugar span').first().text();
-        let jobDate = $(element).find('.c-fecha').text();
-        let jobDescription = $(element).find('.c-desc').text();
+    for (const jobCard of jobCards) {
+        let postID = await jobCard.getByRole('heading').locator('span').innerText();
+        let jobID = `camemp_${postID}`;
+        let jobTitle = await jobCard.getByRole('heading').locator('a').innerText();
+        let jobLink = await jobCard.getByRole('heading').locator('a').getAttribute('href');
+        let jobLocation = await jobCard.locator('.c-lugar').innerText();
+        let jobDate = await jobCard.locator('.c-fecha').innerText();
+        let jobDescription = await jobCard.locator('.c-desc').innerText();
         const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
         let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+
         let jobOffer = {
             address: {
                 city: "vYcgz8Vy6qDj4Q5Pena6", // Todas en ciudad de Toledo? Porque hay ciudades de las ofertas que no están en la BD
@@ -2321,13 +2326,16 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
             updatedby: "Web scrapping",
             scrappingId: jobID,
         };
-        //console.log(`ID: ${jobID}\nTitle: ${jobTitle}\nLocation: ${jobLocation}\nDate: ${jobDate}\nDescription: ${jobDescription}`);
+
         const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
         if (query.empty) {
-            console.log(`Insertando recurso ${jobTitle}`);
-            return db.collection("resources").add(jobOffer);
+            console.log(`Insertando recurso: ${jobTitle}`);
+            await db.collection("resources").add(jobOffer);
+        } else {
+            console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
         }
-    });
+    }
+    browser.close();
 });
 
 exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scrappingIPETA').onPublish(async (message) => {
