@@ -2552,72 +2552,54 @@ exports.updateResourceFromSPEG = functions.runWith(options).pubsub.topic('updati
 });
 
 exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scrappingSEPE').onPublish(async (message) => {
-    const browser = await puppeteer.launch({
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
-    const page = await browser.newPage();
+    const browser = await playwright.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true, //chromium.headless,
+      });
+    const context = await browser.newContext();
+    const page = await context.newPage();
     await page.goto('https://www.gobiernodecanarias.org/empleo/sce/principal/componentes/buscadores_angular/index_ofertas_empleo.jsp?Title_prop=null&cod_buscar=null');
-    await page.waitForSelector('.article');
     // Go to last page (newest offers)
-    const ULPaginationElement = await page.$('.ngx-pagination');
-    const LIPaginationElements = await ULPaginationElement.$$('li');
-    const lastPageElement = await LIPaginationElements[6].$('a');
-    await lastPageElement.evaluate(b => b.click());
-    await setTimeout(1000);
-    const previousPageElement = await LIPaginationElements[0].$('a');
+    await page.waitForSelector('.article', { state: 'attached' });
+    const paginationElements = await page.locator('.ngx-pagination').locator('li').all();
+    await paginationElements[6].click();
     var searching = true;
 
-    while (searching) {
-        const jobCards = await page.$$('.article');
-        console.log(`Nº de ofertas en esta página: ${jobCards.length}`);
-        for (let i = 0; i < jobCards.length; i++) {
-            let jobCard = jobCards[i];
+    while(searching) {
+        await page.waitForSelector('.article', { state: 'attached' });
+        const jobCards = await page.locator('.article').all();
+        console.log(`Nº de ofertas en la página: ${jobCards.length}`);
+        for (const jobCard of jobCards) { 
             var jobID = '';
             var jobDescription = '';
             var jobLocation = '';
             var jobCapacity = 99;
-            const h6element = await jobCard.$('h6');
-            const jobTitle = await h6element.evaluate(element => element.textContent);
-            const dialogLink = await jobCard.$('a');
-            await dialogLink.evaluate(b => b.click());
-            await setTimeout(1000);
-            const dialog = await page.$('.mdc-dialog__container');
-            // Dialog 
-            const tdElements = await dialog.$$('td');
-            const offerId = await tdElements[1].evaluate(element => element.textContent);
+            const jobTitle = await jobCard.getByRole('heading').innerText();
+            await jobCard.locator('a').click();
+            // Dialog
+            const dialog = page.locator('.mdc-dialog__container');
+            const tdElements = await dialog.locator('td').all();
+            const offerId = await tdElements[1].innerText();
             jobID = `sepeofe_${offerId}`;
-            jobLocation = await tdElements[3].evaluate(element => element.textContent);
-            const date = await tdElements[5].evaluate(element => element.textContent);
-            const capacityText = await tdElements[7].evaluate(element => element.textContent);
+            jobLocation = await tdElements[3].innerText();
+            const date = await tdElements[5].innerText();
+            const capacityText = await tdElements[7].innerText();
             jobCapacity = parseInt(capacityText);
-    
+            const jobLink = await dialog.getByText('enlace').getAttribute('href');
             // Format description string
-            const tableElements = await dialog.$$('table');
-            const tableTDElements = await tableElements[1].$$('td');
+            const tableElements = await dialog.getByRole('table').all();
+            const tableTDElements = await tableElements[1].locator('td').all();
             var tableStrings = [];
             for (let i = 0; i < tableTDElements.length; i++) {
-                const tdString = await tableTDElements[i].evaluate(element => element.textContent);
+                const tdString = await tableTDElements[i].innerText();
                 tableStrings.push(tdString);
             }
             for (let i = 0; i < tableStrings.length; i++) {
-                jobDescription = `${jobDescription}· ${tableStrings[i++]}${tableStrings[i]}\n`
-            }
-            //console.log(`DESCRIPCIÓN: ${jobDescription}`);
-    
-            const jobLink = await dialog.evaluate(() => {
-                const links = Array.from(document.querySelectorAll('a'));
-                for (const link of links) {
-                  if (link.textContent.trim() === 'enlace') {
-                    return link.getAttribute('href');
-                  }
-                }
-                return null;
-              });
-            const closeButton = await dialog.$('button');
-            await closeButton.click();
-            await setTimeout(1000);
-    
+                jobDescription = `${jobDescription}· ${tableStrings[i++]} ${tableStrings[i]}\n`
+            }   
+            await dialog.getByRole('button').first().click();  
+            
             var maximumDate = new Date(2050, 12, 31, 23, 59, 0);
             let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
             var provinceId = "mi3tu6DK1GU4yZIQJ1dZ";
@@ -2627,7 +2609,7 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
                 provinceId = "XFtEq16heJenhrEid57m";
                 cityId = 'RtnVLp0Ziuu5jYHVTyzM';
             }
-    
+
             let jobOffer = {
                 address: {
                     // TODO: Ahora mismo solo guarda Las Palmas o Sta. Cruz, en la Base de Datos faltarían muchísimas ciudadaes
@@ -2665,19 +2647,22 @@ exports.extractJobOffersFromSEPE = functions.runWith(options).pubsub.topic('scra
                 updatedby: "Web scrapping",
                 scrappingId: jobID,
             };
-    
+
             const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
             if (query.empty) {
                 console.log(`Insertando recurso ${jobTitle}`);
                 db.collection("resources").add(jobOffer);
             } else {
+                console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
                 searching = false;
             }
         }
         // Go previous page
-        await previousPageElement.evaluate(b => b.click());
-    }  
-    await browser.close();
+        console.log(`Navegando a página anterior...`);
+        await paginationElements[0].click();
+    }
+    
+    browser.close();
   });
 
 exports.extractEmployabilityFromSEPE = functions.runWith(options).pubsub.topic('scrappingEmployabilitySEPE').onPublish(async () => {
