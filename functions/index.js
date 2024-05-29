@@ -2168,13 +2168,7 @@ const findResourcesFromSPEGC = async () => {
     return data
 }
 */
-
-/** INFO!:  Todas las funciones de Scraping que usan Puppeteer estaban fallando con "Could not find Chrome" 
-            Se añadió el archivo de configuración .puppeteerrc.cjs
-            Además cuando se hagan los deploy de estas Clouds, hay que eliminarlas primero en Firebase antes de hacer el deploy
-            Si vuelve a dar error, borramos la carpeta .cache, node_modules, hacemos npm install, borramos la Cloud en Firebase y volvemos a hacer el deploy
-*/         
-// TODO: Probar a hacer todo el scraping con la librería Playwright que es más actual y eficiente que Puppeteer
+      
 // Web Scraping
 exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).pubsub.topic('scrappingFormacionCamaraToledo').onPublish(async (message) => {
     const browser = await playwright.launch({
@@ -2264,7 +2258,8 @@ exports.extractResourcesFromFormacionCamaraToledo = functions.runWith(options).p
             await page.goBack();
         }
     }
-    browser.close();
+    await context.close();
+    await browser.close();
 });
 
 exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubsub.topic('scrappingEmpleoCamaraToledo').onPublish(async (message) => {
@@ -2335,7 +2330,8 @@ exports.extractResourcesFromEmpleoCamaraToledo = functions.runWith(options).pubs
             console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
         }
     }
-    browser.close();
+    await context.close();
+    await browser.close();
 });
 
 exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scrappingIPETA').onPublish(async (message) => {
@@ -2416,7 +2412,7 @@ exports.extractResourcesFromIPETA = functions.runWith(options).pubsub.topic('scr
             console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
         }
     }
-  
+    await context.close();
     await browser.close();
 });
 
@@ -2533,7 +2529,7 @@ exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scra
             console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
         }
     }
-
+    await context.close();
     await browser.close();
 });
 
@@ -2671,172 +2667,152 @@ exports.extractEmployabilityFromSEPE = functions.runWith(options).pubsub.topic('
         julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
       };
 
-    const browser = await puppeteer.launch({
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
- 
-    const page = await browser.newPage();
-    await page.emulateTimezone('Atlantic/Canary');
+      const browser = await playwright.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true, //chromium.headless,
+      });
+    const context = await browser.newContext();
+    const page = await context.newPage();
     await page.goto('https://www3.gobiernodecanarias.org/empleo/infotemporal/infotemporales');
-    await page.waitForSelector('.element.ng-star-inserted');
-    const jobCards = await page.$$('.element.ng-star-inserted');
+    await page.waitForSelector('.element.ng-star-inserted', {state: 'attached'});
+    const jobCards = await page.locator('.element.ng-star-inserted').all();
     console.log(`Nº de ofertas: ${jobCards.length}`);
-    for (let i = 0; i < jobCards.length; i++) {
-            let jobCard = jobCards[i];
-            var jobID = '';
-            var modality = 'Presencial';
-            var jobDescription = '';
-            var jobLocation = '';
-            var jobDuration = 'Indefinido';
-            var startDate = Date.now();
 
-            const buttons = await jobCard.$$('button');
-            const lastButton = buttons[buttons.length - 1];
-            await lastButton.evaluate(b => b.click());
-            await setTimeout(1000);
+    for (const jobCard of jobCards) {
+        var jobID = '';
+        var modality = 'Presencial';
+        var jobDescription = '';
+        var jobLocation = '';
+        var jobDuration = 'Indefinido';
+        var startDate = Date.now();
 
-            const titleElement = await jobCard.$('.title');
-            const jobTitle = await titleElement.evaluate(element => element.textContent);
-            //console.log(`TÍTULO: ${jobTitle}`);
+        await jobCard.getByRole('button').last().click();
+        const jobTitle = await jobCard.locator('.title').innerText();
+        //console.log(`TÍTULO: ${jobTitle}`);
             
-            const modalitySpan = await jobCard.$x('.//span[contains(text(), "resencial")]');
-            modality = await modalitySpan[0].evaluate(element => element.textContent);
-            modality = modality.trim();
-            if (modality === 'No Presencial') {
-                modality = 'Online';
-            }
-            //console.log(`MODALIDAD: ${modality}`);
+        modality = await jobCard.getByText('resencial').first().innerText();
+        if (modality === 'No Presencial') {
+            modality = 'Online';
+        }
+        //console.log(`MODALIDAD: ${modality}`);
 
-            const descriptionDiv = await jobCard.$x('.//div[b[contains(text(), "Descripción:")]]');
-            const descriptionSpan = await descriptionDiv[0].$('span');
-            jobDescription = await descriptionSpan.evaluate(element => element.textContent);
-            //console.log(`DESCRIPCIÓN: ${jobDescription}`);
+        const descriptionDivText = await jobCard.getByText('Descripción:').locator('..').innerText();
+        jobDescription = descriptionDivText.split("Descripción:")[1].trim();
+        //console.log(`DESCRIPCIÓN: ${jobDescription}`);
 
-            const durationDiv = await jobCard.$x('.//div[b[contains(text(), "Duración:")]]');
-            jobDuration = await durationDiv[0].evaluate(element => element.textContent);
-            jobDuration = jobDuration.split(':')[1].trim();
-            //console.log(`DURACIÓN: ${jobDuration}`);
+        const durationDivText = await jobCard.getByText('Duración:').locator('..').last().innerText();
+        jobDuration = durationDivText.split("Duración:")[1].trim();
+        //console.log(`DURACIÓN: ${jobDuration}`);
 
-            let maxDateDiv = await jobCard.$x('.//div[b[contains(text(), "Fecha límite de inscripción:")]]');
-            var maximumDateString = await maxDateDiv[0].evaluate(element => { 
-                element.removeChild(element.firstChild); 
-                return element.textContent.trim();
-            });
-            var dateSplit = maximumDateString.split(' ');
-            var day = parseInt(dateSplit[1]);
-            var month = months[dateSplit[3].toLowerCase()];
-            var year = parseInt(dateSplit[5]);
-            const maximumDate = new Date(year, month, day, 23, 59, 0);
-            //console.log(`FECHA LÍMITE: ${maximumDate}`);
+        let maxDateDivText = await jobCard.getByText('Fecha límite de inscripción:').locator('..').innerText();
+        var maximumDateString = maxDateDivText.split("Fecha límite de inscripción:")[1].trim();
+        var dateSplit = maximumDateString.split(' ');
+        var day = parseInt(dateSplit[1]);
+        var month = months[dateSplit[3].toLowerCase()];
+        var year = parseInt(dateSplit[5]);
+        const maximumDate = new Date(year, month, day, 23, 59, 0);
+        //console.log(`FECHA LÍMITE: ${maximumDate}`);
 
             
-            const startDateDiv = await jobCard.$x('.//div[b[contains(text(), "Fecha de inicio:")]]');
-            var startDateString = await startDateDiv[0].evaluate(element => { 
-                element.removeChild(element.firstChild); 
-                return element.textContent.trim();
-            });
-            dateSplit = startDateString.split(' ');
-            day = parseInt(dateSplit[1]);
-            month = months[dateSplit[3].toLowerCase()];
-            year = parseInt(dateSplit[5]);
-            startDate = new Date(year, month, day, 23, 59, 0);
-            //console.log(`FECHA INICIO: ${startDate}`);
+        const startDateDivText = await jobCard.getByText('Fecha de inicio:').locator('..').innerText();
+        var startDateString = startDateDivText.split("Fecha de inicio:")[1].trim();
+        dateSplit = startDateString.split(' ');
+        day = parseInt(dateSplit[1]);
+        month = months[dateSplit[3].toLowerCase()];
+        year = parseInt(dateSplit[5]);
+        startDate = new Date(year, month, day, 23, 59, 0);
+        //console.log(`FECHA INICIO: ${startDate}`);
 
-            const endDateDiv = await jobCard.$x('.//div[b[contains(text(), "Fecha final:")]]');
-            var endDateString = await endDateDiv[0].evaluate(element => { 
-                element.removeChild(element.firstChild); 
-                return element.textContent.trim();
-            });
-            dateSplit = endDateString.split(' ');
-            day = parseInt(dateSplit[1]);
-            month = months[dateSplit[3].toLowerCase()];
-            year = parseInt(dateSplit[5]);
-            var endDate = maximumDate;
-            endDate = new Date(year, month, day, 23, 59, 0);
-            //console.log(`FECHA FINAL: ${endDate}`);
+        const endDateDivText = await jobCard.getByText('Fecha final:').locator('..').innerText();
+        var endDateString = endDateDivText.split("Fecha final:")[1].trim();
+        dateSplit = endDateString.split(' ');
+        day = parseInt(dateSplit[1]);
+        month = months[dateSplit[3].toLowerCase()];
+        year = parseInt(dateSplit[5]);
+        var endDate = maximumDate;
+        endDate = new Date(year, month, day, 23, 59, 0);
+        //console.log(`FECHA FINAL: ${endDate}`);
 
-            var provinceId = "mi3tu6DK1GU4yZIQJ1dZ";
-            var cityId = "U39M922HHR5FEVJtN3hN";
-            if (modality === 'Presencial') {
-                var island = '';
-                const locationDiv = await jobCard.$x('.//div[b[contains(text(), "Isla")]]');
-                const locationButton = await locationDiv[0].$('button');
-                if (locationButton) {
-                    await locationButton.evaluate(b => b.click());
-                    await setTimeout(1000);
-                    const dialog = await page.$('tbody');
-                    const tdElements = await dialog.$$('td');
-                    island = await tdElements[0].evaluate(element => element.textContent.trim());
-                } else {
-                    jobLocation = await locationDiv[0].evaluate(element => element.textContent);
-                    jobLocation = jobLocation.split(':')[1].trim();
-                    island = jobLocation.split("/")[0].trim().toUpperCase();
-                    jobLocation = jobLocation.split("/")[1].trim();
-                }
-                //console.log(`LOCALIZACIÓN: ${island} --> ${jobLocation}`);
-                
-                if (island === 'TENERIFE' || island === 'LA GOMERA' || island === 'EL HIERRO' || island === 'LA PALMA') {
-                    provinceId = "XFtEq16heJenhrEid57m";
-                    cityId = 'RtnVLp0Ziuu5jYHVTyzM';
-                }
-            }
-            
-            
-            jobID = `sepeemp_${jobTitle}_${startDate.toLocaleDateString('es-ES')}`;
-            console.log(`JOB ID: ${jobID}`);
-            // No hay link especfico para cada recurso
-            let jobLink = 'https://www.gobiernodecanarias.org/empleo/sce/principal/areas_tematicas/empleo/orientacion_para_el_empleo/acciones_de_la_red_de_empleabilidad_canaria.html';
-            let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-            var jobCapacity = 99;   
-    
-            let jobOffer = {
-                address: {
-                    // TODO: Ahora mismo solo guarda Las Palmas o Sta. Cruz, en la Base de Datos faltarían muchísimas ciudades
-                    city: cityId, 
-                    country: "i0GHKqdCWBYeAYcAMa7I",
-                    place: jobLocation, 
-                    province: provinceId,
-                },
-                assistants: 0,
-                capacity: jobCapacity, 
-                contractType: "",
-                createdate: adminFirebase.firestore.Timestamp.now(),
-                createdby: "Web scrapping",
-                description: jobDescription,
-                duration: 'Indefinido',
-                enable: true,
-                end: endDate, 
-                interests: [],
-                lastupdate: adminFirebase.firestore.Timestamp.now(),
-                link: jobLink,
-                maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-                modality: modality,
-                notExpire: true,
-                online: false,
-                organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
-                organizerType: "Organización",
-                resourceCategory: "6ag9Px7zkFpHgRe17PQk",
-                resourcePhoto: randomImage,
-                resourceType: "N9KdlBYmxUp82gOv8oJC",
-                salary: "", 
-                start: startDate, 
-                status: "Disponible",
-                title: jobTitle,
-                trust: true,
-                updatedby: "Web scrapping",
-                scrappingId: jobID,
-            };
-    
-            const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
-            if (query.empty) {
-                console.log(`Insertando recurso ${jobTitle}`);
-                db.collection("resources").add(jobOffer);
+        var provinceId = "mi3tu6DK1GU4yZIQJ1dZ";
+        var cityId = "U39M922HHR5FEVJtN3hN";
+        if (modality === 'Presencial') {
+            var island = '';
+            const locationDivButton = jobCard.getByText('Isla').first().locator('..').getByRole('button');
+            const locationDivButtonCount = await locationDivButton.count();
+            if (locationDivButtonCount > 0) {
+                await locationDivButton.click();
+                island = await page.getByRole('dialog').locator('td').first().innerText();
+                await page.getByRole('dialog').getByRole('button').click();
             } else {
-                searching = false;
+                jobLocation = await jobCard.getByText('Isla').first().locator('..').innerText();
+                jobLocation = jobLocation.split(':')[1].trim();
+                island = jobLocation.split("/")[0].trim().toUpperCase();
+                jobLocation = jobLocation.split("/")[1].trim();
             }
-    }
+            //console.log(`LOCALIZACIÓN: ${island} --> ${jobLocation}`);
+                
+            if (island === 'TENERIFE' || island === 'LA GOMERA' || island === 'EL HIERRO' || island === 'LA PALMA') {
+                provinceId = "XFtEq16heJenhrEid57m";
+                cityId = 'RtnVLp0Ziuu5jYHVTyzM';
+            }
+        }
+            
+            
+        jobID = `sepeemp_${jobTitle}_${startDate.toLocaleDateString('es-ES', {timeZone: 'Atlantic/Canary', })}`;
+        //console.log(`JOB ID: ${jobID}`);
+        // No hay link especfico para cada recurso
+        let jobLink = 'https://www.gobiernodecanarias.org/empleo/sce/principal/areas_tematicas/empleo/orientacion_para_el_empleo/acciones_de_la_red_de_empleabilidad_canaria.html';
+        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
+        var jobCapacity = 99;   
+    
+        let jobOffer = {
+            address: {
+                // TODO: Ahora mismo solo guarda Las Palmas o Sta. Cruz, en la Base de Datos faltarían muchísimas ciudades
+                city: cityId,
+                country: "i0GHKqdCWBYeAYcAMa7I",
+                place: jobLocation,
+                province: provinceId,
+            },
+            assistants: 0,
+            capacity: jobCapacity,
+            contractType: "",
+            createdate: adminFirebase.firestore.Timestamp.now(),
+            createdby: "Web scrapping",
+            description: jobDescription,
+            duration: 'Indefinido',
+            enable: true,
+            end: endDate,
+            interests: [],
+            lastupdate: adminFirebase.firestore.Timestamp.now(),
+            link: jobLink,
+            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
+            modality: modality,
+            notExpire: true,
+            online: false,
+            organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
+            organizerType: "Organización",
+            resourceCategory: "6ag9Px7zkFpHgRe17PQk",
+            resourcePhoto: randomImage,
+            resourceType: "N9KdlBYmxUp82gOv8oJC",
+            salary: "",
+            start: startDate,
+            status: "Disponible",
+            title: jobTitle,
+            trust: true,
+            updatedby: "Web scrapping",
+            scrappingId: jobID,
+        };
 
+        const query = await db.collection("resources").where("scrappingId", "==", jobID).get();
+        if (query.empty) {
+            console.log(`Insertando recurso ${jobTitle}`);
+            db.collection("resources").add(jobOffer);
+        } else {
+            console.log(`No se insertó el recurso duplicado: ${jobTitle}`);
+        }
+    }
+    await context.close();
     await browser.close();
   });
 
