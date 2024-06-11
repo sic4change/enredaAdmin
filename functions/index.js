@@ -2443,7 +2443,7 @@ exports.extractResourcesFromSPEG = functions.runWith(options).pubsub.topic('scra
         if (jobLink && jobLink.startsWith('https://www.spegc.org/formacion-y-eventos/')) { 
             await jobCard.locator('.spegc-event-details a').click();
             const descriptionDiv = await page.locator('article > div').all();
-            jobDescription = await descriptionDiv[3].allInnerTexts();
+            jobDescription = await descriptionDiv[3].innerText();
 
             const postId = await page.getByRole('article').getAttribute('id');
             jobID = `spegc_${postId.split('-')[1]}`;
