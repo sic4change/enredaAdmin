@@ -966,378 +966,124 @@ exports.sendEmailNewUsers = functions.firestore
 
 function createWelcomeToUserTemplate(name, email, password) {
     const contactToUserTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
-<head>
-<meta charset="UTF-8">
-<meta content="width=device-width, initial-scale=1" name="viewport">
-<meta name="x-apple-disable-message-reformatting">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta content="telephone=no" name="format-detection">
-<title>New user email</title><!--[if (mso 16)]>
-<style type="text/css">
-a {text-decoration: none;}
-</style>
-<![endif]--><!--[if gte mso 9]><style>sup { font-size: 100% !important; }</style><![endif]--><!--[if gte mso 9]>
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
+ <head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta content="telephone=no" name="format-detection">
+  <title>nuevo email</title><!--[if (mso 16)]>
+    <style type="text/css">
+    a {text-decoration: none;}
+    </style>
+    <![endif]--><!--[if gte mso 9]><style>sup { font-size: 100% !important; }</style><![endif]--><!--[if gte mso 9]>
 <xml>
-<o:OfficeDocumentSettings>
-<o:AllowPNG></o:AllowPNG>
-<o:PixelsPerInch>96</o:PixelsPerInch>
-</o:OfficeDocumentSettings>
+    <o:OfficeDocumentSettings>
+    <o:AllowPNG></o:AllowPNG>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
 </xml>
 <![endif]-->
-<style type="text/css">
+  <style type="text/css">
 #outlook a {
-padding:0;
-}
-.ExternalClass {
-width:100%;
-}
-.ExternalClass,
-.ExternalClass p,
-.ExternalClass span,
-.ExternalClass font,
-.ExternalClass td,
-.ExternalClass div {
-line-height:100%;
+	padding:0;
 }
 .es-button {
-mso-style-priority:100!important;
-text-decoration:none!important;
+	mso-style-priority:100!important;
+	text-decoration:none!important;
 }
 a[x-apple-data-detectors] {
-color:inherit!important;
-text-decoration:none!important;
-font-size:inherit!important;
-font-family:inherit!important;
-font-weight:inherit!important;
-line-height:inherit!important;
+	color:inherit!important;
+	text-decoration:none!important;
+	font-size:inherit!important;
+	font-family:inherit!important;
+	font-weight:inherit!important;
+	line-height:inherit!important;
 }
 .es-desk-hidden {
-display:none;
-float:left;
-overflow:hidden;
-width:0;
-max-height:0;
-line-height:0;
-mso-hide:all;
+	display:none;
+	float:left;
+	overflow:hidden;
+	width:0;
+	max-height:0;
+	line-height:0;
+	mso-hide:all;
 }
-[data-ogsb] .es-button {
-border-width:0!important;
-padding:10px 20px 10px 20px!important;
-}
-[data-ogsb] .es-button.es-button-1 {
-padding:15px 30px!important;
-}
-@media only screen and (max-width:600px) {p, ul li, ol li, a { line-height:150%!important } h1, h2, h3, h1 a, h2 a, h3 a { line-height:120%!important } h1 { font-size:30px!important; text-align:center } h2 { font-size:22px!important; text-align:center } h3 { font-size:20px!important; text-align:center } .es-header-body h1 a, .es-content-body h1 a, .es-footer-body h1 a { font-size:30px!important } .es-header-body h2 a, .es-content-body h2 a, .es-footer-body h2 a { font-size:22px!important } .es-header-body h3 a, .es-content-body h3 a, .es-footer-body h3 a { font-size:20px!important } .es-menu td a { font-size:14px!important } .es-header-body p, .es-header-body ul li, .es-header-body ol li, .es-header-body a { font-size:14px!important } .es-content-body p, .es-content-body ul li, .es-content-body ol li, .es-content-body a { font-size:16px!important } .es-footer-body p, .es-footer-body ul li, .es-footer-body ol li, .es-footer-body a { font-size:12px!important } .es-infoblock p, .es-infoblock ul li, .es-infoblock ol li, .es-infoblock a { font-size:12px!important } *[class="gmail-fix"] { display:none!important } .es-m-txt-c, .es-m-txt-c h1, .es-m-txt-c h2, .es-m-txt-c h3 { text-align:center!important } .es-m-txt-r, .es-m-txt-r h1, .es-m-txt-r h2, .es-m-txt-r h3 { text-align:right!important } .es-m-txt-l, .es-m-txt-l h1, .es-m-txt-l h2, .es-m-txt-l h3 { text-align:left!important } .es-m-txt-r img, .es-m-txt-c img, .es-m-txt-l img { display:inline!important } .es-button-border { display:block!important } a.es-button, button.es-button { font-size:20px!important; display:block!important; border-left-width:0px!important; border-right-width:0px!important } .es-btn-fw { border-width:10px 0px!important; text-align:center!important } .es-adaptive table, .es-btn-fw, .es-btn-fw-brdr, .es-left, .es-right { width:100%!important } .es-content table, .es-header table, .es-footer table, .es-content, .es-footer, .es-header { width:100%!important; max-width:600px!important } .es-adapt-td { display:block!important; width:100%!important } .adapt-img { width:100%!important; height:auto!important } .es-m-p0 { padding:0px!important } .es-m-p0r { padding-right:0px!important } .es-m-p0l { padding-left:0px!important } .es-m-p0t { padding-top:0px!important } .es-m-p0b { padding-bottom:0!important } .es-m-p20b { padding-bottom:20px!important } .es-mobile-hidden, .es-hidden { display:none!important } tr.es-desk-hidden, td.es-desk-hidden, table.es-desk-hidden { width:auto!important; overflow:visible!important; float:none!important; max-height:inherit!important; line-height:inherit!important } tr.es-desk-hidden { display:table-row!important } table.es-desk-hidden { display:table!important } td.es-desk-menu-hidden { display:table-cell!important } .es-menu td { width:1%!important } table.es-table-not-adapt, .esd-block-html table { width:auto!important } table.es-social { display:inline-block!important } table.es-social td { display:inline-block!important } .es-desk-hidden { display:table-row!important; width:auto!important; overflow:visible!important; max-height:inherit!important } }
+a { color: inherit; }     
+@media only screen and (max-width:600px) {p, ul li, ol li, a { line-height:150%!important } h1, h2, h3, h1 a, h2 a, h3 a { line-height:120% } h1 { font-size:36px!important; text-align:left } h2 { font-size:26px!important; text-align:left } h3 { font-size:20px!important; text-align:left } .es-header-body h1 a, .es-content-body h1 a, .es-footer-body h1 a { font-size:36px!important; text-align:left } .es-header-body h2 a, .es-content-body h2 a, .es-footer-body h2 a { font-size:26px!important; text-align:left } .es-header-body h3 a, .es-content-body h3 a, .es-footer-body h3 a { font-size:20px!important; text-align:left } .es-menu td a { font-size:12px!important } .es-header-body p, .es-header-body ul li, .es-header-body ol li, .es-header-body a { font-size:14px!important } .es-content-body p, .es-content-body ul li, .es-content-body ol li, .es-content-body a { font-size:16px!important } .es-footer-body p, .es-footer-body ul li, .es-footer-body ol li, .es-footer-body a { font-size:14px!important } .es-infoblock p, .es-infoblock ul li, .es-infoblock ol li, .es-infoblock a { font-size:12px!important } *[class="gmail-fix"] { display:none!important } .es-m-txt-c, .es-m-txt-c h1, .es-m-txt-c h2, .es-m-txt-c h3 { text-align:center!important } .es-m-txt-r, .es-m-txt-r h1, .es-m-txt-r h2, .es-m-txt-r h3 { text-align:right!important } .es-m-txt-l, .es-m-txt-l h1, .es-m-txt-l h2, .es-m-txt-l h3 { text-align:left!important } .es-m-txt-r img, .es-m-txt-c img, .es-m-txt-l img { display:inline!important } .es-button-border { display:inline-block!important } a.es-button, button.es-button { font-size:20px!important; display:inline-block!important } .es-adaptive table, .es-left, .es-right { width:100%!important } .es-content table, .es-header table, .es-footer table, .es-content, .es-footer, .es-header { width:100%!important; max-width:600px!important } .es-adapt-td { display:block!important; width:100%!important } .adapt-img { width:100%!important; height:auto!important } .es-m-p0 { padding:0!important } .es-m-p0r { padding-right:0!important } .es-m-p0l { padding-left:0!important } .es-m-p0t { padding-top:0!important } .es-m-p0b { padding-bottom:0!important } .es-m-p20b { padding-bottom:20px!important } .es-mobile-hidden, .es-hidden { display:none!important } tr.es-desk-hidden, td.es-desk-hidden, table.es-desk-hidden { width:auto!important; overflow:visible!important; float:none!important; max-height:inherit!important; line-height:inherit!important } tr.es-desk-hidden { display:table-row!important } table.es-desk-hidden { display:table!important } td.es-desk-menu-hidden { display:table-cell!important } .es-menu td { width:1%!important } table.es-table-not-adapt, .esd-block-html table { width:auto!important } table.es-social { display:inline-block!important } table.es-social td { display:inline-block!important } .es-m-p5 { padding:5px!important } .es-m-p5t { padding-top:5px!important } .es-m-p5b { padding-bottom:5px!important } .es-m-p5r { padding-right:5px!important } .es-m-p5l { padding-left:5px!important } .es-m-p10 { padding:10px!important } .es-m-p10t { padding-top:10px!important } .es-m-p10b { padding-bottom:10px!important } .es-m-p10r { padding-right:10px!important } .es-m-p10l { padding-left:10px!important } .es-m-p15 { padding:15px!important } .es-m-p15t { padding-top:15px!important } .es-m-p15b { padding-bottom:15px!important } .es-m-p15r { padding-right:15px!important } .es-m-p15l { padding-left:15px!important } .es-m-p20 { padding:20px!important } .es-m-p20t { padding-top:20px!important } .es-m-p20r { padding-right:20px!important } .es-m-p20l { padding-left:20px!important } .es-m-p25 { padding:25px!important } .es-m-p25t { padding-top:25px!important } .es-m-p25b { padding-bottom:25px!important } .es-m-p25r { padding-right:25px!important } .es-m-p25l { padding-left:25px!important } .es-m-p30 { padding:30px!important } .es-m-p30t { padding-top:30px!important } .es-m-p30b { padding-bottom:30px!important } .es-m-p30r { padding-right:30px!important } .es-m-p30l { padding-left:30px!important } .es-m-p35 { padding:35px!important } .es-m-p35t { padding-top:35px!important } .es-m-p35b { padding-bottom:35px!important } .es-m-p35r { padding-right:35px!important } .es-m-p35l { padding-left:35px!important } .es-m-p40 { padding:40px!important } .es-m-p40t { padding-top:40px!important } .es-m-p40b { padding-bottom:40px!important } .es-m-p40r { padding-right:40px!important } .es-m-p40l { padding-left:40px!important } .es-desk-hidden { display:table-row!important; width:auto!important; overflow:visible!important; max-height:inherit!important } .h-auto { height:auto!important } }
+@media screen and (max-width:384px) {.mail-message-content { width:414px!important } }
 </style>
-</head>
-<body style="width:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;font-family:arial, 'helvetica neue', helvetica, sans-serif;padding:0;Margin:0">
-<div class="es-wrapper-color" style="background-color:#F6F6F6"><!--[if gte mso 9]>
-<v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
-<v:fill type="tile" color="#f6f6f6"></v:fill>
-</v:background>
-<![endif]-->
-<table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:no-repeat;background-position:center top;background-color:#F6F6F6">
-<tr style="border-collapse:collapse">
-<td valign="top" style="padding:0;Margin:0">
-<table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-<tr style="border-collapse:collapse">
-<td align="center" bgcolor="#ffffff" style="padding:0;Margin:0;background-color:#ffffff">
-<table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#ffffff;width:600px" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center">
-<tr style="border-collapse:collapse">
-<td align="left" style="padding:0;Margin:0">
-<table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;width:600px">
-<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td align="center" style="padding:0;Margin:0;padding-top:40px;padding-bottom:40px;font-size:0px"><a href="https://www.enredas.org/" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#6AA84F;font-size:14px"><img src="https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/images%2Fenreda-logo_900x503.png?alt=media&token=c2dd6abb-d60a-46df-adf5-0c93849f12ce" alt="Enreda" title="Enreda" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" class="adapt-img" height="38"></a></td>
-</tr>
-<tr style="border-collapse:collapse">
-<td align="center" style="padding:15px;Margin:0;font-size:0px"><a href="https://www.enredas.org/" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#6AA84F;font-size:14px"><img src="https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/images%2Filustracion-email_900x503.png?alt=media&token=64c5ec16-dba7-4dd9-a54c-b94ec90327db" alt="Enreda" title="Enreda" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" class="adapt-img" width="570"></a></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table>
-<table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-<tr style="border-collapse:collapse">
-<td align="center" bgcolor="#ffffff" style="padding:0;Margin:0;background-color:#ffffff">
-<table class="es-content-body" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">
-<tr style="border-collapse:collapse">
-<td align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-bottom:30px;padding-top:40px">
-<table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td align="center" style="padding:0;Margin:0;padding-bottom:5px"><h2 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:30px;font-style:normal;font-weight:normal;color:#333333;text-align:left"><strong>¡Hola ${name}!</strong></h2></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-<tr style="border-collapse:collapse">
-<td align="left" style="padding:0;Margin:0;padding-bottom:10px;padding-left:20px;padding-right:20px">
-<table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td align="left" style="padding:0;Margin:0;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:24px;color:#333333;font-size:16px">Te informamos de que te has registrado exitosamente en el programa <strong>enREDa.</strong><br><br>Debes acceder con tu email:&nbsp;<strong><a href="mailto:${email}" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#0b5394;font-size:14px"><strong>${email}</strong></a></strong><br>Además, hemos establecido para ti&nbsp;la contraseña por defecto:&nbsp;<strong>${password}</strong><br>Una vez que inicies sesión, te recomendamos que la cambies.<br><br>Gracias.</p></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table>
-<table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-<tr style="border-collapse:collapse">
-<td align="center" bgcolor="#ffffff" style="padding:0;Margin:0;background-color:#ffffff">
-<table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#efefef;width:600px" cellspacing="0" cellpadding="0" bgcolor="#efefef" align="center">
-<tr style="border-collapse:collapse">
-<td align="left" bgcolor="#ffffff" style="padding:0;Margin:0;padding-left:20px;padding-right:20px;padding-bottom:40px;background-color:#ffffff">
-<table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td align="left" style="padding:0;Margin:0;padding-top:10px"><!--[if mso]><a href="https://enredawebapp.web.app/access" target="_blank" hidden>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="https://enredawebapp.web.app/access"
-style="height:49px; v-text-anchor:middle; width:161px" arcsize="31%" stroke="f" fillcolor="#00d0ce">
-<w:anchorlock></w:anchorlock>
-<center style='color:#ffffff; font-family:arial, "helvetica neue", helvetica, "sans-serif"; font-size:16px; font-weight:400; line-height:16px; mso-text-raise:1px'>IR A ENREDA</center>
-</v:roundrect></a>
-<![endif]--><!--[if !mso]><!-- --><span class="msohide es-button-border" style="border-style:solid;border-color:#FFFFFF;background:#00d0ce;border-width:0px;display:inline-block;border-radius:15px;width:auto;mso-hide:all"><a href="https://enredawebapp.web.app/access" class="es-button es-button-1" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:16px;border-style:solid;border-color:#00d0ce;border-width:15px 30px;display:inline-block;background:#00d0ce;border-radius:15px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:19px;width:auto;text-align:center">IR A ENREDA</a></span><!--<![endif]--></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table>
-<table cellpadding="0" cellspacing="0" class="es-footer" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%;background-color:transparent;background-repeat:repeat;background-position:center top">
-<tr style="border-collapse:collapse">
-<td align="center" bgcolor="#ffffff" style="padding:0;Margin:0;background-color:#ffffff">
-<table class="es-footer-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#efefef;width:600px" cellspacing="0" cellpadding="0" bgcolor="#efefef" align="center">
-<tr style="border-collapse:collapse">
-<td align="left" bgcolor="#ffffff" style="Margin:0;padding-top:10px;padding-bottom:10px;padding-left:20px;padding-right:20px;background-color:#ffffff">
-<table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td align="center" style="padding:0;Margin:0;font-size:0">
-<table class="es-table-not-adapt es-social" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;padding-right:20px"><a target="_blank" href="https://www.facebook.com/sic4change" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Facebook" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/circle-gray-bordered/facebook-circle-gray-bordered.png" alt="Fb" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-<td valign="top" align="center" style="padding:0;Margin:0;padding-right:20px"><a target="_blank" href="https://twitter.com/sic4change?lang=es" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Twitter" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/circle-gray-bordered/twitter-circle-gray-bordered.png" alt="Tw" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-<td valign="top" align="center" style="padding:0;Margin:0;padding-right:20px"><a target="_blank" href="https://www.linkedin.com/company/sic4change/" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Instagram" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/circle-gray-bordered/instagram-circle-gray-bordered.png" alt="Inst" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-<td valign="top" align="center" style="padding:0;Margin:0;padding-right:10px"><a target="_blank" href="https://www.youtube.com/@sic4change315" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Youtube" src="https://aouuxs.stripocdn.email/content/assets/img/social-icons/circle-gray-bordered/youtube-circle-gray-bordered.png" alt="Yt" height="32" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table>
-<table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-<tr style="border-collapse:collapse">
-<td align="center" bgcolor="#ffffff" style="padding:0;Margin:0;background-color:#ffffff">
-<table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" cellspacing="0" cellpadding="0" align="center">
-<tr style="border-collapse:collapse">
-<td align="left" style="Margin:0;padding-top:10px;padding-bottom:10px;padding-left:20px;padding-right:20px">
-<table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-<tr style="border-collapse:collapse">
-<td class="es-infoblock made_with" align="center" style="padding:0;Margin:0;line-height:0px;font-size:0px;color:#CCCCCC"><a target="_blank" href="https://www.sic4change.org/" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"><img src="https://aouuxs.stripocdn.email/content/guids/CABINET_eb22ad32fbf982ad465230d9976cf211/images/sic4changec.png" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="125"></a></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table></td>
-</tr>
-</table>
-</div>
-</body>
+ </head>
+ <body style="width:100%;font-family:arial, 'helvetica neue', helvetica, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
+  <div dir="ltr" class="es-wrapper-color" lang="es" style="background-color:#FAFAFA"><!--[if gte mso 9]>
+			<v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
+				<v:fill type="tile" color="#fafafa"></v:fill>
+			</v:background>
+		<![endif]-->
+   <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#FAFAFA">
+     <tr>
+      <td valign="top" style="padding:0;Margin:0">
+       <table cellpadding="0" cellspacing="0" class="es-content" align="center" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
+         <tr>
+          <td align="center" style="padding:0;Margin:0">
+           <table bgcolor="#ffffff" class="es-content-body" align="center" cellpadding="0" cellspacing="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">
+             <tr>
+              <td align="left" bgcolor="#054D5E" style="padding:0;Margin:0;background-color:#054d5e;border-radius:20px">
+               <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                 <tr>
+                  <td align="center" valign="top" style="padding:0;Margin:0;width:600px">
+                   <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-radius:25px" role="presentation">
+                     <tr class="es-visible-simple-html-only">
+                      <td align="center" style="padding:0;Margin:0;padding-top:25px;font-size:0px"><img class="adapt-img" src="https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/images%2Fmailing-bienvenida.png?alt=media&amp;token=4e53355c-52bd-4ef1-895c-a85fd56bcadd" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="600"></td>
+                     </tr>
+                     <tr>
+                      <td align="center" class="es-m-txt-c" style="padding:0;Margin:0;padding-bottom:25px;padding-top:35px"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#ffffff"><strong>¡Hola ${name}!</strong></h1></td>
+                     </tr>
+                     <tr>
+                      <td align="left" style="Margin:0;padding-top:10px;padding-bottom:40px;padding-left:40px;padding-right:40px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px">Te informamos de que te has registrado exitosamente en el programa Enreda.</p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px"><br>Debes acceder con tu email <a>${email}</a></p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px">Además hemos establecido para ti la contraseña por defecto: ${password}</p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px"><br></p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px">Una vez que inicies sesión, te recomendamos que la cambies.</p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px"><br></p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#ffffff;font-size:14px">Gracias.</p></td>
+                     </tr>
+                     <tr>
+                      <td align="center" style="padding:25px;Margin:0"><span class="es-button-border" style="border-style:solid;border-color:#18c5c1;background:#18c5c1;border-width:2px;display:inline-block;border-radius:25px;width:auto"><a href="https://enredawebapp.web.app/" class="es-button es-button-1719310999593" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;padding:10px 30px;display:inline-block;background:#18c5c1;border-radius:25px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;mso-padding-alt:0;mso-border-alt:10px solid #18c5c1">Ir a Enreda</a></span></td>
+                     </tr>
+                     <tr>
+                      <td align="center" style="padding:0;Margin:0;padding-bottom:25px;padding-left:40px;padding-right:40px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:18px;color:#ffffff;font-size:12px">El equipo de Enreda</p></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+       <table cellpadding="0" cellspacing="0" class="es-footer" align="center" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%;background-color:transparent;background-repeat:repeat;background-position:center top">
+         <tr>
+          <td align="center" style="padding:0;Margin:0">
+           <table class="es-footer-body" align="center" cellpadding="0" cellspacing="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" role="none">
+             <tr>
+              <td align="left" style="padding:20px;Margin:0">
+               <table cellspacing="0" cellpadding="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                 <tr>
+                  <td align="center" style="padding:0;Margin:0;width:560px">
+                   <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                     <tr>
+                      <td class="es-m-p0l" align="center" style="padding:0;Margin:0;font-size:0px"><img src="https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/images%2Flogo-s4c-sec.png?alt=media&amp;token=2e09f421-62dd-4381-af4f-ec7ef95f2b55" alt width="98" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table></td>
+     </tr>
+   </table>
+  </div>
+ </body>
 </html>`;
     return contactToUserTemplate;
 }
 
-// function createWelcomeToUserTemplate(name, email, password) {
-//     const contactToUserTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD
-// XHTML 1.0 Strict//EN"
-// "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html
-// data-editor-version="2" class="sg-campaigns"
-// xmlns="http://www.w3.org/1999/xhtml">     <head>       <meta
-// http-equiv="Content-Type" content="text/html; charset=utf-8">
-// <meta name="viewport" content="width=device-width, initial-scale=1,
-// minimum-scale=1, maximum-scale=1">       <!--[if !mso]><!-->       <meta
-// http-equiv="X-UA-Compatible" content="IE=Edge">       <!--<![endif]-->
-//      <!--[if (gte mso 9)|(IE)]>       <xml>
-// <o:OfficeDocumentSettings>           <o:AllowPNG/>
-// <o:PixelsPerInch>96</o:PixelsPerInch>
-// </o:OfficeDocumentSettings>       </xml>       <![endif]-->
-// <!--[if (gte mso 9)|(IE)]>   <style type="text/css">     body {width:
-// 600px;margin: 0 auto;}     table {border-collapse: collapse;}     table,
-// td {mso-table-lspace: 0pt;mso-table-rspace: 0pt;}     img
-// {-ms-interpolation-mode: bicubic;}   </style> <![endif]-->       <style
-// type="text/css">     body, p, div {       font-family:
-// verdana,geneva,sans-serif;       font-size: 16px;     }     body {
-// color: #516775;     }     body a {       color: #993300;
-// text-decoration: none;     }     p { margin: 0; padding: 0; }
-// table.wrapper {       width:100% !important;       table-layout: fixed;
-//       -webkit-font-smoothing: antialiased;
-// -webkit-text-size-adjust: 100%;       -moz-text-size-adjust: 100%;
-// -ms-text-size-adjust: 100%;     }     img.max-width {       max-width:
-// 100% !important;     }     .column.of-2 {       width: 50%;     }
-// .column.of-3 {       width: 33.333%;     }     .column.of-4 {
-// width: 25%;     }     @media screen and (max-width:480px) {
-// .preheader .rightColumnContent,       .footer .rightColumnContent {
-//     text-align: left !important;       }       .preheader
-// .rightColumnContent div,       .preheader .rightColumnContent span,
-//   .footer .rightColumnContent div,       .footer .rightColumnContent span
-// {         text-align: left !important;       }       .preheader
-// .rightColumnContent,       .preheader .leftColumnContent {
-// font-size: 80% !important;         padding: 5px 0;       }
-// table.wrapper-mobile {         width: 100% !important;
-// table-layout: fixed;       }       img.max-width {         height: auto
-// !important;         max-width: 100% !important;       }
-// a.bulletproof-button {         display: block !important;         width:
-// auto !important;         font-size: 80%;         padding-left: 0
-// !important;         padding-right: 0 !important;       }       .columns
-// {         width: 100% !important;       }       .column {
-// display: block !important;         width: 100% !important;
-// padding-left: 0 !important;         padding-right: 0 !important;
-// margin-left: 0 !important;         margin-right: 0 !important;       }
-//      .social-icon-column {         display: inline-block !important;
-//   }     }   </style>       <!--user entered Head Start-->       <!--End
-// Head user entered-->     </head>     <body>       <center
-// class="wrapper" data-link-color="#993300"
-// data-body-style="font-size:16px; font-family:verdana,geneva,sans-serif;
-// color:#516775; background-color:#F9F5F2;">         <div class="webkit">
-//           <table cellpadding="0" cellspacing="0" border="0" width="100%"
-// class="wrapper" bgcolor="#F9F5F2">             <tr>               <td
-// valign="top" bgcolor="#F9F5F2" width="100%">                 <table
-// width="100%" role="content-container" class="outer" align="center"
-// cellpadding="0" cellspacing="0" border="0">                   <tr>
-//                <td width="100%">                       <table
-// width="100%" cellpadding="0" cellspacing="0" border="0">
-//          <tr>                           <td>
-// <!--[if mso]>     <center>     <table><tr><td width="600">
-// <![endif]-->                                     <table width="100%"
-// cellpadding="0" cellspacing="0" border="0" style="width:100%;
-// max-width:600px;" align="center">
-// <tr>                                         <td
-// role="modules-container" style="padding:0px 0px 0px 0px; color:#516775;
-// text-align:left;" bgcolor="#F9F5F2" width="100%" align="left"><table
-// class="module preheader preheader-hide" role="module"
-// data-type="preheader" border="0" cellpadding="0" cellspacing="0"
-// width="100%" style="display: none !important; mso-hide: all; visibility:
-// hidden; opacity: 0; color: transparent; height: 0; width: 0;">     <tr>
-//       <td role="module-content">         <p></p>       </td>     </tr>
-// </table><table class="module" role="module" data-type="spacer"
-// border="0" cellpadding="0" cellspacing="0" width="100%"
-// style="table-layout: fixed;" data-muid="bdzDb4B4pnnez4W7L1KpxJ">
-// <tbody><tr>         <td style="padding:0px 0px 30px 0px;"
-// role="module-content" bgcolor="">         </td>       </tr>
-// </tbody></table><table class="wrapper" role="module" data-type="image"
-// border="0" cellpadding="0" cellspacing="0" width="100%"
-// style="table-layout: fixed;" data-muid="bKZJcGfRPJb7R2nzyp6ZB6">
-// <tbody><tr>         <td style="font-size:6px; line-height:10px;
-// padding:0px 0px 0px 0px;" valign="top" align="center">           <img
-// class="max-width" border="0" style="display:block; color:#000000;
-// text-decoration:none; font-family:Helvetica, arial, sans-serif;
-// font-size:16px; max-width:100% !important; width:100%; height:auto
-// !important;"
-// src="http://cdn.mcauto-images-production.sendgrid.net/c2af2ef38a422013/f122e378-4bec-41c0-9b33-a9525ee1efea/2048x1366.jpg"
-// alt="" width="600" data-responsive="true"
-// data-proportionally-constrained="false">         </td>       </tr>
-// </tbody></table><table class="module" role="module" data-type="text"
-// border="0" cellpadding="0" cellspacing="0" width="100%"
-// style="table-layout: fixed;" data-muid="gNWHzBzkFeWH4JDKd2Aikk"
-// data-mc-module-version="2019-10-22">       <tbody><tr>         <td
-// style="background-color:#ffffff; padding:50px 0px 10px 0px;
-// line-height:30px; text-align:inherit;" height="100%" valign="top"
-// bgcolor="#ffffff"><div><div style="font-family: inherit; text-align:
-// center"><span style="color: #516775; font-size: 28px; font-family:
-// georgia, serif"><strong>Hola
-// ${name}!</strong></span></div><div></div></div></td>       </tr>
-// </tbody></table><table class="module" role="module" data-type="text"
-// border="0" cellpadding="0" cellspacing="0" width="100%"
-// style="table-layout: fixed;" data-muid="bA2FfEE6abadx6yKoMr3F9"
-// data-mc-module-version="2019-10-22">       <tbody><tr>         <td
-// style="background-color:#ffffff; padding:10px 40px 50px 40px;
-// line-height:22px; text-align:inherit;" height="100%" valign="top"
-// bgcolor="#ffffff"><div><div style="font-family: inherit; text-align:
-// center"><span style="font-family: verdana, geneva, sans-serif">Te
-// informamos de que te has registrado exitosamente en el programa
-// enREDa.&nbsp;</span></div> <div style="font-family: inherit; text-align:
-// center">Debes acceder con tu email <strong>${email}</strong> . Además hemos establecido para tí la contraseña por defecto: <strong>${password}</strong> .
-// Una vez que inicies sesión, te recomendamos que la cambies.</div> <div style="font-family:
-// inherit; text-align: center">Gracias.</div><div></div></div></td>
-// </tr>     </tbody></table><table border="0" cellpadding="0"
-// cellspacing="0" class="module" data-role="module-button"
-// data-type="button" role="module" style="table-layout:fixed" width="100%"
-// data-muid="bKHWQMgPkL5opYCkxiM6aS"><tbody><tr><td align="center"
-// class="outer-td" style="padding:20px 0px 0px 0px;" bgcolor=""><table
-// border="0" cellpadding="0" cellspacing="0"
-// class="button-css__deep-table___2OZyb wrapper-mobile"
-// style="text-align:center"><tbody><tr><td align="center"
-// bgcolor="#993300" class="inner-td" style="border-radius:6px;
-// font-size:16px; text-align:center; background-color:inherit;"><a
-// style="background-color:#993300; border:1px solid #993300;
-// border-color:#993300; border-radius:0px; border-width:1px;
-// color:#ffffff; display:inline-block;
-// font-family:verdana,geneva,sans-serif; font-size:16px;
-// font-weight:normal; letter-spacing:1px; line-height:30px; padding:12px
-// 20px 12px 20px; text-align:center; text-decoration:none;
-// border-style:solid;" href='https://enreda-d3b41.firebaseapp.com'
-// target="_blank">Ir a enREDa</a></td></tr></tbody></table></td></tr></tbody></table><table
-// class="module" role="module" data-type="text" border="0" cellpadding="0"
-// cellspacing="0" width="100%" style="table-layout: fixed;"
-// data-muid="d21b8641-6eaf-4354-9938-61022423da11">     <tbody>       <tr>
-//          <td style="padding:18px 0px 18px 0px; line-height:22px;
-// text-align:inherit;" height="100%" valign="top" bgcolor=""
-// role="module-content"><div><div style="font-family: inherit; text-align:
-// center"><a 'href=https://www.enredaempleo.org'><span style="font-size:
-// 12px">El equipo de Enreda</span></a></div><div></div></div></td>
-// </tr>     </tbody>   </table><table class="module" role="module"
-// data-type="spacer" border="0" cellpadding="0" cellspacing="0"
-// width="100%" style="table-layout: fixed;"
-// data-muid="qkfYAswHNSwNpwb1p7m4gC">       <tbody><tr>         <td
-// style="padding:0px 0px 30px 0px;" role="module-content" bgcolor="">
-//     </td>       </tr>     </tbody></table><table class="module"
-// role="module" data-type="spacer" border="0" cellpadding="0"
-// cellspacing="0" width="100%" style="table-layout: fixed;"
-// data-muid="f5F8P1n4pQyU8o7DNMMEyW">       <tbody><tr>         <td
-// style="padding:0px 0px 30px 0px;" role="module-content" bgcolor="">
-//     </td>       </tr>     </tbody></table></td>
-//              </tr>                                     </table>
-//                            <!--[if mso]>
-//   </td>                                 </tr>
-//    </table>                             </center>
-//      <![endif]-->                           </td>
-// </tr>                       </table>                     </td>
-//          </tr>                 </table>               </td>
-// </tr>           </table>         </div>       </center>     </body>
-// </html>`;
-//     return contactToUserTemplate;
-// }
 
 
 function createWelcomeToInactiveUserTemplate(name) {
