@@ -635,14 +635,14 @@ exports.updateResource = functions.firestore.document('resources/{resourceId}')
 
             const payload = {
                 notification: {
-                    title: 'enREDa',
+                    title: 'Enreda',
                     body: `Nuevo recurso: ${title}`,
                     sound: "default"
                 },
                 data: {
                     resourceId: resourceId,
                     click_action: "FLUTTER_NOTIFICATION_CLICK",
-                    title: 'enREDa',
+                    title: 'Enreda',
                     body: `Nuevos recursos basados en tus intereses`,
                 }
             };
@@ -918,7 +918,7 @@ exports.sendEmailActiveUsers = functions.firestore.document('users/{userId}')
             return adminFirebase.firestore().collection('mail').add({
                 to: newValue.email,
                 message: {
-                    subject: 'Equipo enREDa',
+                    subject: 'Equipo Enreda',
                     html: htmlToSendToNewUser,
                 }
             }).then(() => {
@@ -948,7 +948,7 @@ exports.sendEmailNewUsers = functions.firestore
         return adminFirebase.firestore().collection('mail').add({
             to: snapshot.get('email'),
             message: {
-                subject: 'Equipo enREDa',
+                subject: 'Equipo Enreda',
                 html: htmlToSendToNewUser,
             }
         }).then(() => {
@@ -1732,14 +1732,14 @@ exports.sendEmailOnCreateResource = functions.firestore
 
                         const payload = {
                             notification: {
-                                title: 'enREDa',
+                                title: 'Enreda',
                                 body: `Nuevo recurso: ${title}`,
                                 sound: "default"
                             },
                             data: {
                                 resourceId: resourceId,
                                 click_action: "FLUTTER_NOTIFICATION_CLICK",
-                                title: 'enREDa',
+                                title: 'Enreda',
                                 body: `Nuevos recursos basados en tus intereses`,
                             }
                         };
@@ -2835,13 +2835,13 @@ exports.deleteResource = functions.firestore
             deletedResource.participants.forEach((user) => {
                 const payload = {
                     notification: {
-                        title: 'enREDa',
+                        title: 'Enreda',
                         body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
                         sound: "default"
                     },
                     data: {
                         click_action: "FLUTTER_NOTIFICATION_CLICK",
-                        title: 'enREDa',
+                        title: 'Enreda',
                         body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
                     }
                 };
@@ -2863,14 +2863,14 @@ exports.updateResourceEmail = functions.firestore
             || (!newValue.start.isEqual(previousValue.start)) || (newValue.duration !== previousValue.duration))) {
             const payload = {
                 notification: {
-                    title: 'enREDa',
+                    title: 'Enreda',
                     body: `Ha cambiado el recurso: ${previousValue.title}`,
                     sound: "default"
                 },
                 data: {
                     resourceId: previousValue.resourceId,
                     click_action: "FLUTTER_NOTIFICATION_CLICK",
-                    title: 'enREDa',
+                    title: 'Enreda',
                     body: `Ha cambiado el recurso: ${previousValue.title}`,
                 }
             };
@@ -2888,13 +2888,13 @@ exports.updateResourceEmail = functions.firestore
 exports.scheduleWeekEmail = functions.runWith(options).pubsub.topic('scheduleWeekEmail').onPublish(() => {
     const payload = {
         notification: {
-            title: 'enREDa',
+            title: 'Enreda',
             body: `Nuevos recursos basados en tus intereses`,
             sound: "default"
         },
         data: {
             click_action: "FLUTTER_NOTIFICATION_CLICK",
-            title: 'enREDa',
+            title: 'Enreda',
             body: `Nuevos recursos basados en tus intereses`,
         }
     };
