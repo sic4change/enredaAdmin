@@ -3725,6 +3725,27 @@ exports.createInitialReport = functions.firestore
                 });
         });
 
+    exports.createIpilObjectives = functions.firestore
+        .document('ipilObjectives/{ipilObjectivesId}')
+        .onCreate((snapshot, context) => {
+            const ipilObjectivesId = context.params.ipilObjectivesId;
+            const userId = snapshot.data().userId;
+
+            return adminFirebase.firestore().doc(`ipilObjectives/${ipilObjectivesId}`).set({ ipilObjectivesId}, { merge: true })
+                .then(() => {
+                    console.log("Successfully added ipilObjectivesId to new ipilObjectives");
+                    return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
+                        (snapshot) => {
+                            snapshot.forEach((user) => {
+                                return adminFirebase.firestore().collection("users").doc(user.id).set({ ipilObjectivesId: ipilObjectivesId }, { merge: true })
+                                    .then(() => {
+                                        console.log("Successfully add ipilObjectives in organization user");
+                                    })
+                            })
+                        });
+                });
+        });
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
