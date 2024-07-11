@@ -8,6 +8,7 @@ const axios = require('axios'); // Axios version more than 0.21.1 will fail
 const cheerio = require('cheerio');
 const adminFirebase = require('firebase-admin');
 const { setTimeout } = require('node:timers/promises');
+const ExcelJS = require('exceljs');
 adminFirebase.initializeApp(functions.config().firebase);
 
 const db = adminFirebase.firestore();
@@ -3802,3 +3803,151 @@ exports.updateProvisional = functions.runWith(options).firestore.document('provi
         console.log('FUNCIÓN COMPLETADA CORRECTAMENTE');
     });
 */
+
+const { Firestore } = require('@google-cloud/firestore');
+const otherFirestore = new Firestore({
+  projectId: adminFirebase.instanceId().app.options.projectId,
+  keyFilename: 'enreda-d3b41-firebase-adminsdk-ndmgv-7115331f1e.json',
+  databaseId: 'kpis', 
+});
+
+
+exports.copyParticipantsToKpis = functions.firestore
+  .document('initialReports/{reportId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const reportId = context.params.reportId;
+
+    if (before.finished !== true && after.finished === true ){
+        //&& 
+        //(before.assignedEntityId === '79msEkHIMR87fWEWcSIg' || before.socialEntityId === '79msEkHIMR87fWEWcSIg')) {
+      try {
+        const userId = after.userId; 
+        const userRef = adminFirebase.firestore().collection('users').doc(userId);
+        const userSnap = await userRef.get();
+        
+        if (!userSnap.exists) {
+          console.log('No such user!');
+          return;
+        }
+        
+        await otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId)
+            .set({ userId, birthday: userSnap.data().birthday, nationality: userSnap.data().nationality, 
+                //assignedEntityId: after.assignedEntityId, socialEntityId: after.socialEntityId,
+                laborSituation: after.laborSituation, educationLevel: after.educationLevel,
+                vulnerabilityOptions: after.vulnerabilityOptions }, { merge: true });
+        console.log('Document successfully written to kpis/fse/participants database in kpi Firestore');
+      } catch (error) {
+        console.error('Error writing document to kpis/fse/participants database in kpi Firestore: ', error);
+      }
+    }
+  });
+
+  exports.exportParticipantsToExcel = functions.https.onRequest(async (req, res) => {
+    try {
+      const usersSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('participants').get();
+      const users = [];
+  
+      usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        const birthday = data.birthday ? new Date(data.birthday._seconds * 1000).toISOString().split('T')[0] : '';
+        users.push({
+            userId: doc.id,
+            birthday: birthday || '',
+            nationality: data.nationality || '',
+            // assignedEntityId: data.assignedEntityId || '',
+            // socialEntityId: data.socialEntityId || '',
+            laborSituation: data.laborSituation || '',
+            educationLevel: data.educationLevel || '',
+            vulnerabilityOptions: data.vulnerabilityOptions || ''
+        });
+      });
+  
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Participants');
+  
+      worksheet.columns = [
+        { header: 'userId', key: 'userId', width: 30 },
+        { header: 'birthday', key: 'birthday', width: 30 },
+        { header: 'nationality', key: 'nationality', width: 30 },
+        //{ header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
+        //{ header: 'socialEntityId', key: 'socialEntityId', width: 30 },
+        { header: 'laborSituation', key: 'laborSituation', width: 30 },
+        { header: 'educationLevel', key: 'educationLevel', width: 30 },
+        { header: 'vulnerabilityOptions', key: 'vulnerabilityOptions', width: 30 },
+      ];
+  
+      users.forEach(user => {
+        worksheet.addRow(user);
+      });
+  
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="participants.xlsx"');
+      res.send(buffer);
+    } catch (error) {
+      console.error('Error generating Excel file:', error);
+      res.status(500).send('Error generating Excel file');
+    }
+  });
+
+  //Llamadas
+
+  // HTML
+/*   <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Excel</title>
+</head>
+<body>
+  <button id="download">Download Excel</button>
+
+  <script>
+    document.getElementById('download').addEventListener('click', () => {
+      fetch('https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel', {
+        method: 'GET'
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'participants.xlsx'); // or any other extension
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+      })
+      .catch(error => console.error('Error downloading the file:', error));
+    });
+  </script>
+</body>
+</html> */
+
+
+//CURL
+//curl -o participants.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel
+
+//NodeJS
+/* const axios = require('axios');
+const fs = require('fs');
+
+axios({
+  url: 'https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel',
+  method: 'GET',
+  responseType: 'stream'
+})
+.then(response => {
+  response.data.pipe(fs.createWriteStream('participants.xlsx'));
+})
+.catch(error => {
+  console.error('Error downloading the file:', error);
+}); */
+
+
+
+
+
