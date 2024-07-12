@@ -3812,6 +3812,22 @@ const otherFirestore = new Firestore({
 });
 
 
+async function updateTotalParticipants() {
+    try {
+      const participantsCollectionRef = otherFirestore.collection('kpis').doc('fse').collection('participants');
+      const informRef = otherFirestore.collection('kpis').doc('fse').collection('inform').doc('inform');
+  
+      const participantsSnapshot = await participantsCollectionRef.get();
+      const totalParticipants = participantsSnapshot.size;
+  
+      await informRef.update({ total: totalParticipants });
+  
+      console.log(`Total participants updated to ${totalParticipants} in kpis/fse/inform/inform`);
+    } catch (error) {
+      console.error('Error updating total participants in kpis/fse/inform/inform: ', error);
+    }
+  }
+
 exports.copyParticipantsToKpis = functions.firestore
   .document('initialReports/{reportId}')
   .onUpdate(async (change, context) => {
@@ -3848,15 +3864,7 @@ exports.copyParticipantsToKpis = functions.firestore
 
         console.log('Document successfully written to kpis/fse/participants database in kpi Firestore');
 
-        const participantsCollectionRef = otherFirestore.collection('kpis').doc('fse').collection('participants');
-        const informRef = otherFirestore.collection('kpis').doc('fse').collection('inform').doc('inform');
-
-        const participantsSnapshot = await participantsCollectionRef.get();
-        const totalParticipants = participantsSnapshot.size;
-
-        await informRef.update({ total: totalParticipants });
-
-        console.log(`Total participants updated to ${totalParticipants} in kpis/fse/inform/inform`);
+        await updateTotalParticipants();
 
       } catch (error) {
         console.error('Error writing document to kpis/fse/participants database in kpi Firestore: ', error);
