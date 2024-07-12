@@ -3892,6 +3892,27 @@ exports.copyParticipantsToKpis = functions.firestore
     }
   });
 
+  exports.removeParticipantOnUserDeletion = functions.firestore
+  .document('users/{userId}')
+  .onDelete(async (snap, context) => {
+    const userId = context.params.userId;
+
+    try {
+      const participantRef = otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId);
+      const participantSnap = await participantRef.get();
+
+      if (!participantSnap.exists) {
+        console.log('No such participant!');
+        return;
+      }
+
+      await participantRef.delete();
+
+      console.log('Participant document successfully removed from kpis/fse/participants database in kpi Firestore');
+    } catch (error) {
+      console.error('Error removing participant document from kpis/fse/participants database in kpi Firestore: ', error);
+    }
+  });
 
   exports.exportParticipantsToExcel = functions.https.onRequest(async (req, res) => {
     try {
