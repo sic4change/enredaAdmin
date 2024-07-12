@@ -3842,6 +3842,33 @@ exports.copyParticipantsToKpis = functions.firestore
     }
   });
 
+  exports.removeParticipantsToKpisFinishedToFalse = functions.firestore
+  .document('initialReports/{reportId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const reportId = context.params.reportId;
+
+    if (before.finished !== false && after.finished === false ){
+      try {
+        const participantId = after.userId; 
+        const participantRef = otherFirestore.collection('kpis').doc('fse').collection('participants').doc(participantId);
+        const participantSnap = await participantRef.get();
+        
+        if (!participantSnap.exists) {
+          console.log('No such participant!');
+          return;
+        }
+        
+        await participantRef.delete();
+    
+        console.log('Document successfully removing to kpis/fse/participants database in kpi Firestore');
+      } catch (error) {
+        console.error('Error removing document to kpis/fse/participants database in kpi Firestore: ', error);
+      }
+    }
+  });
+
   exports.exportParticipantsToExcel = functions.https.onRequest(async (req, res) => {
     try {
       const usersSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('participants').get();
