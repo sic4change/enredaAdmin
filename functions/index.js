@@ -3819,23 +3819,45 @@ exports.copyParticipantsToKpis = functions.firestore
     const after = change.after.data();
     const reportId = context.params.reportId;
 
-    if (before.finished !== true && after.finished === true ){
+    if (before.finished !== true && after.finished === true) {
       try {
         const userId = after.userId; 
         const userRef = adminFirebase.firestore().collection('users').doc(userId);
         const userSnap = await userRef.get();
-        
+
         if (!userSnap.exists) {
           console.log('No such user!');
           return;
         }
+
+        const userData = userSnap.data();
         
+        const participantData = {
+          userId, 
+          birthday: userData.birthday !== undefined ? userData.birthday : null, 
+          nationality: userData.nationality !== undefined ? userData.nationality : null,
+          assignedEntityId: userData.assignedEntityId !== undefined ? userData.assignedEntityId : null,
+          socialEntityId: userData.socialEntityId !== undefined ? userData.socialEntityId : null,
+          laborSituation: after.laborSituation !== undefined ? after.laborSituation : null,
+          educationLevel: after.educationLevel !== undefined ? after.educationLevel : null,
+          vulnerabilityOptions: after.vulnerabilityOptions !== undefined ? after.vulnerabilityOptions : null,
+        };
+
         await otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId)
-            .set({ userId, birthday: userSnap.data().birthday, nationality: userSnap.data().nationality, 
-                assignedEntityId: userSnap.data().assignedEntityId, socialEntityId: userSnap.data().socialEntityId,
-                laborSituation: after.laborSituation, educationLevel: after.educationLevel,
-                vulnerabilityOptions: after.vulnerabilityOptions }, { merge: true });
+          .set(participantData, { merge: true });
+
         console.log('Document successfully written to kpis/fse/participants database in kpi Firestore');
+
+        const participantsCollectionRef = otherFirestore.collection('kpis').doc('fse').collection('participants');
+        const informRef = otherFirestore.collection('kpis').doc('fse').collection('inform').doc('inform');
+
+        const participantsSnapshot = await participantsCollectionRef.get();
+        const totalParticipants = participantsSnapshot.size;
+
+        await informRef.update({ total: totalParticipants });
+
+        console.log(`Total participants updated to ${totalParticipants} in kpis/fse/inform/inform`);
+
       } catch (error) {
         console.error('Error writing document to kpis/fse/participants database in kpi Firestore: ', error);
       }
@@ -3962,6 +3984,7 @@ exports.copyParticipantsToKpis = functions.firestore
       res.status(500).send('Error generating Excel file');
     }
   });
+
 
   //Llamadas
 
