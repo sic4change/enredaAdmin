@@ -3820,8 +3820,6 @@ exports.copyParticipantsToKpis = functions.firestore
     const reportId = context.params.reportId;
 
     if (before.finished !== true && after.finished === true ){
-        //&& 
-        //(before.assignedEntityId === '79msEkHIMR87fWEWcSIg' || before.socialEntityId === '79msEkHIMR87fWEWcSIg')) {
       try {
         const userId = after.userId; 
         const userRef = adminFirebase.firestore().collection('users').doc(userId);
@@ -3834,7 +3832,7 @@ exports.copyParticipantsToKpis = functions.firestore
         
         await otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId)
             .set({ userId, birthday: userSnap.data().birthday, nationality: userSnap.data().nationality, 
-                //assignedEntityId: after.assignedEntityId, socialEntityId: after.socialEntityId,
+                assignedEntityId: userSnap.data().assignedEntityId, socialEntityId: userSnap.data().socialEntityId,
                 laborSituation: after.laborSituation, educationLevel: after.educationLevel,
                 vulnerabilityOptions: after.vulnerabilityOptions }, { merge: true });
         console.log('Document successfully written to kpis/fse/participants database in kpi Firestore');
@@ -3856,8 +3854,8 @@ exports.copyParticipantsToKpis = functions.firestore
             userId: doc.id,
             birthday: birthday || '',
             nationality: data.nationality || '',
-            // assignedEntityId: data.assignedEntityId || '',
-            // socialEntityId: data.socialEntityId || '',
+            assignedEntityId: data.assignedEntityId || '',
+            socialEntityId: data.socialEntityId || '',
             laborSituation: data.laborSituation || '',
             educationLevel: data.educationLevel || '',
             vulnerabilityOptions: data.vulnerabilityOptions || ''
@@ -3871,8 +3869,8 @@ exports.copyParticipantsToKpis = functions.firestore
         { header: 'userId', key: 'userId', width: 30 },
         { header: 'birthday', key: 'birthday', width: 30 },
         { header: 'nationality', key: 'nationality', width: 30 },
-        //{ header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
-        //{ header: 'socialEntityId', key: 'socialEntityId', width: 30 },
+        { header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
+        { header: 'socialEntityId', key: 'socialEntityId', width: 30 },
         { header: 'laborSituation', key: 'laborSituation', width: 30 },
         { header: 'educationLevel', key: 'educationLevel', width: 30 },
         { header: 'vulnerabilityOptions', key: 'vulnerabilityOptions', width: 30 },
