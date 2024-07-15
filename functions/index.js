@@ -3814,17 +3814,68 @@ const otherFirestore = new Firestore({
 
 async function updateTotalParticipants() {
     try {
-      const participantsCollectionRef = otherFirestore.collection('kpis').doc('fse').collection('participants');
-      const informRef = otherFirestore.collection('kpis').doc('fse').collection('inform').doc('inform');
+        const participantsCollectionRef = otherFirestore.collection('kpis').doc('fse').collection('participants');
+        const informRef = otherFirestore.collection('kpis').doc('fse').collection('inform').doc('inform');
+    
+        const participantsSnapshot = await participantsCollectionRef.get();
+        const totalParticipants = participantsSnapshot.size;
+
+        let unemployedCount = 0;
+        let unemployed_including_long_term_unemployedCount = 0;
+        let long_term_unemployedCount = 0;
+        let inactiveCount = 0;
+        let employed_including_self_employedCount = 0;
+
+
+        participantsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const laborSituation = data.laborSituation;
+
+            if (laborSituation === 'Inactiva') {
+                inactiveCount++;
+            }
+
+            if (laborSituation === 'Desempleada larga duración') {
+                long_term_unemployedCount++;
+            }
+
+            if (laborSituation === 'Desempleada larga duración' || 
+                laborSituation === 'Desempleada corta duración') {
+                unemployed_including_long_term_unemployedCount++;
+            }
+
+            if (laborSituation === 'Desempleada larga duración' || 
+                laborSituation === 'Desempleada corta duración' || 
+                laborSituation === 'Inactiva') {
+                unemployedCount++;
+            }
+
+            if (laborSituation === 'Ocupada cuenta propia' || 
+                laborSituation === 'Ocupada cuenta ajena') {
+                employed_including_self_employedCount++;
+            }
+
+        });
+
+        console.log(`Total participants: ${totalParticipants}`);
+        console.log(`Inactive participants: ${inactiveCount}`);
+        console.log(`Long-term unemployed participants: ${long_term_unemployedCount}`);
+        console.log(`Unemployed (including long-term): ${unemployed_including_long_term_unemployedCount}`);
+        console.log(`Unemployed participants: ${unemployedCount}`);
+        console.log(`Employed (including self-employed): ${employed_including_self_employedCount}`);
   
-      const participantsSnapshot = await participantsCollectionRef.get();
-      const totalParticipants = participantsSnapshot.size;
+        await informRef.update({ 
+            total: totalParticipants, 
+            unemployed: unemployedCount,
+            unemployed_including_long_term_unemployed: unemployed_including_long_term_unemployedCount,
+            long_term_unemployed: long_term_unemployedCount,
+            inactive: inactiveCount,
+            employed_including_self_employed: employed_including_self_employedCount
+        });
   
-      await informRef.update({ total: totalParticipants });
-  
-      console.log(`Total participants updated to ${totalParticipants} in kpis/fse/inform/inform`);
+        console.log(`Document successfully updated in kpis/fse/inform/inform`);
     } catch (error) {
-      console.error('Error updating total participants in kpis/fse/inform/inform: ', error);
+        console.error('Error updating total participants and unemployed in kpis/fse/inform/inform: ', error);
     }
   }
 
@@ -3848,7 +3899,7 @@ exports.copyParticipantsToKpis = functions.firestore
 
         const userData = userSnap.data();
 
-        if (userData.test) {
+        if (userData.test !== undefined && userData.test) {
             console.log('Test user!');
             return;
         }
