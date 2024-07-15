@@ -3847,6 +3847,11 @@ exports.copyParticipantsToKpis = functions.firestore
         }
 
         const userData = userSnap.data();
+
+        if (userData.test) {
+            console.log('Test user!');
+            return;
+        }
         
         const participantData = {
           userId, 
