@@ -3832,6 +3832,11 @@ async function updateTotalParticipants() {
         let cine24Count = 0;
         let cine58Count = 0;
         let disabilityCount = 0;
+        let foreignCount = 0;
+        let foreignNotEuropeCount = 0;
+        let ethnicMinorityCount = 0;
+        let homelessCount = 0;
+        let ruralAreasCount = 0;
 
         const currentDate = new Date();
 
@@ -3840,6 +3845,8 @@ async function updateTotalParticipants() {
             const laborSituation = data.laborSituation;
             const educationLevel = data.educationLevel;
             const disabilityState = data.disabilityState;
+            const nationality = data.nationality;
+            const region = data.region;
 
             if (laborSituation === 'Inactiva') {
                 inactiveCount++;
@@ -3867,7 +3874,7 @@ async function updateTotalParticipants() {
 
             if (data.birthday) {
                 const birthDate = new Date(data.birthday._seconds * 1000);
-                const age = currentDate.getFullYear() - birthDate.getFullYear();
+                let age = currentDate.getFullYear() - birthDate.getFullYear();
                 const monthDifference = currentDate.getMonth() - birthDate.getMonth();
                 if (monthDifference < 0 || (monthDifference === 0 && currentDate.getDate() < birthDate.getDate())) {
                   age--;
@@ -3897,6 +3904,26 @@ async function updateTotalParticipants() {
                 disabilityCount++;
             }
 
+            if (nationality !== 'España') {
+                foreignCount++;
+            }
+
+            if (region !== 'Europe') {
+                foreignNotEuropeCount++;
+            }
+
+            if (data.vulnerabilityOptions && data.vulnerabilityOptions.includes('Minoría étnica')) {
+                ethnicMinorityCount++;
+            }
+
+            if (data.vulnerabilityOptions && data.vulnerabilityOptions.includes('Situación sinhogarismo')) {
+                homelessCount++;
+            }
+
+            if (data.vulnerabilityOptions && data.vulnerabilityOptions.includes('Ruralidad')) {
+                ruralAreasCount++;
+            }
+
         });
 
         console.log(`Total participants: ${totalParticipants}`);
@@ -3912,6 +3939,11 @@ async function updateTotalParticipants() {
         console.log(`Participants cine24Count: ${cine24Count}`);
         console.log(`Participants cine58Count: ${cine58Count}`);
         console.log(`Participants disability: ${disabilityCount}`);
+        console.log(`Participants foreig: ${foreignCount}`);
+        console.log(`Participants foreig not europe: ${foreignNotEuropeCount}`);
+        console.log(`Participants from ethnic minorities: ${ethnicMinorityCount}`);
+        console.log(`Participants homeless: ${homelessCount}`);
+        console.log(`Participants rural areas: ${ruralAreasCount}`);
   
         await informRef.update({ 
             total: totalParticipants, 
@@ -3926,7 +3958,11 @@ async function updateTotalParticipants() {
             participants_with_primary_education_or_less_ISCED_0_to_2: cine02Count,
             participants_with_secondary_or_post_secondary_education_ISCED_3_to_4: cine24Count,
             participants_with_tertiary_education_or_above: cine58Count,
-            participants_with_disabilities: disabilityCount
+            participants_of_foreign_origin: foreignCount,
+            third_country_nationals: foreignNotEuropeCount,
+            participants_from_minorities_including_marginalized_communities_such_as_Roma: ethnicMinorityCount,
+            homeless_or_excluded_from_housing: homelessCount,
+            participants_from_rural_areas: ruralAreasCount
 
         });
   
@@ -3960,6 +3996,18 @@ exports.copyParticipantsToKpis = functions.firestore
             console.log('Test user!');
             return;
         }
+
+        let region = null;
+
+        if (userData.nationality !== undefined) {
+          const nationsRef = adminFirebase.firestore().collection('nations');
+          const nationsSnapshot = await nationsRef.where('translations.es', '==', userData.nationality).get();
+
+          if (!nationsSnapshot.empty) {
+            const nationData = nationsSnapshot.docs[0].data();
+            region = nationData.region !== undefined ? nationData.region : null;
+          }
+        }
         
         const participantData = {
           userId, 
@@ -3970,6 +4018,7 @@ exports.copyParticipantsToKpis = functions.firestore
           laborSituation: after.laborSituation !== undefined ? after.laborSituation : null,
           educationLevel: after.educationLevel !== undefined ? after.educationLevel : null,
           vulnerabilityOptions: after.vulnerabilityOptions !== undefined ? after.vulnerabilityOptions : null,
+          region: region
         };
 
         await otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId)
