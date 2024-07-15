@@ -3825,11 +3825,21 @@ async function updateTotalParticipants() {
         let long_term_unemployedCount = 0;
         let inactiveCount = 0;
         let employed_including_self_employedCount = 0;
+        let minorCount = 0;
+        let age18to29Count = 0;
+        let over54Count = 0;
+        let cine02Count = 0;
+        let cine24Count = 0;
+        let cine58Count = 0;
+        let disabilityCount = 0;
 
+        const currentDate = new Date();
 
         participantsSnapshot.forEach(doc => {
             const data = doc.data();
             const laborSituation = data.laborSituation;
+            const educationLevel = data.educationLevel;
+            const disabilityState = data.disabilityState;
 
             if (laborSituation === 'Inactiva') {
                 inactiveCount++;
@@ -3855,6 +3865,38 @@ async function updateTotalParticipants() {
                 employed_including_self_employedCount++;
             }
 
+            if (data.birthday) {
+                const birthDate = new Date(data.birthday._seconds * 1000);
+                const age = currentDate.getFullYear() - birthDate.getFullYear();
+                const monthDifference = currentDate.getMonth() - birthDate.getMonth();
+                if (monthDifference < 0 || (monthDifference === 0 && currentDate.getDate() < birthDate.getDate())) {
+                  age--;
+                }
+                if (age < 18) {
+                    minorCount++;
+                  } else if (age >= 18 && age <= 29) {
+                    age18to29Count++;
+                  } else if (age > 54) {
+                    over54Count++;
+                  }
+            }
+
+            if (educationLevel === '1er ciclo 2ria (Max CINE 0-2)') {
+                cine02Count++;
+            }
+
+            if (educationLevel === '2do ciclo 2ria (CINE 3) o postsecundaria (CINE 4)') {
+                cine24Count++;
+            }
+
+            if (educationLevel === 'Superior o 3ria (CINE 5 a 8)') {
+                cine58Count++;
+            }
+
+            if (disabilityState === 'Concedida') {
+                disabilityCount++;
+            }
+
         });
 
         console.log(`Total participants: ${totalParticipants}`);
@@ -3863,6 +3905,13 @@ async function updateTotalParticipants() {
         console.log(`Unemployed (including long-term): ${unemployed_including_long_term_unemployedCount}`);
         console.log(`Unemployed participants: ${unemployedCount}`);
         console.log(`Employed (including self-employed): ${employed_including_self_employedCount}`);
+        console.log(`Minors (under 18): ${minorCount}`);
+        console.log(`Participants aged 18-29: ${age18to29Count}`);
+        console.log(`Participants over 54: ${over54Count}`);
+        console.log(`Participants cine02Count: ${cine02Count}`);
+        console.log(`Participants cine24Count: ${cine24Count}`);
+        console.log(`Participants cine58Count: ${cine58Count}`);
+        console.log(`Participants disability: ${disabilityCount}`);
   
         await informRef.update({ 
             total: totalParticipants, 
@@ -3870,7 +3919,15 @@ async function updateTotalParticipants() {
             unemployed_including_long_term_unemployed: unemployed_including_long_term_unemployedCount,
             long_term_unemployed: long_term_unemployedCount,
             inactive: inactiveCount,
-            employed_including_self_employed: employed_including_self_employedCount
+            employed_including_self_employed: employed_including_self_employedCount,
+            minors_under_18_years: minorCount,
+            number_of_young_people_aged_18_to_29_years: age18to29Count,
+            participants_over_54_years: over54Count,
+            participants_with_primary_education_or_less_ISCED_0_to_2: cine02Count,
+            participants_with_secondary_or_post_secondary_education_ISCED_3_to_4: cine24Count,
+            participants_with_tertiary_education_or_above: cine58Count,
+            participants_with_disabilities: disabilityCount
+
         });
   
         console.log(`Document successfully updated in kpis/fse/inform/inform`);
