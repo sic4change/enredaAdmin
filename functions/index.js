@@ -4165,7 +4165,8 @@ exports.copyParticipantsToKpis = functions.firestore
             socialEntityId: data.socialEntityId || '',
             laborSituation: data.laborSituation || '',
             educationLevel: data.educationLevel || '',
-            vulnerabilityOptions: data.vulnerabilityOptions || ''
+            vulnerabilityOptions: data.vulnerabilityOptions || '',
+            ipilData:data.ipilData || ''
         });
       });
   
@@ -4181,6 +4182,7 @@ exports.copyParticipantsToKpis = functions.firestore
         { header: 'laborSituation', key: 'laborSituation', width: 30 },
         { header: 'educationLevel', key: 'educationLevel', width: 30 },
         { header: 'vulnerabilityOptions', key: 'vulnerabilityOptions', width: 30 },
+        { header: 'ipilData', key: 'ipilData', width: 30 },
       ];
   
       users.forEach(user => {
@@ -4191,6 +4193,82 @@ exports.copyParticipantsToKpis = functions.firestore
 
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', 'attachment; filename="participants.xlsx"');
+      res.send(buffer);
+    } catch (error) {
+      console.error('Error generating Excel file:', error);
+      res.status(500).send('Error generating Excel file');
+    }
+  });
+
+  exports.exportKpisToExcel = functions.https.onRequest(async (req, res) => {
+    try {
+      const informsSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('inform').get();
+      const informs = [];
+  
+      informsSnapshot.forEach(doc => {
+        const data = doc.data();
+        informs.push({
+            total: data.total || 0,
+            unemployed: data.unemployed || 0,
+            unemployed_including_long_term_unemployed: data.unemployed_including_long_term_unemployed || 0,
+            long_term_unemployed: data.long_term_unemployed || 0,
+            inactive: data.inactive || 0,
+            employed_including_self_employed: data.employed_including_self_employed || 0,
+            minors_under_18_years: data.minors_under_18_years || 0,
+            number_of_young_people_aged_18_to_29_years: data.number_of_young_people_aged_18_to_29_years || 0,
+            participants_over_54_years: data.participants_over_54_years || 0,
+            participants_with_primary_education_or_less_ISCED_0_to_2: data.participants_with_primary_education_or_less_ISCED_0_to_2 || 0,
+            participants_with_secondary_or_post_secondary_education_ISCED_3_to_4: data.participants_with_secondary_or_post_secondary_education_ISCED_3_to_4 || 0,
+            participants_with_tertiary_education_or_above: data.participants_with_tertiary_education_or_above || 0,
+            participants_with_disabilities: data.participants_with_disabilities || 0,
+            third_country_nationals: data.third_country_nationals || 0,
+            participants_of_foreign_origin: data.participants_of_foreign_origin || 0,
+            participants_from_minorities_including_marginalized_communities_such_as_Roma: data.participants_from_minorities_including_marginalized_communities_such_as_Roma || 0,
+            homeless_or_excluded_from_housing: data.homeless_or_excluded_from_housing || 0,
+            participants_from_rural_areas: data.participants_from_rural_areas || 0,
+            searchingJob: data.searchingJob || 0,
+            joinedToEducationSystem: data.joinedToEducationSystem || 0,
+            obtainedQualification: data.obtainedQualification || 0,
+            obtanidedJob: data.obtanidedJob || 0
+        });
+      });
+  
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('FSE kpis');
+  
+      worksheet.columns = [
+        { header: 'Número total de participantes', key: 'total', width: 30 },
+        { header: 'Desempleado', key: 'unemployed', width: 30 },
+        { header: 'Desempleados, incluidos los de larga duración', key: 'unemployed_including_long_term_unemployed', width: 30 },
+        { header: 'Desempleados de larga duración', key: 'long_term_unemployed', width: 30 },
+        { header: 'Inactivo', key: 'inactive', width: 30 },
+        { header: 'Empleados, incluso por cuenta propia', key: 'employed_including_self_employed', width: 30 },
+        { header: 'Menores (menos de 18 años)', key: 'minors_under_18_years', width: 30 },
+        { header: 'Número de personas jóvenes de edades comprendidas entre los 18 y los 29 años', key: 'number_of_young_people_aged_18_to_29_years', width: 30 },
+        { header: 'Participantes de más de 54 años', key: 'participants_over_54_years', width: 30 },
+        { header: 'Participantes con el primer ciclo de enseñanza secundaria como máximoCINE0a2', key: 'participants_with_primary_education_or_less_ISCED_0_to_2', width: 30 },
+        { header: 'Participantes con el segundo ciclo de enseñanza secundaria o con enseñanza postsecundaria CINE2a4', key: 'participants_with_secondary_or_post_secondary_education_ISCED_3_to_4', width: 30 },
+        { header: 'Participantes con enseñanza superior o terciaria', key: 'participants_with_tertiary_education_or_above', width: 30 },
+        { header: 'Participantes con discapacidad', key: 'participants_with_disabilities', width: 30 },
+        { header: 'Nacionales de terceros países', key: 'third_country_nationals', width: 30 },
+        { header: 'Participantes de origen extranjero', key: 'participants_of_foreign_origin', width: 30 },
+        { header: 'Participantes pertenecientes a minorías (incluidas las comunidades marginadas, como la romaní)', key: 'participants_from_minorities_including_marginalized_communities_such_as_Roma', width: 30 },
+        { header: 'Personas sin hogar o afectadas por la exclusión en materia de vivienda', key: 'homeless_or_excluded_from_housing', width: 30 },
+        { header: 'Participantes de zonas rurales', key: 'participants_from_rural_areas', width: 30 },
+        { header: 'Participantes que buscan trabajo tras su participación', key: 'searchingJob', width: 30 },
+        { header: 'Participantes que se han integrado en los sistemas de educación o formación tras su participación', key: 'joinedToEducationSystem', width: 30 },
+        { header: 'Participantes que obtienen una cualificación tras su participación', key: 'obtainedQualification', width: 30 },
+        { header: 'Participantes que obtienen un empleo tras su participación', key: 'obtanidedJob', width: 30 },
+      ];
+  
+      informs.forEach(inform => {
+        worksheet.addRow(inform);
+      });
+  
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="kpis_fse.xlsx"');
       res.send(buffer);
     } catch (error) {
       console.error('Error generating Excel file:', error);
@@ -4236,6 +4314,7 @@ exports.copyParticipantsToKpis = functions.firestore
 
 //CURL
 //curl -o participants.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel
+//curl -o kpis_fse.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportKpisToExcel
 
 //NodeJS
 /* const axios = require('axios');
