@@ -3837,6 +3837,10 @@ async function updateTotalParticipants() {
         let ethnicMinorityCount = 0;
         let homelessCount = 0;
         let ruralAreasCount = 0;
+        let searchingJobCount = 0;
+        let joinedToEducationSystemCount = 0;
+        let obtainedQualificationCount = 0;
+        let obtanidedJobCount = 0;
 
         const currentDate = new Date();
 
@@ -3847,6 +3851,7 @@ async function updateTotalParticipants() {
             const disabilityState = data.disabilityState;
             const nationality = data.nationality;
             const region = data.region;
+            const ipilData = data.ipilData;
 
             if (laborSituation === 'Inactiva') {
                 inactiveCount++;
@@ -3924,6 +3929,22 @@ async function updateTotalParticipants() {
                 ruralAreasCount++;
             }
 
+            if (ipilData && ipilData.includes('npaF0hzJRC7OwYSnO7Zr')) {
+                searchingJobCount++;
+            }
+
+            if (ipilData && ipilData.includes('JUI5As4qjMByZKIoYeva')) {
+                joinedToEducationSystemCount++;
+            }
+
+            if (ipilData && ipilData.includes('9GfMP3tp4sWZ91TWnABu')) {
+                obtainedQualificationCount++;
+            }
+
+            if (ipilData && ipilData.includes('iKHgUq7ItDmSvtPnXJFP')) {
+                obtanidedJobCount++;
+            }
+
         });
 
         console.log(`Total participants: ${totalParticipants}`);
@@ -3944,6 +3965,10 @@ async function updateTotalParticipants() {
         console.log(`Participants from ethnic minorities: ${ethnicMinorityCount}`);
         console.log(`Participants homeless: ${homelessCount}`);
         console.log(`Participants rural areas: ${ruralAreasCount}`);
+        console.log(`Participants search job: ${searchingJobCount}`);
+        console.log(`Participants joined to education system: ${joinedToEducationSystemCount}`);
+        console.log(`Participants obtained qualification: ${obtainedQualificationCount}`);
+        console.log(`Participants obtained job: ${obtanidedJobCount}`);
   
         await informRef.update({ 
             total: totalParticipants, 
@@ -3962,8 +3987,11 @@ async function updateTotalParticipants() {
             third_country_nationals: foreignNotEuropeCount,
             participants_from_minorities_including_marginalized_communities_such_as_Roma: ethnicMinorityCount,
             homeless_or_excluded_from_housing: homelessCount,
-            participants_from_rural_areas: ruralAreasCount
-
+            participants_from_rural_areas: ruralAreasCount,
+            searchingJob : searchingJobCount,
+            joinedToEducationSystem: joinedToEducationSystemCount,
+            obtainedQualification: obtainedQualificationCount,
+            obtanidedJob: obtanidedJobCount
         });
   
         console.log(`Document successfully updated in kpis/fse/inform/inform`);
@@ -4008,6 +4036,20 @@ exports.copyParticipantsToKpis = functions.firestore
             region = nationData.region !== undefined ? nationData.region : null;
           }
         }
+
+        let ipilData = [];
+
+        const ipilEntryRef = adminFirebase.firestore().collection('ipilEntry');
+        const ipilEntrySnapshot = await ipilEntryRef.where('userId', '==', userId).get();
+        if (!ipilEntrySnapshot.empty) {
+          ipilEntrySnapshot.forEach(doc => {
+            const ipilEntryData = doc.data();
+            if (ipilEntryData.results !== undefined) {
+              ipilData = ipilData.concat(ipilEntryData.results);
+            }
+          });
+        }
+
         
         const participantData = {
           userId, 
@@ -4018,7 +4060,8 @@ exports.copyParticipantsToKpis = functions.firestore
           laborSituation: after.laborSituation !== undefined ? after.laborSituation : null,
           educationLevel: after.educationLevel !== undefined ? after.educationLevel : null,
           vulnerabilityOptions: after.vulnerabilityOptions !== undefined ? after.vulnerabilityOptions : null,
-          region: region
+          region: region,
+          ipilData: ipilData
         };
 
         await otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId)
