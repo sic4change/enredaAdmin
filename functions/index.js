@@ -4383,7 +4383,13 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
             contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         });
 
+        const [participantsUrl] = await fileParticipants.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2050',  // Set a far future expiration date
+        });
+
         console.log('Participants Excel file saved to Firebase Storage');
+        console.log('Participants Excel file URL:', participantsUrl);
 
         // Generar y guardar el archivo de informes
         const informsSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('inform').get();
@@ -4457,7 +4463,22 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
             contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         });
 
+        const [informsUrl] = await fileInforms.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2050',  // Set a far future expiration date
+        });
+
         console.log('Informs Excel file saved to Firebase Storage');
+        console.log('Informs Excel file URL:', informsUrl);
+
+        //Enviar mails
+        return adminFirebase.firestore().collection('mail').add({
+            to: ['sic4change@gmail.com', 'aasencio@sic4change.org', 'syanez@sic4change.org'],
+            message: {
+                subject: `Informes Fondo Social Europeo (FSE).`,
+                text:`Hola técnico/a de Enreda. \n\nAdjunto los informes de participantes y KPIs del Fondo Social Europeo (FSE). \n\nParticipantes: ${participantsUrl} \n\nKPIs: ${informsUrl} \n\nUn saludo.`,
+            }
+        }).then(() => console.log('Queued email!'));
 
     } catch (error) {
         console.error('Error generating Excel files:', error);
