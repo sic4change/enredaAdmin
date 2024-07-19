@@ -4276,63 +4276,198 @@ exports.copyParticipantsToKpis = functions.firestore
     }
   });
 
+exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
+    try {
+        const usersSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('participants').get();
+        const users = [];
+
+        usersSnapshot.forEach(doc => {
+            const data = doc.data();
+            const birthday = data.birthday ? new Date(data.birthday._seconds * 1000).toISOString().split('T')[0] : '';
+            users.push({
+                userId: doc.id,
+                birthday: birthday || '',
+                nationality: data.nationality || '',
+                assignedEntityId: data.assignedEntityId || '',
+                socialEntityId: data.socialEntityId || '',
+                laborSituation: data.laborSituation || '',
+                educationLevel: data.educationLevel || '',
+                vulnerabilityOptions: data.vulnerabilityOptions || '',
+                ipilData: data.ipilData || ''
+            });
+        });
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Participants');
+
+        worksheet.columns = [
+            { header: 'userId', key: 'userId', width: 30 },
+            { header: 'birthday', key: 'birthday', width: 30 },
+            { header: 'nationality', key: 'nationality', width: 30 },
+            { header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
+            { header: 'socialEntityId', key: 'socialEntityId', width: 30 },
+            { header: 'laborSituation', key: 'laborSituation', width: 30 },
+            { header: 'educationLevel', key: 'educationLevel', width: 30 },
+            { header: 'vulnerabilityOptions', key: 'vulnerabilityOptions', width: 30 },
+            { header: 'ipilData', key: 'ipilData', width: 30 },
+        ];
+
+        users.forEach(user => {
+            worksheet.addRow(user);
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const date = new Date().toISOString().replace(/:/g, '-');
+        const fileName = `kpis/fse/participants_${date}.xlsx`;
+        const bucket = adminFirebase.storage().bucket();
+        const file = bucket.file(fileName);
+
+        await file.save(buffer, {
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        console.log('Excel file saved to Firebase Storage');
+    } catch (error) {
+        console.error('Error generating Excel file:', error);
+    }
+});
+
+exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
+    try {
+        // Generar y guardar el archivo de participantes
+        const usersSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('participants').get();
+        const users = [];
+
+        usersSnapshot.forEach(doc => {
+            const data = doc.data();
+            const birthday = data.birthday ? new Date(data.birthday._seconds * 1000).toISOString().split('T')[0] : '';
+            users.push({
+                userId: doc.id,
+                birthday: birthday || '',
+                nationality: data.nationality || '',
+                assignedEntityId: data.assignedEntityId || '',
+                socialEntityId: data.socialEntityId || '',
+                laborSituation: data.laborSituation || '',
+                educationLevel: data.educationLevel || '',
+                vulnerabilityOptions: data.vulnerabilityOptions || '',
+                ipilData: data.ipilData || ''
+            });
+        });
+
+        const workbookParticipants = new ExcelJS.Workbook();
+        const worksheetParticipants = workbookParticipants.addWorksheet('Participants');
+
+        worksheetParticipants.columns = [
+            { header: 'userId', key: 'userId', width: 30 },
+            { header: 'birthday', key: 'birthday', width: 30 },
+            { header: 'nationality', key: 'nationality', width: 30 },
+            { header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
+            { header: 'socialEntityId', key: 'socialEntityId', width: 30 },
+            { header: 'laborSituation', key: 'laborSituation', width: 30 },
+            { header: 'educationLevel', key: 'educationLevel', width: 30 },
+            { header: 'vulnerabilityOptions', key: 'vulnerabilityOptions', width: 30 },
+            { header: 'ipilData', key: 'ipilData', width: 30 },
+        ];
+
+        users.forEach(user => {
+            worksheetParticipants.addRow(user);
+        });
+
+        const bufferParticipants = await workbookParticipants.xlsx.writeBuffer();
+        const date = new Date().toISOString().replace(/:/g, '-');
+        const fileNameParticipants = `kpis/fse/participants_${date}.xlsx`;
+        const bucket = adminFirebase.storage().bucket();
+        const fileParticipants = bucket.file(fileNameParticipants);
+
+        await fileParticipants.save(bufferParticipants, {
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        console.log('Participants Excel file saved to Firebase Storage');
+
+        // Generar y guardar el archivo de informes
+        const informsSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('inform').get();
+        const informs = [];
+
+        informsSnapshot.forEach(doc => {
+            const data = doc.data();
+            informs.push({
+                total: data.total || 0,
+                unemployed: data.unemployed || 0,
+                unemployed_including_long_term_unemployed: data.unemployed_including_long_term_unemployed || 0,
+                long_term_unemployed: data.long_term_unemployed || 0,
+                inactive: data.inactive || 0,
+                employed_including_self_employed: data.employed_including_self_employed || 0,
+                minors_under_18_years: data.minors_under_18_years || 0,
+                number_of_young_people_aged_18_to_29_years: data.number_of_young_people_aged_18_to_29_years || 0,
+                participants_over_54_years: data.participants_over_54_years || 0,
+                participants_with_primary_education_or_less_ISCED_0_to_2: data.participants_with_primary_education_or_less_ISCED_0_to_2 || 0,
+                participants_with_secondary_or_post_secondary_education_ISCED_3_to_4: data.participants_with_secondary_or_post_secondary_education_ISCED_3_to_4 || 0,
+                participants_with_tertiary_education_or_above: data.participants_with_tertiary_education_or_above || 0,
+                participants_with_disabilities: data.participants_with_disabilities || 0,
+                third_country_nationals: data.third_country_nationals || 0,
+                participants_of_foreign_origin: data.participants_of_foreign_origin || 0,
+                participants_from_minorities_including_marginalized_communities_such_as_Roma: data.participants_from_minorities_including_marginalized_communities_such_as_Roma || 0,
+                homeless_or_excluded_from_housing: data.homeless_or_excluded_from_housing || 0,
+                participants_from_rural_areas: data.participants_from_rural_areas || 0,
+                searchingJob: data.searchingJob || 0,
+                joinedToEducationSystem: data.joinedToEducationSystem || 0,
+                obtainedQualification: data.obtainedQualification || 0,
+                obtanidedJob: data.obtanidedJob || 0
+            });
+        });
+
+        const workbookInforms = new ExcelJS.Workbook();
+        const worksheetInforms = workbookInforms.addWorksheet('FSE kpis');
+
+        worksheetInforms.columns = [
+            { header: 'Número total de participantes', key: 'total', width: 30 },
+            { header: 'Desempleado', key: 'unemployed', width: 30 },
+            { header: 'Desempleados, incluidos los de larga duración', key: 'unemployed_including_long_term_unemployed', width: 30 },
+            { header: 'Desempleados de larga duración', key: 'long_term_unemployed', width: 30 },
+            { header: 'Inactivo', key: 'inactive', width: 30 },
+            { header: 'Empleados, incluso por cuenta propia', key: 'employed_including_self_employed', width: 30 },
+            { header: 'Menores (menos de 18 años)', key: 'minors_under_18_years', width: 30 },
+            { header: 'Número de personas jóvenes de edades comprendidas entre los 18 y los 29 años', key: 'number_of_young_people_aged_18_to_29_years', width: 30 },
+            { header: 'Participantes de más de 54 años', key: 'participants_over_54_years', width: 30 },
+            { header: 'Participantes con el primer ciclo de enseñanza secundaria como máximoCINE0a2', key: 'participants_with_primary_education_or_less_ISCED_0_to_2', width: 30 },
+            { header: 'Participantes con el segundo ciclo de enseñanza secundaria o con enseñanza postsecundaria CINE2a4', key: 'participants_with_secondary_or_post_secondary_education_ISCED_3_to_4', width: 30 },
+            { header: 'Participantes con enseñanza superior o terciaria', key: 'participants_with_tertiary_education_or_above', width: 30 },
+            { header: 'Participantes con discapacidad', key: 'participants_with_disabilities', width: 30 },
+            { header: 'Nacionales de terceros países', key: 'third_country_nationals', width: 30 },
+            { header: 'Participantes de origen extranjero', key: 'participants_of_foreign_origin', width: 30 },
+            { header: 'Participantes pertenecientes a minorías (incluidas las comunidades marginadas, como la romaní)', key: 'participants_from_minorities_including_marginalized_communities_such_as_Roma', width: 30 },
+            { header: 'Personas sin hogar o afectadas por la exclusión en materia de vivienda', key: 'homeless_or_excluded_from_housing', width: 30 },
+            { header: 'Participantes de zonas rurales', key: 'participants_from_rural_areas', width: 30 },
+            { header: 'Participantes que buscan trabajo tras su participación', key: 'searchingJob', width: 30 },
+            { header: 'Participantes que se han integrado en los sistemas de educación o formación tras su participación', key: 'joinedToEducationSystem', width: 30 },
+            { header: 'Participantes que obtienen una cualificación tras su participación', key: 'obtainedQualification', width: 30 },
+            { header: 'Participantes que obtienen un empleo tras su participación', key: 'obtanidedJob', width: 30 },
+        ];
+
+        informs.forEach(inform => {
+            worksheetInforms.addRow(inform);
+        });
+
+        const bufferInforms = await workbookInforms.xlsx.writeBuffer();
+        const fileNameInforms = `kpis/fse/informs_${date}.xlsx`;
+        const fileInforms = bucket.file(fileNameInforms);
+
+        await fileInforms.save(bufferInforms, {
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        console.log('Informs Excel file saved to Firebase Storage');
+
+    } catch (error) {
+        console.error('Error generating Excel files:', error);
+    }
+});
+
 
   //Llamadas
-
-  // HTML
-/*   <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Download Excel</title>
-</head>
-<body>
-  <button id="download">Download Excel</button>
-
-  <script>
-    document.getElementById('download').addEventListener('click', () => {
-      fetch('https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel', {
-        method: 'GET'
-      })
-      .then(response => response.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(new Blob([blob]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'participants.xlsx'); // or any other extension
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-      })
-      .catch(error => console.error('Error downloading the file:', error));
-    });
-  </script>
-</body>
-</html> */
-
 
 //CURL
 //curl -o participants.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel
 //curl -o kpis_fse.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportKpisToExcel
-
-//NodeJS
-/* const axios = require('axios');
-const fs = require('fs');
-
-axios({
-  url: 'https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel',
-  method: 'GET',
-  responseType: 'stream'
-})
-.then(response => {
-  response.data.pipe(fs.createWriteStream('participants.xlsx'));
-})
-.catch(error => {
-  console.error('Error downloading the file:', error);
-}); */
-
-
-
-
 
