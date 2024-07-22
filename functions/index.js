@@ -4096,6 +4096,7 @@ exports.copyParticipantsToKpis = functions.firestore
         }
         
         await participantRef.delete();
+        await updateTotalParticipants();
     
         console.log('Document successfully removing to kpis/fse/participants database in kpi Firestore');
       } catch (error) {
@@ -4120,6 +4121,7 @@ exports.copyParticipantsToKpis = functions.firestore
       }
 
       await participantRef.delete();
+      await updateTotalParticipants();
 
       console.log('Participant document successfully removed from kpis/fse/participants database in kpi Firestore');
     } catch (error) {
@@ -4142,11 +4144,41 @@ exports.copyParticipantsToKpis = functions.firestore
       }
 
       await participantRef.delete();
+      await updateTotalParticipants();
 
       console.log('Participant document successfully removed from kpis/fse/participants database in kpi Firestore');
     } catch (error) {
       console.error('Error removing participant document from kpis/fse/participants database in kpi Firestore: ', error);
     }
+  });
+
+  exports.removeParticipantOnUserTestChange = functions.firestore
+  .document('users/{userId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const userId = context.params.userId;
+
+    if (before.test === false && after.finished !== false ){
+        try {
+            const participantRef = otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId);
+            const participantSnap = await participantRef.get();
+      
+            if (!participantSnap.exists) {
+              console.log('No such participant!');
+              return;
+            }
+      
+            await participantRef.delete();
+            await updateTotalParticipants();
+      
+            console.log('Participant document successfully removed from kpis/fse/participants database in kpi Firestore');
+          } catch (error) {
+            console.error('Error removing participant document from kpis/fse/participants database in kpi Firestore: ', error);
+          }
+    }
+
+    
   });
 
   exports.exportParticipantsToExcel = functions.https.onRequest(async (req, res) => {
