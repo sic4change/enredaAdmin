@@ -4366,7 +4366,6 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
 
 exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
     try {
-        // Generar y guardar el archivo de participantes
         const usersSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('participants').get();
         const users = [];
 
@@ -4417,13 +4416,12 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
 
         const [participantsUrl] = await fileParticipants.getSignedUrl({
             action: 'read',
-            expires: '01-01-2050',  // Set a far future expiration date
+            expires: '01-01-2050', 
         });
 
         console.log('Participants Excel file saved to Firebase Storage');
         console.log('Participants Excel file URL:', participantsUrl);
 
-        // Generar y guardar el archivo de informes
         const informsSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('inform').get();
         const informs = [];
 
@@ -4497,18 +4495,23 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
 
         const [informsUrl] = await fileInforms.getSignedUrl({
             action: 'read',
-            expires: '01-01-2050',  // Set a far future expiration date
+            expires: '01-01-2050', 
         });
 
         console.log('Informs Excel file saved to Firebase Storage');
         console.log('Informs Excel file URL:', informsUrl);
 
-        //Enviar mails
         return adminFirebase.firestore().collection('mail').add({
             to: ['sic4change@gmail.com', 'aasencio@sic4change.org', 'syanez@sic4change.org'],
             message: {
                 subject: `Informes Fondo Social Europeo (FSE).`,
-                text:`Hola técnico/a de Enreda. \n\nAdjunto los informes de participantes y KPIs del Fondo Social Europeo (FSE). \n\nParticipantes: ${participantsUrl} \n\nKPIs: ${informsUrl} \n\nUn saludo.`,
+                html: `
+                    <p>Hola técnico/a de Enreda,</p>
+                    <p>Adjunto los informes de participantes y KPIs del Fondo Social Europeo (FSE).</p>
+                    <p><a href="${participantsUrl}" style="background-color: rgb(0,204,204); color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;">Descargar Participantes</a></p>
+                    <p><a href="${informsUrl}" style="background-color: rgb(0,204,204); color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;">Descargar KPIs</a></p>
+                    <p>Un saludo.</p>
+                    `,
             }
         }).then(() => console.log('Queued email!'));
 
