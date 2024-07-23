@@ -39,6 +39,8 @@ let randomImages = ['https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.ap
 exports.createUser = functions.firestore
     .document('users/{userId}')
     .onCreate((snapshot, context) => {
+        let createDate = new Date();
+
         return adminFirebase.firestore().collection('users').where("email", "==", snapshot.get('email')).get().then(
             (snapshot2) => {
                 if (snapshot2.size > 1) {
@@ -78,7 +80,7 @@ exports.createUser = functions.firestore
                     let photoURL = (snapshot.get('profilePic') !== undefined) ? snapshot.get('profilePic').src : photoUserDefault
                     if (role === 'Mentor') {
                         let trust = snapshot.data().trust !== undefined ? snapshot.data().trust : false;
-                        return adminFirebase.firestore().doc(`users/${userId}`).set({ userId, role, email, active, trust, birthday }, { merge: true })
+                        return adminFirebase.firestore().doc(`users/${userId}`).set({ userId, role, email, active, trust, birthday, createDate }, { merge: true })
                             .then(() => {
                                 return adminFirebase.auth().createUser({
                                     uid: userId,
@@ -113,7 +115,7 @@ exports.createUser = functions.firestore
                                 })
                             });
                     } else {
-                        return adminFirebase.firestore().doc(`users/${userId}`).set({ userId, role, email, active, birthday }, { merge: true })
+                        return adminFirebase.firestore().doc(`users/${userId}`).set({ userId, role, email, active, birthday, createDate }, { merge: true })
                             .then(() => {
                                 return adminFirebase.auth().createUser({
                                     uid: userId,
