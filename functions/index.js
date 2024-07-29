@@ -3825,6 +3825,9 @@ async function updateTotalParticipants() {
         let long_term_unemployedCount = 0;
         let inactiveCount = 0;
         let employed_including_self_employedCount = 0;
+        let manCount = 0;
+        let womanCount = 0;
+        let notBinaryCount = 0;
         let minorCount = 0;
         let age18to29Count = 0;
         let over54Count = 0;
@@ -3852,6 +3855,15 @@ async function updateTotalParticipants() {
             const nationality = data.nationality;
             const region = data.region;
             const ipilData = data.ipilData;
+            const gender = data.gender;
+
+            if (gender === 'Hombre') {
+                manCount++;
+            } else if (gender === 'Mujer') {
+                womanCount++;
+            } else {
+                notBinaryCount++;
+            }
 
             if (laborSituation === 'Inactiva') {
                 inactiveCount++;
@@ -3948,6 +3960,9 @@ async function updateTotalParticipants() {
         });
 
         console.log(`Total participants: ${totalParticipants}`);
+        console.log(`Total participants mujeres: ${womanCount}`);
+        console.log(`Total participants hombres: ${manCount}`);
+        console.log(`Total participants no binario: ${notBinaryCount}`);
         console.log(`Inactive participants: ${inactiveCount}`);
         console.log(`Long-term unemployed participants: ${long_term_unemployedCount}`);
         console.log(`Unemployed (including long-term): ${unemployed_including_long_term_unemployedCount}`);
@@ -3972,6 +3987,9 @@ async function updateTotalParticipants() {
   
         await informRef.update({ 
             total: totalParticipants, 
+            woman: womanCount,
+            man: manCount,
+            notBinaryCount: notBinaryCount,
             unemployed: unemployedCount,
             unemployed_including_long_term_unemployed: unemployed_including_long_term_unemployedCount,
             long_term_unemployed: long_term_unemployedCount,
@@ -4053,6 +4071,7 @@ exports.copyParticipantsToKpis = functions.firestore
         
         const participantData = {
           userId, 
+          gender: userData.gender !== undefined ? userData.gender : null, 
           birthday: userData.birthday !== undefined ? userData.birthday : null, 
           nationality: userData.nationality !== undefined ? userData.nationality : null,
           assignedEntityId: userData.assignedEntityId !== undefined ? userData.assignedEntityId : null,
@@ -4191,6 +4210,7 @@ exports.copyParticipantsToKpis = functions.firestore
         const birthday = data.birthday ? new Date(data.birthday._seconds * 1000).toISOString().split('T')[0] : '';
         users.push({
             userId: doc.id,
+            gender: data.gender || '',
             birthday: birthday || '',
             nationality: data.nationality || '',
             assignedEntityId: data.assignedEntityId || '',
@@ -4207,6 +4227,7 @@ exports.copyParticipantsToKpis = functions.firestore
   
       worksheet.columns = [
         { header: 'userId', key: 'userId', width: 30 },
+        { header: 'gender', key: 'gender', width: 30 },
         { header: 'birthday', key: 'birthday', width: 30 },
         { header: 'nationality', key: 'nationality', width: 30 },
         { header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
@@ -4241,6 +4262,9 @@ exports.copyParticipantsToKpis = functions.firestore
         const data = doc.data();
         informs.push({
             total: data.total || 0,
+            woman: data.woman || 0,
+            man: data.man || 0,
+            notBinary: data.notBinary || 0,
             unemployed: data.unemployed || 0,
             unemployed_including_long_term_unemployed: data.unemployed_including_long_term_unemployed || 0,
             long_term_unemployed: data.long_term_unemployed || 0,
@@ -4270,6 +4294,9 @@ exports.copyParticipantsToKpis = functions.firestore
   
       worksheet.columns = [
         { header: 'Número total de participantes', key: 'total', width: 30 },
+        { header: 'Número total de mujeres', key: 'woman', width: 30 },
+        { header: 'Número total de hombres', key: 'man', width: 30 },
+        { header: 'Número total de no binarios', key: 'notBinary', width: 30 },
         { header: 'Desempleado', key: 'unemployed', width: 30 },
         { header: 'Desempleados, incluidos los de larga duración', key: 'unemployed_including_long_term_unemployed', width: 30 },
         { header: 'Desempleados de larga duración', key: 'long_term_unemployed', width: 30 },
@@ -4308,7 +4335,7 @@ exports.copyParticipantsToKpis = functions.firestore
     }
   });
 
-exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
+/* exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
     try {
         const usersSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('participants').get();
         const users = [];
@@ -4318,6 +4345,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
             const birthday = data.birthday ? new Date(data.birthday._seconds * 1000).toISOString().split('T')[0] : '';
             users.push({
                 userId: doc.id,
+                gender: data.gender || '',
                 birthday: birthday || '',
                 nationality: data.nationality || '',
                 assignedEntityId: data.assignedEntityId || '',
@@ -4334,6 +4362,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
 
         worksheet.columns = [
             { header: 'userId', key: 'userId', width: 30 },
+            { header: 'gender', key: 'gender', width: 30 },
             { header: 'birthday', key: 'birthday', width: 30 },
             { header: 'nationality', key: 'nationality', width: 30 },
             { header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
@@ -4362,7 +4391,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
     } catch (error) {
         console.error('Error generating Excel file:', error);
     }
-});
+}); */
 
 exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
     try {
@@ -4374,6 +4403,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
             const birthday = data.birthday ? new Date(data.birthday._seconds * 1000).toISOString().split('T')[0] : '';
             users.push({
                 userId: doc.id,
+                gender: data.gender || '',
                 birthday: birthday || '',
                 nationality: data.nationality || '',
                 assignedEntityId: data.assignedEntityId || '',
@@ -4390,6 +4420,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
 
         worksheetParticipants.columns = [
             { header: 'userId', key: 'userId', width: 30 },
+            { header: 'gender', key: 'gender', width: 30 },
             { header: 'birthday', key: 'birthday', width: 30 },
             { header: 'nationality', key: 'nationality', width: 30 },
             { header: 'assignedEntityId', key: 'assignedEntityId', width: 30 },
@@ -4429,6 +4460,9 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
             const data = doc.data();
             informs.push({
                 total: data.total || 0,
+                woman: data.woman || 0,
+                man: data.man || 0,
+                notBinary: data.notBinary || 0,
                 unemployed: data.unemployed || 0,
                 unemployed_including_long_term_unemployed: data.unemployed_including_long_term_unemployed || 0,
                 long_term_unemployed: data.long_term_unemployed || 0,
@@ -4458,6 +4492,9 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
 
         worksheetInforms.columns = [
             { header: 'Número total de participantes', key: 'total', width: 30 },
+            { header: 'Número total de mujeres', key: 'woman', width: 30 },
+            { header: 'Número total de hombres', key: 'man', width: 30 },
+            { header: 'Número total de no binarios', key: 'notBinary', width: 30 },
             { header: 'Desempleado', key: 'unemployed', width: 30 },
             { header: 'Desempleados, incluidos los de larga duración', key: 'unemployed_including_long_term_unemployed', width: 30 },
             { header: 'Desempleados de larga duración', key: 'long_term_unemployed', width: 30 },
@@ -4502,7 +4539,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
         console.log('Informs Excel file URL:', informsUrl);
 
         return adminFirebase.firestore().collection('mail').add({
-            to: ['sic4change@gmail.com', 'aasencio@sic4change.org', 'syanez@sic4change.org'],
+            to: ['sic4change@gmail.com', 'aasencio@sic4change.org', 'syanez@sic4change.org', 'bvillavicencio@sic4change.org', 'ngomez@sic4change.org'],
             message: {
                 subject: `Informes Fondo Social Europeo (FSE).`,
                 html: `
