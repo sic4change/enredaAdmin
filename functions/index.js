@@ -3748,6 +3748,45 @@ exports.createInitialReport = functions.firestore
                 });
         });
 
+    exports.createExternalSocialEntity = functions.firestore
+        .document('externalSocialEntities/{externalSocialEntityId}')
+        .onCreate(async (snapshot, context) => {
+            const externalSocialEntityId = context.params.externalSocialEntityId;
+            await updateExternalSocialEntitySearchText(snapshot, externalSocialEntityId);
+            return adminFirebase.firestore().doc(`externalSocialEntities/${externalSocialEntityId}`).set({ externalSocialEntityId }, { merge: true })
+                .then(() => {
+                    console.log("Successfully added countryId to new country");
+                });
+        });
+
+        async function updateExternalSocialEntitySearchText(externalEntity, externalEntityId) {
+            let countryName = '';
+            let provinceName = '';
+            let cityName = '';
+            let document;
+        
+            if (externalEntity.data().address.country && externalEntity.data().address.country != "undefined") {
+                document = await adminFirebase.firestore().collection('countries').doc(externalEntity.data().address.country).get();
+                countryName = document.data().name;
+            }
+        
+            if (externalEntity.data().address.province && externalEntity.data().address.province != "undefined") {
+                document = await adminFirebase.firestore().collection('provinces').doc(externalEntity.data().address.province).get();
+                provinceName = document.data().name;
+            }
+        
+            if (externalEntity.data().address.city && externalEntity.data().address.city != "undefined") {
+                document = await adminFirebase.firestore().collection('cities').doc(externalEntity.data().address.city).get();
+                cityName = document.data().name;
+            }
+        
+            await adminFirebase.firestore().doc(`externalSocialEntities/${externalEntityId}`).set({ searchText: `${externalEntity.data().name};${externalEntity.data().category};${externalEntity.data().subCategory};${externalEntity.data().subGeographicZone};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
+                console.log(`Entidad social externa actualizada: ${externalEntity.data().name}, ${countryName}, ${provinceName}, ${cityName}`);
+            });
+        }
+
+
+
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
     .onUpdate(async (change, context) => {
