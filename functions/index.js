@@ -3648,6 +3648,7 @@ exports.createInitialReport = functions.firestore
     .onCreate((snapshot, context) => {
         const initialReportId = context.params.initialReportId;
         const userId = snapshot.data().userId;
+        const startDateItinerary = adminFirebase.firestore.Timestamp.now();
 
         return adminFirebase.firestore().doc(`initialReports/${initialReportId}`).set({ initialReportId}, { merge: true })
             .then(() => {
@@ -3655,9 +3656,9 @@ exports.createInitialReport = functions.firestore
                 return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
                     (snapshot) => {
                         snapshot.forEach((user) => {
-                            return adminFirebase.firestore().collection("users").doc(user.id).set({ initialReportId: initialReportId }, { merge: true })
+                            return adminFirebase.firestore().collection("users").doc(user.id).set({ initialReportId: initialReportId, startDateItinerary: startDateItinerary}, { merge: true })
                                 .then(() => {
-                                    console.log("Successfully add initialReport in organization user");
+                                    console.log("Successfully add initialReport in user");
                                 })
                         })
                     });
