@@ -3627,11 +3627,22 @@ exports.createSocialEntity = functions.firestore
     .document('socialEntities/{socialEntityId}')
     .onCreate((snapshot, context) => {
         const socialEntityId = context.params.socialEntityId;
+        const email = snapshot.data().email;
+        let trust = snapshot.data().trust !== undefined ? snapshot.data().trust : false;
         return adminFirebase.firestore().doc(`socialEntities/${socialEntityId}`).set({ socialEntityId }, { merge: true })
             .then(() => {
-                console.log("Successfully added socialEntityId to new socialEntity");
+                return adminFirebase.firestore().collection('users').where("email", "==", email).get().then(
+                    (snapshot) => {
+                        snapshot.forEach((user) => {
+                            return adminFirebase.firestore().collection("users").doc(user.id).set({ socialEntityId: socialEntityId }, { merge: true })
+                                .then(() => {
+                                    console.log("Successfully add socialEntityId in user");
+                                })
+                        })
+                    });
             });
     });
+   
 
 exports.createIpilEntry = functions.firestore
     .document('ipilEntry/{ipilId}')
