@@ -3625,22 +3625,15 @@ exports.createExperience = functions.firestore
     
 exports.createSocialEntity = functions.firestore
     .document('socialEntities/{socialEntityId}')
-    .onCreate((snapshot, context) => {
+    .onCreate(async (snapshot, context) => {
         const socialEntityId = context.params.socialEntityId;
-        const email = snapshot.data().email;
-        let trust = snapshot.data().trust !== undefined ? snapshot.data().trust : false;
-        return adminFirebase.firestore().doc(`socialEntities/${socialEntityId}`).set({ socialEntityId }, { merge: true })
-            .then(() => {
-                return adminFirebase.firestore().collection('users').where("email", "==", email).get().then(
-                    (snapshot) => {
-                        snapshot.forEach((user) => {
-                            return adminFirebase.firestore().collection("users").doc(user.id).set({ socialEntityId: socialEntityId }, { merge: true })
-                                .then(() => {
-                                    console.log("Successfully add socialEntityId in user");
-                                })
-                        })
-                    });
-            });
+        const contactEmail = snapshot.data().contactEmail;
+        await adminFirebase.firestore().doc(`socialEntities/${socialEntityId}`).set({ socialEntityId }, { merge: true });
+        const snapshot_1 = await adminFirebase.firestore().collection('users').where("email", "==", contactEmail).get();
+        snapshot_1.forEach(async (user) => {
+            await adminFirebase.firestore().collection("users").doc(user.id).set({ socialEntityId: socialEntityId }, { merge: true });
+            console.log("Successfully add socialEntityId in user");
+        });
     });
    
 
