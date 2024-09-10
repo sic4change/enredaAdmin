@@ -3203,26 +3203,26 @@ exports.updateResourceCategory = functions.firestore.document('testOne/{testOnet
 
     exports.resourceInvitation = functions.firestore
     .document('resourcesInvitations/{resourceInvitationId}')
-    .onCreate((snapshot, context) => {
+    .onCreate(async (snapshot, context) => {
         const resourceInvitationId = context.params.resourceInvitationId;
         const unemployedName = snapshot.get('unemployedName');
         const unemployedEmail = snapshot.get('unemployedEmail');
         const resourceId = snapshot.get('resourceId');
         const resourceTitle = snapshot.get('resourceTitle');
         const resourceDescription = snapshot.get('resourceDescription');
-        return adminFirebase.firestore().doc(`resourcesInvitations/${resourceInvitationId}`).set({resourceInvitationId}, {
-            merge:true
-        })
-            .then(() => {
-                return adminFirebase.firestore().collection('mail').add({
-                    to: unemployedEmail,
-                    message: {
-                        subject: `${resourceTitle} ¡Este recurso podría interesarte!`,
-                        html: createResourceInvitationTemplate(unemployedName, resourceTitle, resourceId, resourceDescription ),
-                    }
-                }).then(() => console.log('Queued email!'));
-                });
-            });
+        await adminFirebase.firestore().doc(`resourcesInvitations/${resourceInvitationId}`).set({ resourceInvitationId }, {
+            merge: true
+        });
+        await adminFirebase.firestore().collection('mail').add({
+            to: unemployedEmail,
+            message: {
+                subject: `${resourceTitle} ¡Este recurso podría interesarte!`,
+                html: createResourceInvitationTemplate(unemployedName, resourceTitle, resourceId, resourceDescription),
+            }
+        });
+        return console.log('Queued email!');
+            
+    });
 
 
     function createResourceInvitationTemplate(unemployedName, resourceTitle, resourceId, resourceDescription ) {
