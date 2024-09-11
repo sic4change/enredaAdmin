@@ -850,13 +850,33 @@ exports.updateResource = functions.firestore.document('resources/{resourceId}')
             }
         }   
         if (newValue.invitationsList !== previousValue.invitationsList) {
+            let categoryName = '';
+            let countryName = '';
+            let provinceName = '';
+            let cityName = '';
+    
+            async function getDocumentValue(collection, id) {
+                if (id !== undefined && id !== null && id !== '') {
+                    const doc = await adminFirebase.firestore().collection(collection).doc(id).get();
+                    return doc.data().name;
+                }
+                return '';
+            }
+    
+            // Fetch names in parallel
+            [countryName, provinceName, cityName, categoryName] = await Promise.all([
+                getDocumentValue('countries', newValue.address.country),
+                getDocumentValue('provinces', newValue.address.province),
+                getDocumentValue('cities', newValue.address.city),
+                getDocumentValue('resourcesCategories', newValue.resourceCategory)
+            ]);
+    
             // Eliminate duplicate emails from the list
             const uniqueEmailList = [...new Set(newValue.invitationsList)];
-        
             const resourceTitle = newValue.title;
-            const resourceDescription = newValue.description;
+            const resourceDescription = `${categoryName} en ${cityName}, ${provinceName}, ${countryName}`;
             const sendInvitationPromises = [];
-        
+    
             for (const email of uniqueEmailList) {
                 let htmlToSendInvitationToUser = resourceInvitationTemplate(
                     resourceTitle,
