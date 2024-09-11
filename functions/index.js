@@ -3671,6 +3671,32 @@ exports.createInitialReport = functions.firestore
         }
 
 
+        exports.updateExternalSocialEntity = functions.firestore.document('externalSocialEntities/{externalSocialEntityId}')
+        .onUpdate(async (change, context) => {
+            const externalSocialEntityId = context.params.externalSocialEntityId;
+            const newValue = change.after.data();
+            const previousValue = change.before.data();
+    
+            await updateExternalSocialEntitySearchText(change.after, externalSocialEntityId);
+
+        });
+
+
+exports.deleteDocumentationParticipant = functions.firestore
+    .document('documentationParticipants/{documentationParticipantId}')
+    .onDelete(async(snapshot, context) => {
+        const documentationParticipantId = context.params.documentationParticipantId;
+        const userId = snapshot.data().userId;
+        const documentName = snapshot.data().file.title;
+        try {
+            const bucket = adminFirebase.storage().bucket();
+            const filePath = `users/${userId}/files/${documentName}`;
+            await bucket.file(filePath).delete();
+            console.log(`Successfully deleted file: ${filePath}`);
+        } catch (error) {
+            console.error("Error deleting file:", error);
+        }
+    });
 
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
