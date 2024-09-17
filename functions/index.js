@@ -3515,6 +3515,19 @@ exports.createSocialEntity = functions.firestore
             console.log("Successfully add socialEntityId in user");
         });
     });
+
+exports.createCompany = functions.firestore
+    .document('companies/{companyId}')
+    .onCreate(async (snapshot, context) => {
+        const companyId = context.params.companyId;
+        const contactEmail = snapshot.data().contactEmail;
+        await adminFirebase.firestore().doc(`companies/${companyId}`).set({ companyId }, { merge: true });
+        const snapshot_1 = await adminFirebase.firestore().collection('users').where("email", "==", contactEmail).get();
+        snapshot_1.forEach(async (user) => {
+            await adminFirebase.firestore().collection("users").doc(user.id).set({ companyId: companyId }, { merge: true });
+            console.log("Successfully add companyId in user");
+        });
+    });
    
 
 exports.createIpilEntry = functions.firestore
