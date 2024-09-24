@@ -511,6 +511,42 @@ exports.createResource = functions.runWith(options).firestore
                     }
                 }
                 )
+        } else if (snapshot.data().organizerType === 'Empresa') {
+            return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
+                .then(() => {
+                    console.log("Added new company resource");
+                    return adminFirebase.firestore().collection('companies').where("companyId", "==", snapshot.data().organizer).get()
+                            .then((snapshot) => {
+                                snapshot.forEach((organization) => {
+                                    if (!organization.data().trust) {
+                                        doc.update({
+                                            enable: true,
+                                            trust: false,
+                                            online: onlineUpdate,
+                                            address: {
+                                                place: placeUpdate,
+                                                country: countryUpdate,
+                                                province: provinceUpdate,
+                                                city: cityUpdate
+                                            },
+                                        });
+                                    } else {
+                                        doc.update({
+                                            enable: true,
+                                            trust: true,
+                                            online: onlineUpdate,
+                                            address: {
+                                                place: placeUpdate,
+                                                country: countryUpdate,
+                                                province: provinceUpdate,
+                                                city: cityUpdate
+                                            },
+                                        });
+                                    }
+                                })
+                            });
+                }
+                )
         } else {
             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
                 .then(() => {
@@ -615,7 +651,7 @@ exports.checkResourceDate = functions.pubsub.topic('checkResourceDate').onPublis
             if (resource.data().end.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis() ||
                 resource.data().maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()
             ) {
-                if (resource.data().status !== 'A actualizar') {
+                if (resource.data().status !== 'A actualizar' || resource.data().status !== 'edition') {
                     const doc = adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`);
                     doc.update({
                         enable: false,
