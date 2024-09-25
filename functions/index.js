@@ -520,27 +520,13 @@ exports.createResource = functions.runWith(options).firestore
                                 snapshot.forEach((organization) => {
                                     if (!organization.data().trust) {
                                         doc.update({
-                                            enable: true,
+                                            enable: false,
                                             trust: false,
-                                            online: onlineUpdate,
-                                            address: {
-                                                place: placeUpdate,
-                                                country: countryUpdate,
-                                                province: provinceUpdate,
-                                                city: cityUpdate
-                                            },
                                         });
                                     } else {
                                         doc.update({
                                             enable: true,
                                             trust: true,
-                                            online: onlineUpdate,
-                                            address: {
-                                                place: placeUpdate,
-                                                country: countryUpdate,
-                                                province: provinceUpdate,
-                                                city: cityUpdate
-                                            },
                                         });
                                     }
                                 })
@@ -648,15 +634,23 @@ exports.createResourceType = functions.firestore
 exports.checkResourceDate = functions.pubsub.topic('checkResourceDate').onPublish((message, context) => {
     return adminFirebase.firestore().collection('resources').get().then((snapshot) => {
         snapshot.forEach((resource) => {
-            if (resource.data().end.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis() ||
-                resource.data().maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()
-            ) {
-                if (resource.data().status !== 'A actualizar' || resource.data().status !== 'edition') {
-                    const doc = adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`);
-                    doc.update({
-                        enable: false,
-                        status: 'No disponible'
-                    });
+            const data = resource.data();
+            const now = adminFirebase.firestore.Timestamp.now().toMillis();
+            const endMillis = data.end.toMillis();
+            const maximumDateMillis = data.maximumDate.toMillis();
+            if (data.end && data.maximumDate && endMillis && maximumDateMillis) {
+                if (endMillis <= now || maximumDateMillis <= now) {
+                    if (data.status !== 'A actualizar' && data.status !== 'edition') {
+                        const doc = adminFirebase.firestore().doc(`resources/${data.resourceId}`);
+                        doc.update({
+                            enable: false,
+                            status: 'No disponible'
+                        }).then(() => {
+                            console.log(`Document ${data.resourceId} successfully updated`);
+                        }).catch((error) => {
+                            console.error(`Error updating document ${data.resourceId}:`, error);
+                        });
+                    }
                 }
             }
         });
@@ -798,7 +792,7 @@ exports.updateResource = functions.firestore.document('resources/{resourceId}')
         //Cuando se modifica la fecha limite de inscripcion
         if (newValue.maximumDate !== previousValue.maximumDate) {
             if (!newValue.notExpire && newValue.maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()) {
-                if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo')) {
+                if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo') && (newValue.status !== 'edition')) {
                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
                     doc.update({
                         enable: false,
@@ -806,7 +800,7 @@ exports.updateResource = functions.firestore.document('resources/{resourceId}')
                     });
                 }
             } else {
-                if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo')) {
+                if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo') && (newValue.status !== 'edition')) {
                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
                     doc.update({
                         enable: true,
