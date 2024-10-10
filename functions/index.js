@@ -511,6 +511,57 @@ exports.createResource = functions.runWith(options).firestore
                     }
                 }
                 )
+            //Si el creador del recurso es una organization hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
+        } else if (snapshot.data().organizerType === 'Entidad Social') {
+            return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
+                .then(() => {
+                    console.log("Successfully added resourceId to new resource");
+                    // Comprobamos si es un recurso creado de la SPEGC por web scrapping
+                    if (snapshot.data().organizer === 'btTAIYUkGSgqlEAnaZJB') {
+                        doc.update({
+                            end: adminFirebase.firestore.Timestamp.now(),
+                            start: adminFirebase.firestore.Timestamp.now(),
+                            lastupdate: adminFirebase.firestore.Timestamp.now(),
+                            createdate: adminFirebase.firestore.Timestamp.now(),
+                            maximumDate: adminFirebase.firestore.Timestamp.now(),
+                            trust: true
+                        });
+                    } else {
+                        return adminFirebase.firestore().collection('socialEntities').where("socialEntityId", "==", snapshot.data().organizer).get()
+                            .then((snapshot) => {
+                                snapshot.forEach((organization) => {
+                                    if (!organization.data().trust) {
+                                        doc.update({
+                                            enable: true,
+                                            trust: false,
+                                            online: onlineUpdate,
+                                            status: 'Disponible',
+                                            address: {
+                                                place: placeUpdate,
+                                                country: countryUpdate,
+                                                province: provinceUpdate,
+                                                city: cityUpdate
+                                            },
+                                        });
+                                    } else {
+                                        doc.update({
+                                            enable: true,
+                                            trust: true,
+                                            online: onlineUpdate,
+                                            status: 'Disponible',
+                                            address: {
+                                                place: placeUpdate,
+                                                country: countryUpdate,
+                                                province: provinceUpdate,
+                                                city: cityUpdate
+                                            },
+                                        });
+                                    }
+                                })
+                            });
+                    }
+                }
+                )
         } else if (snapshot.data().organizerType === 'Empresa') {
             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
                 .then(() => {
