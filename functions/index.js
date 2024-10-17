@@ -1031,18 +1031,6 @@ exports.createJobOfferApplication = functions.firestore
             });
     });
 
-// exports.createJobOfferApplication = functions.firestore
-//     .document('jobOfferApplications/{jobOfferApplicationId}')
-//     .onCreate(async (snapshot, context) => {
-//         try {
-//             const jobOfferApplicationId = context.params.jobOfferApplicationId;
-//             await admin.firestore().doc(`jobOfferApplications/${jobOfferApplicationId}`).set({ jobOfferApplicationId }, { merge: true });
-//             console.log("Successfully added jobOfferApplicationId to new jobOfferApplication");
-//         } catch (error) {
-//             console.error("Error adding jobOfferApplicationId:", error);
-//         }
-//     });
-
 exports.sendEmailActiveUsers = functions.firestore.document('users/{userId}')
     .onUpdate((change, context) => {
         const userId = context.params.userId;
