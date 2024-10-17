@@ -1021,6 +1021,16 @@ exports.createSpecificInterest = functions.firestore
             });
     });
 
+exports.createJobOfferApplication = functions.firestore
+    .document('jobOfferApplications/{jobOfferApplicationId}')
+    .onCreate((snapshot, context) => {
+        const jobOfferApplicationId = context.params.jobOfferApplicationId;
+        return adminFirebase.firestore().doc(`jobOfferApplications/${jobOfferApplicationId}`).set({ jobOfferApplicationId }, { merge: true })
+            .then(() => {
+                console.log("Successfully added jobOfferApplicationId to new jobOfferApplication");
+            });
+    });
+
 exports.sendEmailActiveUsers = functions.firestore.document('users/{userId}')
     .onUpdate((change, context) => {
         const userId = context.params.userId;
