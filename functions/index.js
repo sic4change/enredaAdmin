@@ -8,6 +8,7 @@ const axios = require('axios'); // Axios version more than 0.21.1 will fail
 const cheerio = require('cheerio');
 const adminFirebase = require('firebase-admin');
 const { setTimeout } = require('node:timers/promises');
+const { OpenAI } = require("openai");
 adminFirebase.initializeApp(functions.config().firebase);
 
 const db = adminFirebase.firestore();
@@ -18,6 +19,14 @@ var options = { memory: '2GB', timeoutSeconds: 540, }
 const firestore = require('@google-cloud/firestore');
 const client = new firestore.v1.FirestoreAdminClient();
 const bucket = 'gs://enreda_bucket_eu';
+const openaiModel = "gpt-4o-mini";
+const orchestratorTemperature = 1.0;
+
+
+const openaiApiKey = "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";
+const openai = new OpenAI({
+  apiKey: openaiApiKey,
+});
 
 let randomImages = ['https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom1_900x503.png?alt=media&token=a2d3ee76-d2f2-4995-87ad-f40664c18c77',
             'https://firebasestorage.googleapis.com/v0/b/enreda-d3b41.appspot.com/o/randomImages%2Frandom2_900x503.png?alt=media&token=ad799b1d-dbf5-462d-bc44-603fb022558b',
@@ -3810,6 +3819,278 @@ exports.deleteDocumentationParticipant = functions.firestore
             console.error("Error deleting file:", error);
         }
     });
+
+exports.createGenerateDocument = functions.firestore
+    .document('jobOfferApplications/{jobOfferApplicationId}')
+    .onCreate((snapshot, context) => {
+        const jobOfferApplicationId = context.params.jobOfferApplicationId;
+        const jobOfferApplicationData = snapshot.data();
+
+        const { jobOfferId, userId } = jobOfferApplicationData;
+
+        const jobOfferPromise = adminFirebase.firestore().collection('jobOffers').doc(jobOfferId).get()
+            .then(jobOfferDoc => {
+                if (jobOfferDoc.exists) {
+                    return {
+                        offerCompetencies: jobOfferDoc.data().criteria[3].competencies.join(';'),
+                        offerCompetenciesWeight: jobOfferDoc.data().criteria[3].weight.toString(),
+                        offerLanguage: jobOfferDoc.data().criteria[2].requirementText,
+                        offerLanguageWeight: jobOfferDoc.data().criteria[2].weight.toString(),
+                        offerFormation: jobOfferDoc.data().criteria[0].requirementText,
+                        offerFormationWeight: jobOfferDoc.data().criteria[0].weight.toString(),
+                        offerExperience: jobOfferDoc.data().criteria[1].requirementText,
+                        offerExperienceWeight: jobOfferDoc.data().criteria[1].weight.toString(),
+                    }
+                } else {
+                    console.log(`No se encontró el jobOffer con ID: ${jobOfferId}`);
+                    return null;
+                }
+            }).catch(error => {
+                console.error("Error obteniendo jobOffer:", error);
+                return null;
+            });
+
+        const userPromise = adminFirebase.firestore().collection('users').doc(userId).get()
+            .then(userDoc => {
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    return {
+                        competencies: Object.keys(userData.competencies).join(';'),
+                        languages: userData.languages.join(';')
+                    };
+                } else {
+                    console.log(`No se encontró el usuario con ID: ${userId}`);
+                    return { competencies: null, languages: null };
+                }
+            }).catch(error => {
+                console.error("Error obteniendo usuario:", error);
+                return { competencies: null, languages: null };
+            });
+
+             const formationPromise = adminFirebase.firestore().collection('experiences')
+                        .where('userId', '==', userId)
+                        .where('type', '==', 'Formativa')
+                        .get()
+                        .then(querySnapshot => {
+                            if (querySnapshot.empty) {
+                                console.log(`No se encontraron documentos de experiencia para userId: ${userId} con type: Formativa`);
+                                return { formationNames: null };
+                            }
+
+                            const formationNames = [];
+                            querySnapshot.forEach(doc => {
+                                const data = doc.data();
+                                if (data.nameFormation) {
+                                    formationNames.push(data.nameFormation);
+                                }
+                            });
+
+                            return { formationNames: formationNames.join(';') };
+                        })
+                        .catch(error => {
+                            console.error("Error obteniendo formaciones:", error);
+                            return { formationNames: null };
+                        });
+
+             const experiencePromise = adminFirebase.firestore().collection('experiences')
+                                     .where('userId', '==', userId)
+                                     .where('type', '==', 'Profesional')
+                                     .get()
+                                     .then(querySnapshot => {
+                                         if (querySnapshot.empty) {
+                                             console.log(`No se encontraron documentos de experiencia para userId: ${userId} con type: Profesional`);
+                                             return { ExperiencesNames: null };
+                                         }
+
+                                         const experiencesNames = [];
+                                         querySnapshot.forEach(doc => {
+                                             const data = doc.data();
+                                             if (data.professionActivitiesText) {
+                                                element = data.professionActivitiesText;
+                                                startDate = data.startDate.toDate();
+                                                startYear = startDate.getFullYear();
+                                                element = element + " - " + startYear;
+                                                if(data.endDate){
+                                                    endDate = data.endDate.toDate();
+                                                    endYear = endDate.getFullYear();
+                                                    element  = element + " - " + endYear;
+                                                }
+                                                else{
+                                                element = element + " - " + "Actualidad";
+                                                }
+                                                 experiencesNames.push(element);
+                                             }
+                                         });
+
+                                         return { experiencesNames: experiencesNames.join(';') };
+                                     })
+                                     .catch(error => {
+                                         console.error("Error obteniendo experiencias:", error);
+                                         return { experiencesNames: null };
+                                     });
+
+
+
+        return Promise.all([jobOfferPromise, userPromise, formationPromise, experiencePromise])
+            .then(([criteria, userFields, formationFields, experienceFields]) => {
+
+                const promptPre = `Objetivo: Generar un JSON con resultados numéricos basados en la comparación de listas y criterios de evaluación específicos.\n
+                                  Tareas:\n
+                                  1. Evaluar Competencias:\n
+                                      * Compara los elementos de la lista ${criteria.offerCompetencies} (separados por ;) con la lista ${userFields.competencies} (separados por ;).\n
+                                      * Calcula un puntaje de 0 a ${criteria.offerCompetenciesWeight}:\n
+                                          * 0: Ningún elemento coincide exactamente.\n
+                                          * ${criteria.offerCompetenciesWeight}: Todos los elementos de la primera lista están contenidos exactamente en la segunda.\n
+                                      * Agrega el resultado al campo "89QFQO49uloGU3vXaA2Z" del JSON.\n
+                                  2. Evaluar Idiomas:\n
+                                      * Compara los idiomas requeridos ${criteria.offerLanguage} con los idiomas dominados ${userFields.languages} (separados por ;).\n
+                                      * Calcula un puntaje de 0 a ${criteria.offerLanguageWeight}:\n
+                                          * 0: Ningún idioma coincide.\n
+                                          * ${criteria.offerLanguageWeight}: Todos los idiomas requeridos coinciden exactamente.\n
+                                      * Agrega el resultado al campo "xxxP0JVB9xkwjdrXk1vE" del JSON.\n
+                                  3. Evaluar Formación Académica:\n
+                                      * Compara los requisitos en ${criteria.offerFormation} con las formaciones en ${formationFields.formationNames} (separados por ;).\n
+                                      * Calcula un puntaje de 0 a ${criteria.offerFormationWeight}:\n
+                                          * 0: Ninguna formación coincide.\n
+                                          * ${criteria.offerFormationWeight}: Todas las formaciones coinciden exactamente.\n
+                                      * Agrega el resultado al campo "8NUZxq3TCK4Q98S5ZDYB" del JSON.\n
+                                  4. Evaluar Experiencia Laboral:\n
+                                      * Compara los requisitos de experiencia en ${criteria.offerExperience} con las experiencias del aplicante a la oferta listadas en ${experienceFields.experiencesNames} (separados por ;), cada una con años de inicio y fin.\n
+                                      * Regla especial: Si el año de fin es “Actualidad, se considera que sigue activa.\n
+                                      * Calcula un puntaje de 0 a ${criteria.offerExperienceWeight}:\n
+                                          * 0: Ninguna experiencia de la oferta se ve reflejada en las del usuario.\n
+                                          * ${criteria.offerExperienceWeight}: Todas las experiencias requeridas se encuentran entre las que posee el aplicante, distribuidas de cualquier forma.\n
+                                      * Agrega el resultado al campo "RR2kOQfkmuSgFdHg7BWp" del JSON.\n
+                                  Resultado esperado:\n
+                                  El JSON debe incluir estos campos:\n
+                                  {\n
+                                    "89QFQO49uloGU3vXaA2Z": <numeric_value>,\n
+                                    "xxxP0JVB9xkwjdrXk1vE": <numeric_value>,\n
+                                    "8NUZxq3TCK4Q98S5ZDYB": <numeric_value>,\n
+                                    "RR2kOQfkmuSgFdHg7BWp": <numeric_value>\n
+                                   }/n`;
+
+
+        return openai.chat.completions.create({
+            model: openaiModel,
+            temperature: orchestratorTemperature,
+            messages: [
+                {
+                    "role": "system",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": promptPre
+                        }
+                    ]
+                }
+            ]
+        }).then(openaiResponse => {
+            const assistantResponsePre = openaiResponse.choices[0].message.content.trim().replace(/"/g, "");
+
+            const generateData = {
+                jobOfferApplicationId,
+                jobOfferId,
+                userId,
+                offerCompetencies: criteria.offerCompetencies,
+                offerCompetenciesWeight: criteria.offerCompetenciesWeight,
+                offerLanguage: criteria.offerLanguage,
+                offerLanguageWeight: criteria.offerLanguageWeight,
+                offerFormation: criteria.offerFormation,
+                offerFormationWeight: criteria.offerFormationWeight,
+                offerExperience: criteria.offerExperience,
+                offerExperienceWeight: criteria.offerExperienceWeight,
+                competencies: userFields.competencies,
+                languages: userFields.languages,
+                formationNames: formationFields.formationNames,
+                experiencesNames: experienceFields.experiencesNames,
+                openAIResponse: assistantResponsePre
+            };
+
+                return adminFirebase.firestore().collection('generate').add(generateData)
+                    .then(() => {
+                        console.log("Documento creado exitosamente en la colección generate con jobOfferApplicationId:", jobOfferApplicationId);
+                    });
+            })
+            })
+            .catch(error => {
+                console.error("Error creando el documento en generate:", error);
+                throw new functions.https.HttpsError('internal', 'Error al crear el documento en generate.');
+            });
+    });
+
+
+    exports.addEvaluationsField = functions.firestore
+        .document('generate/{docId}')
+        .onCreate(async (snapshot, context) => {
+            try {
+                const { jobOfferApplicationId, openAIResponse } = snapshot.data();
+
+                if (!jobOfferApplicationId) {
+                    console.error('jobOfferApplicationId is missing in the document.');
+                    return null;
+                }
+
+                if (!openAIResponse) {
+                    console.error('openAIResponse is missing in the document.');
+                    return null;
+                }
+
+                const extractJson = (inputText) => {
+                    const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+                    const match = inputText.match(jsonRegex);
+
+                    if (match && match[1]) {
+                        let rawJson = match[1].trim();
+                        console.log("Texto extraído como JSON:", rawJson);
+
+                        rawJson = rawJson.replace(/(\w+)\s*:/g, '"$1":');
+
+                        try {
+                            return JSON.parse(rawJson);
+                        } catch (error) {
+                            console.error("Error al parsear JSON:", error);
+                        }
+                    }
+                    return null;
+                };
+
+                const calculateMatchValue = (data) => {
+                    if (!data) return null;
+                    return Object.values(data)
+                        .filter(value => typeof value === 'number') // Solo sumar números
+                        .reduce((sum, value) => sum + value, 0);
+                };
+
+                const resultJsonEvaluation = extractJson(openAIResponse);
+                const matchValue = calculateMatchValue(resultJsonEvaluation);
+
+
+                const querySnapshot = await adminFirebase.firestore()
+                    .collection('jobOfferApplications')
+                    .where('jobOfferApplicationId', '==', jobOfferApplicationId)
+                    .get();
+
+                if (querySnapshot.empty) {
+                    console.error(`No documents found with jobOfferApplicationId: ${jobOfferApplicationId}`);
+                    return null;
+                }
+
+                const updates = [];
+                querySnapshot.forEach(doc => {
+                    const docRef = doc.ref;
+                    updates.push(docRef.set({ evaluations: resultJsonEvaluation, match: matchValue }, { merge: true }));
+                });
+
+                await Promise.all(updates);
+
+                console.log(`Evaluations field updated with openAIResponse for jobOfferApplicationId: ${jobOfferApplicationId}`);
+                return null;
+            } catch (error) {
+                console.error('Error adding evaluations field:', error);
+                return null;
+            }
+        });
 
 /*
 exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
