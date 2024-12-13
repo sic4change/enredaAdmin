@@ -23,7 +23,7 @@ const openaiModel = "gpt-4o-mini";
 const orchestratorTemperature = 1.0;
 
 
-const openaiApiKey = "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";
+const openaiApiKey = "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";
 const openai = new OpenAI({
   apiKey: openaiApiKey,
 });
