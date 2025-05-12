@@ -4539,7 +4539,7 @@ exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(as
         console.log('Informs Excel file URL:', informsUrl);
 
         return adminFirebase.firestore().collection('mail').add({
-            to: ['sic4change@gmail.com', 'aasencio@sic4change.org', 'asuarez@sic4change.org', 'bvillavicencio@sic4change.org'],
+            to: ['sic4change@gmail.com', 'aasencio@sic4change.org', 'asuarez@sic4change.org', 'bvillavicencio@sic4change.org', 'lgarcia@sic4change.org'],
             message: {
                 subject: `Informes Fondo Social Europeo (FSE).`,
                 html: `
