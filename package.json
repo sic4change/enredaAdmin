@@ -21,6 +21,7 @@
     "firebase-functions": "^3.16.0",
     "material-ui": "^0.20.2",
     "moment": "^2.29.1",
+    "openai": "^5.8.2",
     "prop-types": "^15.7.2",
     "ra-data-json-server": "^3.8.3",
     "ra-i18n-polyglot": "^3.8.3",
