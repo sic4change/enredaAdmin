@@ -7124,3 +7124,101 @@ exports.sheduledKpisFSE = onMessagePublished({
 // //curl -o kpis_fse.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportKpisToExcel
 
 //module.exports = require('./update/updateCountryOnly');
+
+// ── Notificación: Invitación a sesión ────────────────────────────────────────
+//
+// Dos triggers:
+//  1. onDocumentCreated → envía a todos los invitedParticipants de la nueva sesión.
+//  2. onDocumentUpdated → envía solo a los participantes NUEVOS añadidos al array.
+//
+// El nombre de la sesión se toma de "title" si existe, o del tipo de sesión.
+//
+
+async function _sendSessionInvitationNotifications(userIds, sessionData) {
+  if (!userIds || userIds.length === 0) return;
+
+  const sessionTitle =
+    sessionData.title && sessionData.title.trim() !== ''
+      ? sessionData.title.trim()
+      : sessionData.sessionType === 'individual'
+      ? 'Sesión individual'
+      : 'Sesión grupal';
+
+  const notificationBody = `Te han invitado a la sesión: ${sessionTitle}`;
+
+  console.log(`[notifySessionInvitation] Sending to ${userIds.length} participant(s): "${notificationBody}"`);
+
+  const messaging = adminFirebase.messaging();
+
+  await Promise.all(
+    userIds.map(async (userId) => {
+      try {
+        await messaging.send({
+          topic: userId,
+          notification: {
+            title: 'Enreda',
+            body: notificationBody,
+          },
+          data: {
+            type: 'session_invitation',
+            route: '/calendar',
+          },
+          android: {
+            notification: {
+              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+            },
+          },
+        });
+        console.log(`[notifySessionInvitation] Notification sent to user ${userId}`);
+      } catch (err) {
+        console.error(`[notifySessionInvitation] Error sending to user ${userId}:`, err);
+      }
+    })
+  );
+}
+
+// Trigger 1: Nueva sesión creada → notificar a todos los invitados
+exports.notifySessionInvitationOnCreate = onDocumentCreated(
+  'sesiones/{sesionId}',
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) {
+      console.log('[notifySessionInvitationOnCreate] No data in created document.');
+      return;
+    }
+
+    const invitedParticipants = data.invitedParticipants || [];
+    if (invitedParticipants.length === 0) {
+      console.log('[notifySessionInvitationOnCreate] No participants to notify.');
+      return;
+    }
+
+    await _sendSessionInvitationNotifications(invitedParticipants, data);
+  }
+);
+
+// Trigger 2: Sesión actualizada → notificar solo a los nuevos invitados
+exports.notifySessionInvitationOnUpdate = onDocumentUpdated(
+  'sesiones/{sesionId}',
+  async (event) => {
+    const before = event.data?.before?.data();
+    const after = event.data?.after?.data();
+
+    if (!before || !after) {
+      console.log('[notifySessionInvitationOnUpdate] No data found in update event.');
+      return;
+    }
+
+    // Detectar participantes nuevos (no existían en "before")
+    const previousInvited = new Set(before.invitedParticipants || []);
+    const currentInvited = after.invitedParticipants || [];
+    const newlyInvited = currentInvited.filter((uid) => !previousInvited.has(uid));
+
+    if (newlyInvited.length === 0) {
+      console.log('[notifySessionInvitationOnUpdate] No new invited participants.');
+      return;
+    }
+
+    await _sendSessionInvitationNotifications(newlyInvited, after);
+  }
+);
