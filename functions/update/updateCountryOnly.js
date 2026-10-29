@@ -1,24 +1,24 @@
 // functions/update/updateCountryOnly.js
 
-// const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
-// const { onDocumentCreated } = require('firebase-functions/v2/firestore');
-// const { onDocumentDeleted } = require('firebase-functions/v2/firestore');
-// const { onMessagePublished } = require('firebase-functions/v2/pubsub');
+// Se carga desde index.js, que es quien inicializa la app de firebase-admin.
+
+const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onDocumentDeleted } = require('firebase-functions/v2/firestore');
+const { onMessagePublished } = require('firebase-functions/v2/pubsub');
 
 
-// const { logger } = require('firebase-functions');
+const { logger } = require('firebase-functions');
 
-// const adminFirebase = require('firebase-admin');
+const adminFirebase = require('firebase-admin');
 
-// adminFirebase.initializeApp();
+var options = { memory: '2GB', timeoutSeconds: 540 };
 
-// var options = { memory: '2GB', timeoutSeconds: 540 };
-
-// const { Firestore } = require('@google-cloud/firestore');
-// const otherFirestore = new Firestore({
-//   projectId: 'enreda-d3b41',
-//   databaseId: 'kpis',
-// });
+const { Firestore } = require('@google-cloud/firestore');
+const otherFirestore = new Firestore({
+  projectId: 'enreda-d3b41',
+  databaseId: 'kpis',
+});
 
 
 exports.updateCountry = onDocumentUpdated('countries/{countryId}', async (event) => {

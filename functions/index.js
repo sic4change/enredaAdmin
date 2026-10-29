@@ -7,7 +7,6 @@ const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { onMessagePublished } = require('firebase-functions/v2/pubsub');
 const { onObjectFinalized } = require('firebase-functions/v2/storage');
-const { onRequest } = require('firebase-functions/v2/https');
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 
@@ -253,20 +252,6 @@ exports.updateUser = onDocumentUpdated('users/{userId}', async (event) => {
   }
 });
 
-// exports.deleteUser = functions.firestore
-//     .document('users/{userId}')
-//     .onDelete((snapshot, context) => {
-//         const userId = context.params.userId;
-//         return adminFirebase.auth().deleteUser(userId).then(() => {
-//             console.log("Successfully deleted user from auth");
-//         }).then(() => {
-//             const bucket = adminFirebase.storage().bucket();
-//             return bucket.deleteFiles({
-//                 prefix: `users/${userId}`
-//             });
-//         });
-//     });
-
 exports.createOrganization = onDocumentCreated('organizations/{organizationId}', async (event) => {
   const snapshot = event.data;
   const organizationId = event.params.organizationId;
@@ -331,102 +316,6 @@ exports.updateOrganization = onDocumentUpdated('organizations/{organizationId}',
   }
 });
 
-// exports.deleteOrganization = functions.firestore
-//     .document('organizations/{organizationId}')
-//     .onDelete((snapshot, context) => {
-//         const organizationId = context.params.organizationId;
-//         return adminFirebase.firestore().collection('resources').where("organizer", "==", organizationId).get().then(
-//             (snapshot) => {
-//                 snapshot.forEach((resource) => {
-//                     return adminFirebase.firestore().collection("resources").doc(resource.id).delete().then(function () {
-//                         console.log("Resource successfully deleted!");
-//                         return adminFirebase.firestore().collection("users").where("organization", "==", organizationId).get().then(
-//                             (snapshot) => {
-//                                 snapshot.forEach((user) => {
-//                                     return adminFirebase.firestore().collection("users").doc(user.id).delete().then(function () {
-//                                         return adminFirebase.auth().deleteUser(user.id).then(() => {
-//                                             console.log("Successfully deleted user from auth");
-//                                         }).then(() => {
-//                                             const bucket = adminFirebase.storage().bucket();
-//                                             return bucket.deleteFiles({
-//                                                 prefix: `users/${user.id}`
-//                                             });
-//                                         });
-//                                     })
-//                                 })
-//                             }
-//                         )
-//                     }).catch(function (error) {
-//                         console.error("Error removing resource: ", error);
-//                     });
-//                 })
-//             }
-//         );
-//     });
-
-// exports.createCountry = functions.firestore
-//     .document('countries/{countryId}')
-//     .onCreate((snapshot, context) => {
-//         const countryId = context.params.countryId;
-//         //return adminFirebase.firestore().collection('resources').where("organizer", "==", countryId).get().then()
-//         return adminFirebase.firestore().doc(`countries/${countryId}`).set({ countryId, active: true }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added countryId to new country");
-//             });
-//     });
-
-// exports.updateCountry = functions.firestore.document('countries/{countryId}')
-//     .onUpdate(async (change, context) => {
-//         const previousValue = change.before.data();
-
-//         const resources = await adminFirebase.firestore().collection('resources').where("address.country", "==", previousValue.countryId).get();
-
-//         for (const resource of resources.docs) {
-//             await updateResourceSearchText(resource, resource.data().resourceId);
-//         }
-
-//         console.log('All resources searchText have been modified with the new country');
-//         return;
-//     });
-
-// exports.deleteCountry = functions.firestore
-//     .document('countries/{countryId}')
-//     .onDelete((snapshot, context) => {
-//         const countryId = context.params.countryId;
-//         return adminFirebase.firestore().collection('provinces').where("countryId", "==", countryId).get()
-//             .then((snapshot) => {
-//                 snapshot.forEach((province) => {
-//                     return adminFirebase.firestore().collection("provinces").doc(province.id).delete().then(function () {
-//                         console.log("Associated province successfully deleted!");
-//                     })
-//                 })
-//             });
-//     });
-
-// exports.createProvince = functions.firestore
-//     .document('provinces/{provinceId}')
-//     .onCreate((snapshot, context) => {
-//         const provinceId = context.params.provinceId;
-//         return adminFirebase.firestore().doc(`provinces/${provinceId}`).set({ provinceId, active: true }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added provinceId to new province");
-//             });
-//     });
-
-
-// exports.updateProvince = functions.firestore.document('provinces/{provinceId}')
-//     .onUpdate(async (change, context) => {
-//         const previousValue = change.before.data();
-
-//         const resources = await adminFirebase.firestore().collection('resources').where("address.province", "==", previousValue.provinceId).get();
-
-//         for (const resource of resources.docs) {
-//             await updateResourceSearchText(resource, resource.data().resourceId);
-//         }
-
-//         console.log('All resources searchText have been modified with the new province');
-//         return;
-//     });
 
 
 exports.deleteProvince = onDocumentDeleted('provinces/{provinceId}', async (event) => {
@@ -459,232 +348,6 @@ exports.deleteProvince = onDocumentDeleted('provinces/{provinceId}', async (even
     console.error(`Error deleting cities for province ${provinceId}:`, error);
   }
 });
-
-// exports.createCity = functions.firestore
-//     .document('cities/{cityId}')
-//     .onCreate((snapshot, context) => {
-//         const cityId = context.params.cityId;
-//         return adminFirebase.firestore().doc(`cities/${cityId}`).set({ cityId, active: true }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added cityId to new city");
-//             });
-//     });
-
-// exports.updateCity = functions.firestore.document('cities/{cityId}')
-//     .onUpdate(async (change, context) => {
-//         const previousValue = change.before.data();
-
-//         const resources = await adminFirebase.firestore().collection('resources').where("address.city", "==", previousValue.cityId).get();
-
-//         for (const resource of resources.docs) {
-//             await updateResourceSearchText(resource, resource.data().resourceId);
-//         }
-
-//         console.log('All resources searchText have been modified with the new city');
-//         return;
-//     });
-
-// exports.createResource = functions.runWith(options).firestore
-//     .document('resources/{resourceId}')
-//     .onCreate(async (snapshot, context) => {
-//         const resourceId = context.params.resourceId;
-//         const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//         const onlineUpdate = snapshot.data().modality !== 'Presencial' ? true : false;
-//         const countryUpdate = (snapshot.data().address.country === undefined || snapshot.data().address.country === null) ? "undefined" : snapshot.data().address.country;
-//         const provinceUpdate = (snapshot.data().address.province === undefined || snapshot.data().address.province === null) ? "undefined" : snapshot.data().address.province;
-//         const cityUpdate = (snapshot.data().address.city === undefined || snapshot.data().address.city === null) ? "undefined" : snapshot.data().address.city;
-//         const placeUpdate = snapshot.data().address.place;
-
-//         adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceLink: `https://enredawebapp.web.app/resources/${resourceId}` }, { merge: true });
-
-//         await updateResourceSearchText(snapshot, resourceId);
-
-//         //Si el creador del recurso es un mentor hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
-//         if (snapshot.data().organizerType === 'Mentor') {
-//             return adminFirebase.firestore().collection('users').where("userId", "==", snapshot.data().organizer).get()
-//                 .then((snapshot) => {
-//                     snapshot.forEach((user) => {
-//                         if (!user.data().trust) {
-//                             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                                 .then(() => {
-//                                     console.log("Successfully added resourceId to new resource");
-//                                     doc.update({
-//                                         enable: true,
-//                                         trust: false,
-//                                         online: onlineUpdate,
-//                                         status: 'Disponible',
-//                                         address: {
-//                                             place: placeUpdate,
-//                                             country: countryUpdate,
-//                                             province: provinceUpdate,
-//                                             city: cityUpdate
-//                                         },
-//                                     });
-
-//                                 })
-//                         } else {
-//                             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                                 .then(() => {
-//                                     console.log("Successfully added resourceId to new resource");
-//                                     doc.update({
-//                                         enable: true,
-//                                         trust: true,
-//                                         online: onlineUpdate,
-//                                         status: 'Disponible',
-//                                         address: {
-//                                             place: placeUpdate,
-//                                             country: countryUpdate,
-//                                             province: provinceUpdate,
-//                                             city: cityUpdate
-//                                         },
-//                                     });
-
-//                                 })
-//                         }
-//                     })
-//                 });
-//             //Si el creador del recurso es una organization hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
-//         } else if (snapshot.data().organizerType === 'Organización') {
-//             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                 .then(() => {
-//                     console.log("Successfully added resourceId to new resource");
-//                     // Comprobamos si es un recurso creado de la SPEGC por web scrapping
-//                     if (snapshot.data().organizer === 'btTAIYUkGSgqlEAnaZJB') {
-//                         doc.update({
-//                             end: adminFirebase.firestore.Timestamp.now(),
-//                             start: adminFirebase.firestore.Timestamp.now(),
-//                             lastupdate: adminFirebase.firestore.Timestamp.now(),
-//                             createdate: adminFirebase.firestore.Timestamp.now(),
-//                             maximumDate: adminFirebase.firestore.Timestamp.now(),
-//                             trust: true
-//                         });
-//                     } else {
-//                         return adminFirebase.firestore().collection('organizations').where("organizationId", "==", snapshot.data().organizer).get()
-//                             .then((snapshot) => {
-//                                 snapshot.forEach((organization) => {
-//                                     if (!organization.data().trust) {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: false,
-//                                             online: onlineUpdate,
-//                                             status: 'Disponible',
-//                                             address: {
-//                                                 place: placeUpdate,
-//                                                 country: countryUpdate,
-//                                                 province: provinceUpdate,
-//                                                 city: cityUpdate
-//                                             },
-//                                         });
-//                                     } else {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: true,
-//                                             online: onlineUpdate,
-//                                             status: 'Disponible',
-//                                             address: {
-//                                                 place: placeUpdate,
-//                                                 country: countryUpdate,
-//                                                 province: provinceUpdate,
-//                                                 city: cityUpdate
-//                                             },
-//                                         });
-//                                     }
-//                                 })
-//                             });
-//                     }
-//                 }
-//                 )
-//             //Si el creador del recurso es una organization hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
-//         } else if (snapshot.data().organizerType === 'Entidad Social') {
-//             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                 .then(() => {
-//                     console.log("Successfully added resourceId to new resource");
-//                     // Comprobamos si es un recurso creado de la SPEGC por web scrapping
-//                     if (snapshot.data().organizer === 'btTAIYUkGSgqlEAnaZJB') {
-//                         doc.update({
-//                             end: adminFirebase.firestore.Timestamp.now(),
-//                             start: adminFirebase.firestore.Timestamp.now(),
-//                             lastupdate: adminFirebase.firestore.Timestamp.now(),
-//                             createdate: adminFirebase.firestore.Timestamp.now(),
-//                             maximumDate: adminFirebase.firestore.Timestamp.now(),
-//                             trust: true
-//                         });
-//                     } else {
-//                         return adminFirebase.firestore().collection('socialEntities').where("socialEntityId", "==", snapshot.data().organizer).get()
-//                             .then((snapshot) => {
-//                                 snapshot.forEach((organization) => {
-//                                     if (!organization.data().trust) {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: false,
-//                                             online: onlineUpdate,
-//                                             status: 'Disponible',
-//                                             address: {
-//                                                 place: placeUpdate,
-//                                                 country: countryUpdate,
-//                                                 province: provinceUpdate,
-//                                                 city: cityUpdate
-//                                             },
-//                                         });
-//                                     } else {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: true,
-//                                             online: onlineUpdate,
-//                                             status: 'Disponible',
-//                                             address: {
-//                                                 place: placeUpdate,
-//                                                 country: countryUpdate,
-//                                                 province: provinceUpdate,
-//                                                 city: cityUpdate
-//                                             },
-//                                         });
-//                                     }
-//                                 })
-//                             });
-//                     }
-//                 }
-//                 )
-//         } else if (snapshot.data().organizerType === 'Empresa') {
-//             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                 .then(() => {
-//                     console.log("Added new company resource");
-//                     return adminFirebase.firestore().collection('companies').where("companyId", "==", snapshot.data().organizer).get()
-//                             .then((snapshot) => {
-//                                 snapshot.forEach((organization) => {
-//                                     if (!organization.data().trust) {
-//                                         doc.update({
-//                                             enable: false,
-//                                             trust: false,
-//                                         });
-//                                     } else {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: true,
-//                                         });
-//                                     }
-//                                 })
-//                             });
-//                 }
-//                 )
-//         } else {
-//             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                 .then(() => {
-//                     console.log("Successfully added resourceId to new resource");
-//                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//                     doc.update({
-//                         enable: true,
-//                         trust: true,
-//                         online: onlineUpdate,
-//                         status: 'Disponible',
-//                         country: countryUpdate,
-//                         province: provinceUpdate,
-//                         city: cityUpdate
-//                     });
-//                 })
-//         }
-
-//     });
 
 exports.createJobOffer = onDocumentCreated('jobOffers/{jobOfferId}', async (event) => {
     const jobOfferId = event.params.jobOfferId;
@@ -775,42 +438,6 @@ exports.storage = onObjectFinalized(
       console.error("Error deleting resource picture files:", error);
     }
   });
-
-// exports.createResourceType = functions.firestore
-//     .document('resourcesTypes/{resourceTypeId}')
-//     .onCreate((snapshot, context) => {
-//         const resourceTypeId = context.params.resourceTypeId;
-//         return adminFirebase.firestore().doc(`resourcesTypes/${resourceTypeId}`).set({ resourceTypeId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added resourceTypeId to new resourceType");
-//             });
-//     });
-
-// exports.checkResourceDate = functions.pubsub.topic('checkResourceDate').onPublish((message, context) => {
-//     return adminFirebase.firestore().collection('resources').get().then((snapshot) => {
-//         snapshot.forEach((resource) => {
-//             const data = resource.data();
-//             const now = adminFirebase.firestore.Timestamp.now().toMillis();
-//             const endMillis = data.end.toMillis();
-//             const maximumDateMillis = data.maximumDate.toMillis();
-//             if (data.end && data.maximumDate && endMillis && maximumDateMillis) {
-//                 if (endMillis <= now || maximumDateMillis <= now) {
-//                     if (data.status !== 'A actualizar' && data.status !== 'edition') {
-//                         const doc = adminFirebase.firestore().doc(`resources/${data.resourceId}`);
-//                         doc.update({
-//                             enable: false,
-//                             status: 'No disponible'
-//                         }).then(() => {
-//                             console.log(`Document ${data.resourceId} successfully updated`);
-//                         }).catch((error) => {
-//                             console.error(`Error updating document ${data.resourceId}:`, error);
-//                         });
-//                     }
-//                 }
-//             }
-//         });
-//     });
-// });
 
 exports.updateResource = onDocumentUpdated('resources/{resourceId}', async (event) => {
   const resourceId = event.params.resourceId;
@@ -984,36 +611,6 @@ exports.updateResource = onDocumentUpdated('resources/{resourceId}', async (even
   }
 });
 
-// exports.createAbility = functions.firestore
-//     .document('abilities/{abilityId}')
-//     .onCreate((snapshot, context) => {
-//         const abilityId = context.params.abilityId;
-//         return adminFirebase.firestore().doc(`abilities/${abilityId}`).set({ abilityId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added abilityId to new ability");
-//             });
-//     });
-
-// exports.createInterest = functions.firestore
-//     .document('interests/{interestId}')
-//     .onCreate((snapshot, context) => {
-//         const interestId = context.params.interestId;
-//         return adminFirebase.firestore().doc(`interests/${interestId}`).set({ interestId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added interestId to new interest");
-//             });
-//     });
-
-// exports.createSpecificInterest = functions.firestore
-//     .document('specificInterests/{specificInterestId}')
-//     .onCreate((snapshot, context) => {
-//         const specificInterestId = context.params.specificInterestId;
-//         return adminFirebase.firestore().doc(`specificInterests/${specificInterestId}`).set({ specificInterestId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added specificInterestId to new specificInterest");
-//             });
-//     });
-
 exports.createJobOfferApplication = onDocumentCreated(
   {
     document: "jobOfferApplications/{jobOfferApplicationId}",
@@ -1074,43 +671,6 @@ exports.sendEmailActiveUsers = onDocumentUpdated('users/{userId}', async (event)
     }
   }
 });
-
-// exports.sendEmailNewUsers = functions.firestore
-//     .document('users/{userId}')
-//     .onCreate((snapshot, context) => {
-//         const userId = context.params.userId;
-//         const role = snapshot.get('role');
-//         const phone = snapshot.get('phone');
-//         const address = snapshot.get('address');
-//         const country = address.country;
-//         let active = snapshot.get('active')
-//         //Controlamos inactivos en Peru
-//         if (active === undefined) {
-//             if (country === 'WMHqCzqISX6KNVs9b3iN' && role !== 'Desempleado') {
-//                 active = false
-//             } else {
-//                 active = true
-//             }
-//         }
-//         let htmlToSendToNewUser = (active) ? createWelcomeToUserTemplate(snapshot.get('firstName'), snapshot.get('email').trim().toLowerCase(), 'enreda_' + userId.slice(-3)) : createWelcomeToInactiveUserTemplate(snapshot.get('firstName'));
-//         return adminFirebase.firestore().collection('mail').add({
-//             to: snapshot.get('email'),
-//             message: {
-//                 subject: 'Equipo Enreda',
-//                 html: htmlToSendToNewUser,
-//             }
-//         }).then(() => {
-//             return adminFirebase.firestore().collection('mail').add({
-//                 to: 'escuchamos@enredas.org',
-//                 message: {
-//                     subject: 'Tenemos un nuevo integrante',
-//                     html:
-//                         createWelcomeToEnredaTemplate(snapshot.get('firstName'),
-//                             snapshot.get('email'), snapshot.get('role')),
-//                 }
-//             }).then(() => console.log('Queued email for delivery!'));
-//         });
-//     });
 
 function createWelcomeToUserTemplate(name, email, password) {
     const contactToUserTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -1535,36 +1095,6 @@ style="padding:0px 0px 30px 0px;" role="module-content" bgcolor="">
     return contactToEnredaTemplate;
 }
 
-
-// exports.contactFormHandler = functions.firestore
-//     .document('contact/{contactId}')
-//     .onCreate((snapshot, context) => {
-//         const contactId = context.params.contactId;
-//         return adminFirebase.firestore().doc(`contact/${contactId}`).set({ contactId }, {
-//             merge:
-//                 true
-//         })
-//             .then(() => {
-//                 return adminFirebase.firestore().collection('mail').add({
-//                     to: snapshot.get('email'),
-//                     message: {
-//                         subject: 'Enreda: gracias por contactar',
-//                         html:
-//                             createContactToUserTemplate(snapshot.get('name')),
-//                     }
-//                 }).then(() => {
-//                     return adminFirebase.firestore().collection('mail').add({
-//                         to: 'escuchamos@enredas.org',
-//                         message: {
-//                             subject: 'Hemos recibido una solicitud de contacto',
-//                             html:
-//                                 createContactToEnredaTemplate(snapshot.get('name'),
-//                                     snapshot.get('email'), snapshot.get('text')),
-//                         }
-//                     }).then(() => console.log('Queued email for delivery!'));
-//                 });
-//             });
-//     });
 
 function createContactToUserTemplate(name) {
     const contactToUserTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD
@@ -2035,54 +1565,6 @@ const findResourcesFromSPEGC = async () => {
     return data
 }
 */
-// exports.updateCountry = onDocumentUpdated('countries/{countryId}', async (event) => {
-//     const change = event;
-//     const previousValue = change.data?.before?.fields;
-//     const countryId = previousValue?.countryId?.stringValue;
-//     if (!countryId) {
-//       logger.warn('No countryId found in previous document');
-//       return;
-//     }
-    
-//     const db = adminFirebase.firestore();
-//     const resourcesSnapshot = await db
-//       .collection('resources')
-//       .where('address.country', '==', countryId)
-//       .get();
-    
-//     for (const resource of resourcesSnapshot.docs) {
-//       const data = resource.data();
-//       await updateResourceSearchText(resource, data.resourceId);
-//     }
-    
-//     logger.info('All resources searchText have been modified with the new country');
-//     return;
-//   });
-
-// exports.deleteCountry = functions.firestore
-//     .document('countries/{countryId}')
-//     .onDelete((snapshot, context) => {
-//         const countryId = context.params.countryId;
-//         return adminFirebase.firestore().collection('provinces').where("countryId", "==", countryId).get()
-//             .then((snapshot) => {
-//                 snapshot.forEach((province) => {
-//                     return adminFirebase.firestore().collection("provinces").doc(province.id).delete().then(function () {
-//                         console.log("Associated province successfully deleted!");
-//                     })
-//                 })
-//             });
-//     });
-
-// exports.createProvince = functions.firestore
-//     .document('provinces/{provinceId}')
-//     .onCreate((snapshot, context) => {
-//         const provinceId = context.params.provinceId;
-//         return adminFirebase.firestore().doc(`provinces/${provinceId}`).set({ provinceId, active: true }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added provinceId to new province");
-//             });
-//     });
-
 
 exports.updateProvince = onDocumentUpdated(
   {
@@ -2117,20 +1599,6 @@ exports.updateProvince = onDocumentUpdated(
   }
 );
 
-// exports.deleteProvince = functions.firestore
-//     .document('provinces/{provinceId}')
-//     .onDelete((snapshot, context) => {
-//         const provinceId = context.params.provinceId;
-//         return adminFirebase.firestore().collection('cities').where("provinceId", "==", provinceId).get()
-//             .then((snapshot) => {
-//                 snapshot.forEach((city) => {
-//                     return adminFirebase.firestore().collection("cities").doc(city.id).delete().then(function () {
-//                         console.log("Associated city successfully deleted!");
-//                     })
-//                 })
-//             });
-//     });
-
 exports.createCity = onDocumentCreated('cities/{cityId}', async (event) => {
   const cityId = event.params.cityId;
 
@@ -2144,189 +1612,6 @@ exports.createCity = onDocumentCreated('cities/{cityId}', async (event) => {
     logger.error(`❌ Error creating city ${cityId}:`, error);
   }
 });
-
-// exports.updateCity = functions.firestore.document('cities/{cityId}')
-//     .onUpdate(async (change, context) => {
-//         const previousValue = change.before.data();
-
-//         const resources = await adminFirebase.firestore().collection('resources').where("address.city", "==", previousValue.cityId).get();
-
-//         for (const resource of resources.docs) {
-//             await updateResourceSearchText(resource, resource.data().resourceId);
-//         }
-
-//         console.log('All resources searchText have been modified with the new city');
-//         return;
-//     });
-
-// exports.createResource = functions.runWith(options).firestore
-//     .document('resources/{resourceId}')
-//     .onCreate(async (snapshot, context) => {
-//         const resourceId = context.params.resourceId;
-//         const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//         const onlineUpdate = snapshot.data().modality !== 'Presencial' ? true : false;
-//         const countryUpdate = (snapshot.data().address.country === undefined || snapshot.data().address.country === null) ? "undefined" : snapshot.data().address.country;
-//         const provinceUpdate = (snapshot.data().address.province === undefined || snapshot.data().address.province === null) ? "undefined" : snapshot.data().address.province;
-//         const cityUpdate = (snapshot.data().address.city === undefined || snapshot.data().address.city === null) ? "undefined" : snapshot.data().address.city;
-//         const placeUpdate = snapshot.data().address.place;
-
-//         adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceLink: `https://enredawebapp.web.app/resources/${resourceId}` }, { merge: true });
-
-//         await updateResourceSearchText(snapshot, resourceId);
-
-//         //Si el creador del recurso es un mentor hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
-//         if (snapshot.data().organizerType === 'Mentor') {
-//             return adminFirebase.firestore().collection('users').where("userId", "==", snapshot.data().organizer).get()
-//                 .then((snapshot) => {
-//                     snapshot.forEach((user) => {
-//                         if (!user.data().trust) {
-//                             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                                 .then(() => {
-//                                     console.log("Successfully added resourceId to new resource");
-//                                     doc.update({
-//                                         enable: true,
-//                                         trust: false,
-//                                         online: onlineUpdate,
-//                                         status: 'Disponible',
-//                                         address: {
-//                                             place: placeUpdate,
-//                                             country: countryUpdate,
-//                                             province: provinceUpdate,
-//                                             city: cityUpdate
-//                                         },
-//                                     });
-
-//                                 })
-//                         } else {
-//                             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                                 .then(() => {
-//                                     console.log("Successfully added resourceId to new resource");
-//                                     doc.update({
-//                                         enable: true,
-//                                         trust: true,
-//                                         online: onlineUpdate,
-//                                         status: 'Disponible',
-//                                         address: {
-//                                             place: placeUpdate,
-//                                             country: countryUpdate,
-//                                             province: provinceUpdate,
-//                                             city: cityUpdate
-//                                         },
-//                                     });
-
-//                                 })
-//                         }
-//                     })
-//                 });
-//             //Si el creador del recurso es una organization hay que mirar si el campo trust para ver si el recurso se puede mostrar o no
-//         } else if (snapshot.data().organizerType === 'Organización') {
-//             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                 .then(() => {
-//                     console.log("Successfully added resourceId to new resource");
-//                     // Comprobamos si es un recurso creado de la SPEGC por web scrapping
-//                     if (snapshot.data().organizer === 'btTAIYUkGSgqlEAnaZJB') {
-//                         doc.update({
-//                             end: adminFirebase.firestore.Timestamp.now(),
-//                             start: adminFirebase.firestore.Timestamp.now(),
-//                             lastupdate: adminFirebase.firestore.Timestamp.now(),
-//                             createdate: adminFirebase.firestore.Timestamp.now(),
-//                             maximumDate: adminFirebase.firestore.Timestamp.now(),
-//                             trust: true
-//                         });
-//                     } else {
-//                         return adminFirebase.firestore().collection('organizations').where("organizationId", "==", snapshot.data().organizer).get()
-//                             .then((snapshot) => {
-//                                 snapshot.forEach((organization) => {
-//                                     if (!organization.data().trust) {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: false,
-//                                             online: onlineUpdate,
-//                                             status: 'Disponible',
-//                                             address: {
-//                                                 place: placeUpdate,
-//                                                 country: countryUpdate,
-//                                                 province: provinceUpdate,
-//                                                 city: cityUpdate
-//                                             },
-//                                         });
-//                                     } else {
-//                                         doc.update({
-//                                             enable: true,
-//                                             trust: true,
-//                                             online: onlineUpdate,
-//                                             status: 'Disponible',
-//                                             address: {
-//                                                 place: placeUpdate,
-//                                                 country: countryUpdate,
-//                                                 province: provinceUpdate,
-//                                                 city: cityUpdate
-//                                             },
-//                                         });
-//                                     }
-//                                 })
-//                             });
-//                     }
-//                 }
-//                 )
-//         } else {
-//             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ resourceId }, { merge: true })
-//                 .then(() => {
-//                     console.log("Successfully added resourceId to new resource");
-//                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//                     doc.update({
-//                         enable: true,
-//                         trust: true,
-//                         online: onlineUpdate,
-//                         status: 'Disponible',
-//                         country: countryUpdate,
-//                         province: provinceUpdate,
-//                         city: cityUpdate
-//                     });
-//                 })
-//         }
-
-//     });
-
-// exports.storage = functions.storage.object().onFinalize(async (object) => {
-//     const bucket = object.bucket;
-//     const pathToFile = object.name;
-//     const downloadToken = object.metadata.firebaseStorageDownloadTokens;
-//     const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
-//         pathToFile
-//     )}?alt=media&token=${downloadToken}`;
-//     const path = pathToFile.substring(0, pathToFile.lastIndexOf('/'));
-//     //const title = pathToFile.substring(pathToFile.lastIndexOf('/') + 1);
-//     let resourcePhoto = {
-//         src: url,
-//     }
-//     let logoPic = {
-//         src: url,
-//     }
-//     let profilePic = {
-//         src: url,
-//     }
-
-//     const pathToCollection = pathToFile.substring(0, pathToFile.indexOf('/'));
-//     //console.log(`Path to collection: ${pathToCollection}`);
-//     if (pathToCollection === 'resourcesPictures') {
-//         return adminFirebase.firestore().doc(path).set({ resourcePhoto }, { merge: true })
-//             .then(() => {
-//                 console.log("Resource photo successfully updated");
-//             });
-//     } else if (pathToCollection === 'organizations') {
-//         return adminFirebase.firestore().doc(path).set({ logoPic }, { merge: true })
-//             .then(() => {
-//                 console.log("Organization Logo successfully updated");
-//             });
-//     }
-//     else if (pathToCollection === 'users') {
-//         return adminFirebase.firestore().doc(path).set({ profilePic }, { merge: true })
-//             .then(() => {
-//                 console.log("User profile picture successfully updated after resizing");
-//             });
-//     }
-// });
 
 exports.deleteResourcePicture = onDocumentDeleted('resourcesPictures/{resourcePictureId}', async (event) => {
   try {
@@ -2357,346 +1642,6 @@ exports.deleteResourcePicture = onDocumentDeleted('resourcesPictures/{resourcePi
     console.error("Error deleting resource picture files:", error);
   }
 });
-
-// exports.createResourceType = functions.firestore
-//     .document('resourcesTypes/{resourceTypeId}')
-//     .onCreate((snapshot, context) => {
-//         const resourceTypeId = context.params.resourceTypeId;
-//         return adminFirebase.firestore().doc(`resourcesTypes/${resourceTypeId}`).set({ resourceTypeId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added resourceTypeId to new resourceType");
-//             });
-//     });
-
-// exports.checkResourceDate = functions.pubsub.topic('checkResourceDate').onPublish((message, context) => {
-//     return adminFirebase.firestore().collection('resources').get().then((snapshot) => {
-//         snapshot.forEach((resource) => {
-//             if (resource.data().end.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis() ||
-//                 resource.data().maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()
-//             ) {
-//                 if (resource.data().status !== 'A actualizar') {
-//                     const doc = adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`);
-//                     doc.update({
-//                         enable: false,
-//                         status: 'No disponible'
-//                     });
-//                 }
-//             }
-//         });
-//     });
-// });
-
-// exports.updateResource = functions.firestore.document('resources/{resourceId}')
-//     .onUpdate(async (change, context) => {
-//         const resourceId = context.params.resourceId;
-//         const newValue = change.after.data();
-//         const previousValue = change.before.data();
-
-//         await updateResourceSearchText(change.after, resourceId);
-
-//         // Tras web scrapping cuando pasa de 'A actualizar a 'Disponible' hay que enviar el mail
-//         if ((newValue.status === 'Disponible') && (previousValue.status === 'A actualizar')) {
-//             const interests = [];
-//             Object.values(newValue.interests).forEach((key) => {
-//                 interests.push(key);
-//             });
-//             const title = newValue.title;
-//             const resourceType = newValue.resourceType;
-//             const resourceStatus = newValue.status;
-
-//             const payload = {
-//                 notification: {
-//                     title: 'Enreda',
-//                     body: `Nuevo recurso: ${title}`,
-//                     sound: "default"
-//                 },
-//                 data: {
-//                     resourceId: resourceId,
-//                     click_action: "FLUTTER_NOTIFICATION_CLICK",
-//                     title: 'Enreda',
-//                     body: `Nuevos recursos basados en tus intereses`,
-//                 }
-//             };
-//             const options = {
-//                 priority: "high",
-//                 timeToLive: 60 * 60 * 24
-//             };
-
-//             if (resourceStatus !== 'A actualizar') {
-//                 functions.logger.log('INTERESTS', interests);
-//                 const promises = interests.map((interest) => {
-//                     return adminFirebase.firestore().collection('users').get().then((snapshot) => {
-//                         snapshot.forEach((user) => {
-//                             if (user.get('role') === 'Desempleado') {
-//                                 // Si el recurso es de ocio, se envia a todo los desempleados
-//                                 if (resourceType === 'iGkqdz7uiWuXAFz1O8PY') {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                                 else {
-//                                     if (user.get('unemployedType') === 'T1' || user.get('unemployedType') === 'T2') {
-//                                         return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                     }
-//                                     // Si el recurso es de habilidades sociales 
-//                                     else if (resourceType === 'GOw01m2HPro4I8xd6rSj') {
-//                                         // Si el desempleado tiene la habilidad "Habilidades sociales"
-//                                         if (user.get('motivation').abilities.includes('kv0ZGalD2ViPdTx0BMm6')) {
-//                                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                         }
-//                                     }
-//                                     // Si el recurso es de Financación
-//                                     else if (resourceType === 'PPX3Ufeg9YfzH4YA0SkU') {
-//                                         // Si el desempleado tiene la habilidad "Financiacion"
-//                                         if (user.get('motivation').abilities.includes('5X4lcOCqMTAZ4UwQLl03')) {
-//                                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                         }
-//                                     }
-//                                     // Si el recurso es de mentoria
-//                                     else if (resourceType === 'lUubulxiAGo4llxFJrkl') {
-//                                         // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral"
-//                                         if (user.get('motivation').abilities.includes('3ywxTQBRJ6wzgMiVx9GE')) {
-//                                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                         }
-//                                     }
-//                                     // Si el recurso es de Apoyo y orientacion para el empleo
-//                                     else if (resourceType === 'MvCHSFzASskxlkBzPElb') {
-//                                         // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral"
-//                                         if (user.get('motivation').abilities.includes('RrBucTiz917syI4jyJKz')) {
-//                                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                         }
-//                                     }
-//                                     // Si el recurso es de programa para la emprendeduria 
-//                                     else if (resourceType === '4l9BLhP7cwXohUvQzMOT') {
-//                                         // Si el desempleado tiene la habilidad "Emprenduderia"
-//                                         if (user.get('motivation').abilities.includes('0m7igV4HhWcXwWabBKK5')) {
-//                                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                         }
-//                                     }
-//                                     // Si el recurso es de formacion
-//                                     else if (resourceType === 'N9KdlBYmxUp82gOv8oJC') {
-//                                         // Si el desempleado tiene la habilidad "Formacion"
-//                                         if (user.get('motivation').abilities.includes('nMWfKP0yOqQf8Zv4A3n6')) {
-//                                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                         }
-//                                     }
-//                                     else {
-//                                         const interestsUser = [];
-//                                         user.get('interests').interests.forEach((i) => {
-//                                             interestsUser.push(i);
-//                                         });
-//                                         interestsUser.forEach((interestUser) => {
-//                                             if (interestUser === interest) {
-//                                                 return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                             }
-//                                         })
-//                                     }
-//                                 }
-
-//                             }
-//                         });
-//                     })
-//                 });
-//                 return Promise.all(promises);
-//             }
-//         }
-
-//         //Cuando se modifica la modalidad
-//         if (newValue.modality !== previousValue.modality) {
-//             const onlineUpdate = newValue.data().modality !== 'Presencial' ? true : false;
-//             const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//             const countryUpdate = (newValue.data().address.country === undefined || newValue.data().address.country === null) ? "undefined" : newValue.data().address.country;
-//             const provinceUpdate = (newValue.data().address.province === undefined || newValue.data().address.province === null) ? "undefined" : newValue.data().address.province;
-//             const cityUpdate = (newValue.data().address.city === undefined || newValue.data().address.city === null) ? "undefined" : newValue.data().address.city;
-//             const placeUpdate = newValue.data().address.place;
-//             doc.update({
-//                 online: onlineUpdate,
-//                 address: {
-//                     place: placeUpdate,
-//                     country: countryUpdate,
-//                     province: provinceUpdate,
-//                     city: cityUpdate
-//                 },
-//             });
-//         }
-
-//         //Cuando se modifica la fecha limite de inscripcion
-//         if (newValue.maximumDate !== previousValue.maximumDate) {
-//             if (!newValue.notExpire && newValue.maximumDate.toMillis() <= adminFirebase.firestore.Timestamp.now().toMillis()) {
-//                 if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo')) {
-//                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//                     doc.update({
-//                         enable: false,
-//                         status: 'No disponible'
-//                     });
-//                 }
-//             } else {
-//                 if ((newValue.status !== 'A actualizar') && (newValue.status !== 'Completo')) {
-//                     const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//                     doc.update({
-//                         enable: true,
-//                         status: 'Disponible'
-//                     });
-//                 }
-//             }
-//         }
-
-//         //Cuando se modifica el aforo y ya hay asistentes inscritos
-//         if (newValue.capacity !== previousValue.capacity) {
-//             if (previousValue.assistants <= newValue.capacity) {
-//                 return adminFirebase.firestore().doc(`resources/${resourceId}`).set({
-//                     capacity: newValue.capacity
-//                 }, { merge: true })
-//                     .then(() => {
-//                         console.log("Changes were applied to capacity");
-//                         if (previousValue.assistants === newValue.capacity) {
-//                             const status = 'Completo';
-//                             return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ status }, { merge: true }).then(() => {
-//                                 console.log('Se ha modificado correctamente el evento');
-//                             });
-//                         }
-//                     });
-//             } else {
-//                 return adminFirebase.firestore().doc(`resources/${resourceId}`).set({
-//                     capacity: previousValue.capacity
-//                 }, { merge: true })
-//                     .then(() => {
-//                         console.log("Changes were not applied because the number of assistants were higher than the new capacity");
-//                     });
-//             }
-//         }
-
-//         // // Cuando se añaden asistentes
-//         if (newValue.assistants !== previousValue.assistants) {
-//             let status = previousValue.status
-//             if (newValue.assistants === newValue.capacity) {
-//                 status = 'Completo';
-//             }
-//             const doc = adminFirebase.firestore().doc(`resources/${resourceId}`);
-//             doc.update({
-//                 assistants: newValue.participants.length.toString(),
-//                 status: status
-//             });
-//         }
-//         // Cuando se modifican los participantes (solo desde las apps)
-//         if ((newValue.participants !== previousValue.participants) && (newValue.participantsString === previousValue.participantsString)) {
-//             console.log("Aqui desde el movil");
-//             let difference;
-//             let addingParticipants;
-        
-//             if (previousValue.participants.length > newValue.participants.length) {
-//                 difference = previousValue.participants.filter(x => !newValue.participants.includes(x));
-//                 addingParticipants = false;
-//             } else {
-//                 difference = newValue.participants.filter(x => !previousValue.participants.includes(x));
-//                 addingParticipants = true;
-//             }
-        
-//             let participant = difference[0];
-//             if (participant) {
-//                 return adminFirebase.firestore().doc(`resources/${resourceId}`).set({ participantsString: newValue.participants.join() }, { merge: true })
-//                     .then(() => adminFirebase.firestore().collection('users').where("userId", "==", participant).get())
-//                     .then((snapshot) => {
-//                         let promises = [];
-//                         snapshot.forEach((user) => {
-//                             let resources = user.get('resources') || [];
-//                             if (addingParticipants) {
-//                                 resources.push(resourceId);
-//                             } else {
-//                                 resources = resources.filter(resource => resource !== resourceId);
-//                             }
-//                             promises.push(adminFirebase.firestore().doc(`users/${participant}`).set({ resources, resourcesString: resources.join() }, { merge: true }));
-//                         });
-//                         return Promise.all(promises);
-//                     })
-//                     .then(() => {
-//                         console.log("Successfully updated resources in user");
-//                     })
-//                     .catch((error) => {
-//                         console.error("Error updating resources:", error);
-//                     });
-//             } else {
-//                 console.log("No participants changed.");
-//                 // Handle the case where there is no change.
-//             }
-//         }   
-//         if (newValue.invitationsList !== previousValue.invitationsList) {
-//             // Eliminate duplicate emails from the list
-//             const uniqueEmailList = [...new Set(newValue.invitationsList)];
-        
-//             const resourceTitle = newValue.title;
-//             const resourceDescription = newValue.description;
-//             const sendInvitationPromises = [];
-        
-//             for (const email of uniqueEmailList) {
-//                 let htmlToSendInvitationToUser = resourceInvitationTemplate(
-//                     resourceTitle,
-//                     resourceId,
-//                     resourceDescription 
-//                 );
-//                 const sendPromise = adminFirebase.firestore().collection('mail').add({
-//                     to: email,
-//                     message: {
-//                         subject: `Invitación: ${resourceTitle}`,
-//                         html: htmlToSendInvitationToUser,
-//                     }
-//                 }).then(() => {
-//                     console.log(`Successfully sent ${email}`);
-//                 }).catch(error => {
-//                     console.error(`Failed to send ${email}`, error);
-//                 });
-//                 sendInvitationPromises.push(sendPromise);
-//             } 
-//             return Promise.all(sendInvitationPromises);
-//         }
-//     });
-
-// exports.createAbility = functions.firestore
-//     .document('abilities/{abilityId}')
-//     .onCreate((snapshot, context) => {
-//         const abilityId = context.params.abilityId;
-//         return adminFirebase.firestore().doc(`abilities/${abilityId}`).set({ abilityId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added abilityId to new ability");
-//             });
-//     });
-
-// exports.createInterest = functions.firestore
-//     .document('interests/{interestId}')
-//     .onCreate((snapshot, context) => {
-//         const interestId = context.params.interestId;
-//         return adminFirebase.firestore().doc(`interests/${interestId}`).set({ interestId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added interestId to new interest");
-//             });
-//     });
-
-// exports.createSpecificInterest = functions.firestore
-//     .document('specificInterests/{specificInterestId}')
-//     .onCreate((snapshot, context) => {
-//         const specificInterestId = context.params.specificInterestId;
-//         return adminFirebase.firestore().doc(`specificInterests/${specificInterestId}`).set({ specificInterestId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added specificInterestId to new specificInterest");
-//             });
-//     });
-
-// exports.sendEmailActiveUsers = functions.firestore.document('users/{userId}')
-//     .onUpdate((change, context) => {
-//         const userId = context.params.userId;
-//         const newValue = change.after.data();
-//         const beforeValue = change.before.data();
-//         if (!beforeValue.active && newValue.active && newValue.address.country == 'WMHqCzqISX6KNVs9b3iN' && newValue.role !== 'Desempleado') {
-//             let htmlToSendToNewUser = createWelcomeToUserTemplate(newValue.firstName, newValue.email.trim().toLowerCase(), 'enreda_' + userId.slice(-3));
-//             return adminFirebase.firestore().collection('mail').add({
-//                 to: newValue.email,
-//                 message: {
-//                     subject: 'Equipo Enreda',
-//                     html: htmlToSendToNewUser,
-//                 }
-//             }).then(() => {
-//                 console.log("Successfully send email");
-//             });
-//         }
-//     });
 
 exports.sendEmailNewUsers = onDocumentCreated('users/{userId}', async (event) => {
   const snapshot = event.data;
@@ -3512,108 +2457,6 @@ style="padding:0px 0px 30px 0px;" role="module-content" bgcolor="">
 </html>`;
     return contactToEnredaTemplate;
 }
-
-// exports.sendEmailOnCreateResource = functions.firestore
-//     .document('resources/{resourceId}')
-//     .onCreate((snapshot, context) => {
-//         const resourceId = context.params.resourceId;
-//         const interests = [];
-//         Object.values(snapshot.get('interests')).forEach((key) => {
-//             interests.push(key);
-//         });
-//         const title = snapshot.get('title');
-//         const resourceType = snapshot.get('resourceType');
-//         const resourceStatus = snapshot.get('status');
-//         if (resourceStatus !== 'A actualizar') {
-//             return adminFirebase.firestore().collection('users').get().then((snapshot) => {
-//                 snapshot.forEach((user) => {
-//                     if (user.get('role') === 'Desempleado') {
-
-//                         const payload = {
-//                             notification: {
-//                                 title: 'Enreda',
-//                                 body: `Nuevo recurso: ${title}`,
-//                                 sound: "default"
-//                             },
-//                             data: {
-//                                 resourceId: resourceId,
-//                                 click_action: "FLUTTER_NOTIFICATION_CLICK",
-//                                 title: 'Enreda',
-//                                 body: `Nuevos recursos basados en tus intereses`,
-//                             }
-//                         };
-//                         const options = {
-//                             priority: "high",
-//                             timeToLive: 60 * 60 * 24
-//                         };
-
-//                         // Si el recurso es de ocio, se envia a todo los desempleados
-//                         if (resourceType === 'iGkqdz7uiWuXAFz1O8PY') {
-//                             return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                         }
-//                         else {
-//                             if (user.get('unemployedType') === 'T1' || user.get('unemployedType') === 'T2') {
-//                                 return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                             }
-//                             // Si el recurso es de habilidades sociales 
-//                             else if (resourceType === 'GOw01m2HPro4I8xd6rSj') {
-//                                 // Si el desempleado tiene la habilidad "Habilidades sociales"
-//                                 if (user.get('motivation').abilities.includes('kv0ZGalD2ViPdTx0BMm6')) {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                             }
-//                             // Si el recurso es de Financación
-//                             else if (resourceType === 'PPX3Ufeg9YfzH4YA0SkU') {
-//                                 // Si el desempleado tiene la habilidad "Financiacion"
-//                                 if (user.get('motivation').abilities.includes('5X4lcOCqMTAZ4UwQLl03')) {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                             }
-//                             // Si el recurso es de mentoria
-//                             else if (resourceType === 'lUubulxiAGo4llxFJrkl') {
-//                                 // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral" 
-//                                 if (user.get('motivation').abilities.includes('3ywxTQBRJ6wzgMiVx9GE')) {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                             }
-//                             // Si el recurso es de Apoyo y orientacion para el empleo
-//                             else if (resourceType === 'MvCHSFzASskxlkBzPElb') {
-//                                 // Si el desempleado tiene la habilidad "Apoyo profesional al sector laboral"
-//                                 if (user.get('motivation').abilities.includes('RrBucTiz917syI4jyJKz')) {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                             }
-//                             // Si el recurso es de programa para la emprendeduria 
-//                             else if (resourceType === '4l9BLhP7cwXohUvQzMOT') {
-//                                 // Si el desempleado tiene la habilidad "Emprenduderia"
-//                                 if (user.get('motivation').abilities.includes('0m7igV4HhWcXwWabBKK5')) {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                             }
-//                             // Si el recurso es de formacion
-//                             else if (resourceType === 'N9KdlBYmxUp82gOv8oJC') {
-//                                 // Si el desempleado tiene la habilidad "Formacion"
-//                                 if (user.get('motivation').abilities.includes('nMWfKP0yOqQf8Zv4A3n6')) {
-//                                     return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                 }
-//                             }
-//                             else {
-//                                 const interestsUser = [];
-//                                 user.get('interests').interests.forEach((i) => {
-//                                     interestsUser.push(i);
-//                                 });
-//                                 interestsUser.forEach((interestUser) => {
-//                                     if (interests.indexOf(interestUser) > -1) {
-//                                         return adminFirebase.messaging().sendToTopic(user.get('userId'), payload, options);
-//                                     }
-//                                 })
-//                             }
-//                         }
-//                     }
-//                 });
-//             })
-//         }
-//     });
 
 // /*
 // const findResourcesFromSPEGC = async () => {
@@ -4694,32 +3537,6 @@ const findResourceDetailFromSPEGC = async (url) => {
 };
 
 
-// exports.deleteResource = functions.firestore
-//     .document('resources/{resourceId}')
-//     .onDelete((snapshot, context) => {
-//         const deletedResource = snapshot.data();
-//         if (deletedResource.participants !== undefined && deletedResource.participants.length > 0) {
-//             deletedResource.participants.forEach((user) => {
-//                 const payload = {
-//                     notification: {
-//                         title: 'Enreda',
-//                         body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
-//                         sound: "default"
-//                     },
-//                     data: {
-//                         click_action: "FLUTTER_NOTIFICATION_CLICK",
-//                         title: 'Enreda',
-//                         body: `Ha sido cancelado o suspendido el recurso: ${deletedResource.title}`,
-//                     }
-//                 };
-//                 const options = {
-//                     priority: "high",
-//                     timeToLive: 60 * 60 * 24
-//                 };
-//                 return adminFirebase.messaging().sendToTopic(user, payload, options);
-//             })
-//         }
-//     });
 exports.updateResourceEmail = onDocumentUpdated('resources/{resourceId}', async (event) => {
     const before = event.data?.before?.data();
     const after = event.data?.after?.data();
@@ -4929,22 +3746,6 @@ async function updateResourceSearchText(resource, resourceId) {
     }
 
 
-// exports.scheduledFirestoreExport = functions.pubsub.schedule('every 24 hours').onRun((context) => {
-//     const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT;
-//     const databaseName = client.databasePath(projectId, '(default)');
-//     return client.exportDocuments({
-//         name: databaseName,
-//         outputUriPrefix: bucket,
-//         collectionIds: []
-//     }).then(responses => {
-//         const response = responses[0];
-//         console.log(`Operation Name: ${response['name']}`);
-//     }).catch(err => {
-//         console.error(err);
-//         throw new Error('Export operation failed');
-//     });
-// });
-
 exports.updateCertificationRequest = onDocumentUpdated(
   'certificationsRequests/{certificationRequestId}',
   async (event) => {
@@ -4990,30 +3791,6 @@ exports.updateCertificationRequest = onDocumentUpdated(
     }
   }
 );
-
-// exports.certificationRequestForm = functions.firestore
-//     .document('certificationsRequests/{certificationRequestId}')
-//     .onCreate((snapshot, context) => {
-//         const certificationRequestId = context.params.certificationRequestId;
-//         const certifierName = snapshot.get('certifierName');
-//         const competencyName = snapshot.get('competencyName');
-//         const unemployedRequesterName = snapshot.get('unemployedRequesterName');
-
-//         return adminFirebase.firestore().doc(`certificationsRequests/${certificationRequestId}`).set({ certificationRequestId }, {
-//             merge: true
-//         })
-//             .then(() => {
-//                 return adminFirebase.firestore().collection('mail').add({
-//                     to: snapshot.get('email'),
-//                     message: {
-//                         subject: `${unemployedRequesterName} necesita que le certifiques una competencia.`,
-//                         html:
-//                             createCertificationRequestTemplate(certifierName,
-//                                 competencyName, unemployedRequesterName, certificationRequestId),
-//                     }
-//                 }).then(() => console.log('Queued email!'));
-//             });
-//     });
 
 
 
@@ -5243,28 +4020,6 @@ exports.resourceInvitation = onDocumentCreated('resourcesInvitations/{resourceIn
     }
   );
 
-// exports.updateCertificationRequest = functions.firestore.document('certificationsRequests/{certificationRequestId}')
-//     .onUpdate((change, context) => {
-//         const certificationRequestId = context.params.certificationRequestId;
-//         const newValue = change.after.data();
-//         const previousValue = change.before.data();
-//         const userId = newValue.unemployedRequesterId;
-//         const competencyId = newValue.competencyId;
-//         if (newValue.certified !== previousValue.certified) {
-//             return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
-//                 (snapshot) => {
-//                     snapshot.forEach((user) => {
-//                         const competencies = user.get('competencies');
-//                         competencies[competencyId] = "certified";
-//                         return adminFirebase.firestore().doc(`users/${userId}`).set({ competencies }, { merge: true })
-//                             .then(() => {
-//                                 console.log("Successfully change certified competency status");
-//                             })
-//                     })
-//                 });
-//         }
-//     });
-
 exports.certificationRequestForm = onDocumentCreated('certificationsRequests/{certificationRequestId}', async (event) => {
   const snapshot = event.data;
   if (!snapshot) {
@@ -5433,53 +4188,6 @@ function createCertificationRequestTemplate(certifierName, competencyName, unemp
 
 
 
-// exports.updateResourceCategory = functions.firestore.document('testOne/{testOnetId}')
-//     .onUpdate((change, context) => {
-//         const testOnetId = context.params.testOnetIdId;
-//         const newValue = change.after.data();
-//         const previousValue = change.before.data();
-//         if (newValue.run !== previousValue.run) {
-//             return adminFirebase.firestore().collection('resources').get().then(
-//                 (snapshot) => {
-//                     snapshot.forEach((resource) => {
-//                         resourceId = resource.get('resourceId');
-//                         if (resource.get('resourceType') === 'kUM5r4lSikIPLMZlQ7FD') {
-//                             return adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({ resourceCategory: 'POUBGFk5gU6c5X1DKo1b' }, { merge: true })
-//                                 .then(() => {
-//                                     console.log("Successfully added resource category");
-//                                 }).catch(err => {
-//                                     console.error(err);
-//                                     throw new Error('Export resource category operation failed:' + err);
-//                                 });
-//                         }
-//                     })
-//                 });
-//         }
-//     });
-
-
-//     exports.resourceInvitation = functions.firestore
-//     .document('resourcesInvitations/{resourceInvitationId}')
-//     .onCreate(async (snapshot, context) => {
-//         const resourceInvitationId = context.params.resourceInvitationId;
-//         const unemployedName = snapshot.get('unemployedName');
-//         const unemployedEmail = snapshot.get('unemployedEmail');
-//         const resourceId = snapshot.get('resourceId');
-//         const resourceTitle = snapshot.get('resourceTitle');
-//         const resourceDescription = snapshot.get('resourceDescription');
-//         await adminFirebase.firestore().doc(`resourcesInvitations/${resourceInvitationId}`).set({ resourceInvitationId }, {
-//             merge: true
-//         });
-//         await adminFirebase.firestore().collection('mail').add({
-//             to: unemployedEmail,
-//             message: {
-//                 subject: `${resourceTitle} ¡Este recurso podría interesarte!`,
-//                 html: createResourceInvitationTemplate(unemployedName, resourceTitle, resourceId, resourceDescription),
-//             }
-//         });
-//         return console.log('Queued email!');
-            
-//     });
 
 
     function createResourceInvitationTemplate(unemployedName, resourceTitle, resourceId, resourceDescription ) {
@@ -5736,13 +4444,6 @@ function createCertificationRequestTemplate(certifierName, competencyName, unemp
     console.log(`Successfully added id ${id} to chatQuestions document.`);
   });
 
-// exports.createExperience = functions.firestore
-//     .document('experiences/{id}')
-//     .onCreate((snapshot, context) => {
-//         const id = context.params.id;
-//         return adminFirebase.firestore().doc(`experiences/${id}`).set({ id: id }, { merge: true });
-//     });
-    
 exports.createSocialEntity = onDocumentCreated('socialEntities/{socialEntityId}', async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
@@ -5833,16 +4534,6 @@ exports.createSocialEntity = onDocumentCreated('socialEntities/{socialEntityId}'
     }
   });
    
-
-// exports.createIpilEntry = functions.firestore
-//     .document('ipilEntry/{ipilId}')
-//     .onCreate((snapshot, context) => {
-//         const ipilId = context.params.ipilId;
-//         return adminFirebase.firestore().doc(`ipilEntry/${ipilId}`).set({ ipilId }, { merge: true })
-//             .then(() => {
-//                 console.log("Successfully added ipilId to new ipilEntry");
-//             });
-//     });
 
 exports.createInitialReport = onDocumentCreated(
   {
@@ -5993,27 +4684,6 @@ exports.createDerivationReport = onDocumentCreated("derivationReports/{derivatio
     throw new Error("createDerivationReport failed");
   }
 });
-
-//     exports.createIpilObjectives = functions.firestore
-//         .document('ipilObjectives/{ipilObjectivesId}')
-//         .onCreate((snapshot, context) => {
-//             const ipilObjectivesId = context.params.ipilObjectivesId;
-//             const userId = snapshot.data().userId;
-
-//             return adminFirebase.firestore().doc(`ipilObjectives/${ipilObjectivesId}`).set({ ipilObjectivesId}, { merge: true })
-//                 .then(() => {
-//                     console.log("Successfully added ipilObjectivesId to new ipilObjectives");
-//                     return adminFirebase.firestore().collection('users').where("userId", "==", userId).get().then(
-//                         (snapshot) => {
-//                             snapshot.forEach((user) => {
-//                                 return adminFirebase.firestore().collection("users").doc(user.id).set({ ipilObjectivesId: ipilObjectivesId }, { merge: true })
-//                                     .then(() => {
-//                                         console.log("Successfully add ipilObjectives in organization user");
-//                                     })
-//                             })
-//                         });
-//                 });
-//         });
 
 exports.createExternalSocialEntity = onDocumentCreated('externalSocialEntities/{externalSocialEntityId}', async (event) => {
     const snapshot = event.data;
@@ -6322,63 +4992,6 @@ exports.createGenerateDocument = onDocumentCreated({
       logger.error('❌ Error adding evaluations field:', error);
     }
   });
-
-/*
-exports.updateProvisional = functions.runWith(options).firestore.document('provisional/{provisionalId}')
-    .onUpdate(async (change, context) => {
- 
-//         const resources = await adminFirebase.firestore().collection('resources').get();
- 
-//         console.log(`Recursos: ${resources.size}`);
- 
-//         var i = 1;
-//         for (const resource of resources.docs) {
-//             //console.log(`Recurso: ${resource.data().title}`);
-//             let resourceTypeName = '';
-//             let organizerName = '';
-//             let countryName = '';
-//             let provinceName = '';
-//             let cityName = '';
-//             let document;
- 
-//             if (resource.data().resourceType) {
-//                 document = await adminFirebase.firestore().collection('resourcesTypes').doc(resource.data().resourceType).get();
-//                 resourceTypeName = document.data().name;
-//                 //console.log(`Tipo de recurso: ${resourceTypeName}`)
-//             }
- 
-//             if (resource.data().organizer) {
-//                 document = await adminFirebase.firestore().collection('organizations').doc(resource.data().organizer).get();
-//                 organizerName = document.data().name;
-//                 //console.log(`Organizador: ${organizerName}`)
-//             }
- 
-//             if (resource.data().address.country) {
-//                 document = await adminFirebase.firestore().collection('countries').doc(resource.data().address.country).get();
-//                 countryName = document.data().name;
-//                 //console.log(`País: ${countryName}`)
-//             }
- 
-//             if (resource.data().address.province) {
-//                 document = await adminFirebase.firestore().collection('provinces').doc(resource.data().address.province).get();
-//                 provinceName = document.data().name;
-//                 //console.log(`Provincia: ${provinceName}`)
-//             }
- 
-//             if (resource.data().address.city) {
-//                 document = await adminFirebase.firestore().collection('cities').doc(resource.data().address.city).get();
-//                 cityName = document.data().name;
-//                 //console.log(`Provincia: ${cityName}`)
-//             }
- 
-//             await adminFirebase.firestore().doc(`resources/${resource.data().resourceId}`).set({ searchText: `${resource.data().title};${resourceTypeName};${organizerName};${countryName};${provinceName};${cityName}` }, { merge: true }).then(() => {
-//                 console.log(`${i++} - Recurso actualizado: ${resource.data().title}, ${resourceTypeName}, ${organizerName}, ${countryName}, ${provinceName}, ${cityName}`);
-//             });
-//         }
- 
-//         console.log('FUNCIÓN COMPLETADA CORRECTAMENTE');
-//     });
-// */
 
 // const { Firestore } = require('@google-cloud/firestore');
 // const otherFirestore = new Firestore({
@@ -6759,29 +5372,6 @@ exports.removeParticipantOnInitialReportDeletion = onDocumentDeleted(
     }
   );
 
-//   exports.removeParticipantOnUserDeletion = functions.firestore
-//   .document('users/{userId}')
-//   .onDelete(async (snap, context) => {
-//     const userId = context.params.userId;
-
-//     try {
-//       const participantRef = otherFirestore.collection('kpis').doc('fse').collection('participants').doc(userId);
-//       const participantSnap = await participantRef.get();
-
-//       if (!participantSnap.exists) {
-//         console.log('No such participant!');
-//         return;
-//       }
-
-//       await participantRef.delete();
-//       await updateTotalParticipants();
-
-//       console.log('Participant document successfully removed from kpis/fse/participants database in kpi Firestore');
-//     } catch (error) {
-//       console.error('Error removing participant document from kpis/fse/participants database in kpi Firestore: ', error);
-//     }
-//   });
-
 
 exports.removeParticipantOnUserTestChange = onDocumentUpdated('users/{userId}', async (event) => {
     const before = event.data?.before?.data();
@@ -6820,149 +5410,6 @@ exports.removeParticipantOnUserTestChange = onDocumentUpdated('users/{userId}', 
       logger.info(`No participant removal needed for userId ${userId}`);
     }
   });
-
-exports.exportParticipantsToExcel = onRequest(async (req, res) => {
-  try {
-    const usersSnapshot = await otherFirestore
-      .collection("kpis")
-      .doc("fse")
-      .collection("participants")
-      .get();
-
-    const users = [];
-
-    usersSnapshot.forEach((doc) => {
-      const data = doc.data();
-      const birthday = data.birthday
-        ? new Date(data.birthday._seconds * 1000).toISOString().split("T")[0]
-        : "";
-      users.push({
-        userId: doc.id,
-        gender: data.gender || "",
-        birthday: birthday || "",
-        nationality: data.nationality || "",
-        assignedEntityId: data.assignedEntityId || "",
-        socialEntityId: data.socialEntityId || "",
-        laborSituation: data.laborSituation || "",
-        educationLevel: data.educationLevel || "",
-        vulnerabilityOptions: data.vulnerabilityOptions || "",
-        ipilData: data.ipilData || "",
-      });
-    });
-
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Participants");
-
-    worksheet.columns = [
-      { header: "userId", key: "userId", width: 30 },
-      { header: "gender", key: "gender", width: 30 },
-      { header: "birthday", key: "birthday", width: 30 },
-      { header: "nationality", key: "nationality", width: 30 },
-      { header: "assignedEntityId", key: "assignedEntityId", width: 30 },
-      { header: "socialEntityId", key: "socialEntityId", width: 30 },
-      { header: "laborSituation", key: "laborSituation", width: 30 },
-      { header: "educationLevel", key: "educationLevel", width: 30 },
-      { header: "vulnerabilityOptions", key: "vulnerabilityOptions", width: 30 },
-      { header: "ipilData", key: "ipilData", width: 30 },
-    ];
-
-    users.forEach((user) => {
-      worksheet.addRow(user);
-    });
-
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader("Content-Disposition", 'attachment; filename="participants.xlsx"');
-    res.status(200).send(buffer);
-  } catch (error) {
-    logger.error("Error generating Excel file:", error);
-    res.status(500).send("Error generating Excel file");
-  }
-});
-
-exports.exportKpisToExcel = onRequest(async (req, res) => {
-  try {
-    const informsSnapshot = await otherFirestore.collection('kpis').doc('fse').collection('inform').get();
-    const informs = [];
-
-    informsSnapshot.forEach(doc => {
-      const data = doc.data();
-      informs.push({
-        total: data.total || 0,
-        woman: data.woman || 0,
-        man: data.man || 0,
-        notBinary: data.notBinary || 0,
-        unemployed: data.unemployed || 0,
-        unemployed_including_long_term_unemployed: data.unemployed_including_long_term_unemployed || 0,
-        long_term_unemployed: data.long_term_unemployed || 0,
-        inactive: data.inactive || 0,
-        employed_including_self_employed: data.employed_including_self_employed || 0,
-        minors_under_18_years: data.minors_under_18_years || 0,
-        number_of_young_people_aged_18_to_29_years: data.number_of_young_people_aged_18_to_29_years || 0,
-        participants_over_54_years: data.participants_over_54_years || 0,
-        participants_with_primary_education_or_less_ISCED_0_to_2: data.participants_with_primary_education_or_less_ISCED_0_to_2 || 0,
-        participants_with_secondary_or_post_secondary_education_ISCED_3_to_4: data.participants_with_secondary_or_post_secondary_education_ISCED_3_to_4 || 0,
-        participants_with_tertiary_education_or_above: data.participants_with_tertiary_education_or_above || 0,
-        participants_with_disabilities: data.participants_with_disabilities || 0,
-        third_country_nationals: data.third_country_nationals || 0,
-        participants_of_foreign_origin: data.participants_of_foreign_origin || 0,
-        participants_from_minorities_including_marginalized_communities_such_as_Roma: data.participants_from_minorities_including_marginalized_communities_such_as_Roma || 0,
-        homeless_or_excluded_from_housing: data.homeless_or_excluded_from_housing || 0,
-        participants_from_rural_areas: data.participants_from_rural_areas || 0,
-        searchingJob: data.searchingJob || 0,
-        joinedToEducationSystem: data.joinedToEducationSystem || 0,
-        obtainedQualification: data.obtainedQualification || 0,
-        obtanidedJob: data.obtanidedJob || 0
-      });
-    });
-
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('FSE kpis');
-
-    worksheet.columns = [
-      { header: 'Número total de participantes', key: 'total', width: 30 },
-      { header: 'Número total de mujeres', key: 'woman', width: 30 },
-      { header: 'Número total de hombres', key: 'man', width: 30 },
-      { header: 'Número total de no binarios', key: 'notBinary', width: 30 },
-      { header: 'Desempleado', key: 'unemployed', width: 30 },
-      { header: 'Desempleados, incluidos los de larga duración', key: 'unemployed_including_long_term_unemployed', width: 30 },
-      { header: 'Desempleados de larga duración', key: 'long_term_unemployed', width: 30 },
-      { header: 'Inactivo', key: 'inactive', width: 30 },
-      { header: 'Empleados, incluso por cuenta propia', key: 'employed_including_self_employed', width: 30 },
-      { header: 'Menores (menos de 18 años)', key: 'minors_under_18_years', width: 30 },
-      { header: 'Número de personas jóvenes de edades comprendidas entre los 18 y los 29 años', key: 'number_of_young_people_aged_18_to_29_years', width: 30 },
-      { header: 'Participantes de más de 54 años', key: 'participants_over_54_years', width: 30 },
-      { header: 'Participantes con el primer ciclo de enseñanza secundaria como máximoCINE0a2', key: 'participants_with_primary_education_or_less_ISCED_0_to_2', width: 30 },
-      { header: 'Participantes con el segundo ciclo de enseñanza secundaria o con enseñanza postsecundaria CINE2a4', key: 'participants_with_secondary_or_post_secondary_education_ISCED_3_to_4', width: 30 },
-      { header: 'Participantes con enseñanza superior o terciaria', key: 'participants_with_tertiary_education_or_above', width: 30 },
-      { header: 'Participantes con discapacidad', key: 'participants_with_disabilities', width: 30 },
-      { header: 'Nacionales de terceros países', key: 'third_country_nationals', width: 30 },
-      { header: 'Participantes de origen extranjero', key: 'participants_of_foreign_origin', width: 30 },
-      { header: 'Participantes pertenecientes a minorías (incluidas las comunidades marginadas, como la romaní)', key: 'participants_from_minorities_including_marginalized_communities_such_as_Roma', width: 30 },
-      { header: 'Personas sin hogar o afectadas por la exclusión en materia de vivienda', key: 'homeless_or_excluded_from_housing', width: 30 },
-      { header: 'Participantes de zonas rurales', key: 'participants_from_rural_areas', width: 30 },
-      { header: 'Participantes que buscan trabajo tras su participación', key: 'searchingJob', width: 30 },
-      { header: 'Participantes que se han integrado en los sistemas de educación o formación tras su participación', key: 'joinedToEducationSystem', width: 30 },
-      { header: 'Participantes que obtienen una cualificación tras su participación', key: 'obtainedQualification', width: 30 },
-      { header: 'Participantes que obtienen un empleo tras su participación', key: 'obtanidedJob', width: 30 },
-    ];
-
-    informs.forEach(inform => worksheet.addRow(inform));
-
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename="kpis_fse.xlsx"');
-    res.status(200).send(buffer);
-  } catch (error) {
-    console.error('Error generating Excel file:', error);
-    res.status(500).send('Error generating Excel file');
-  }
-});
 
 // /* exports.sheduledKpisFSE = functions.pubsub.topic('sheduledKpisFSE').onPublish(async (message, context) => {
 //     try {
@@ -7123,8 +5570,6 @@ exports.sheduledKpisFSE = onMessagePublished({
 // //curl -o participants.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportParticipantsToExcel
 // //curl -o kpis_fse.xlsx https://us-central1-enreda-d3b41.cloudfunctions.net/exportKpisToExcel
 
-//module.exports = require('./update/updateCountryOnly');
-
 // ── Notificación: Invitación a sesión ────────────────────────────────────────
 //
 // Dos triggers:
@@ -7222,3 +5667,6 @@ exports.notifySessionInvitationOnUpdate = onDocumentUpdated(
     await _sendSessionInvitationNotifications(newlyInvited, after);
   }
 );
+
+// Funciones migradas a v2 que viven en un archivo aparte
+Object.assign(exports, require('./update/updateCountryOnly'));
