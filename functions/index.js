@@ -512,7 +512,14 @@ exports.updateResource = onDocumentUpdated('resources/{resourceId}', async (even
     });
   }
 
-  if (newValue.maximumDate !== previousValue.maximumDate) {
+  // Timestamps are distinct object instances on every snapshot, so `!==` was
+  // always true and any update re-forced the status by date (reverting manual
+  // 'No disponible' changes on resources with notExpire=true). Compare by value.
+  const maximumDateChanged = !!newValue.maximumDate && (
+    !previousValue.maximumDate || !newValue.maximumDate.isEqual(previousValue.maximumDate)
+  );
+  const notExpireChanged = !!newValue.notExpire !== !!previousValue.notExpire;
+  if (maximumDateChanged || notExpireChanged) {
     const now = adminFirebase.firestore.Timestamp.now().toMillis();
     const maxDate = newValue.maximumDate.toMillis();
     if (!newValue.notExpire && maxDate <= now) {

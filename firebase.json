@@ -17,7 +17,9 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        ".cache"
+        ".cache",
+        "scripts",
+        "*.csv"
       ]
     }
   ]
