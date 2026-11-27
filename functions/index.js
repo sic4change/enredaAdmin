@@ -449,6 +449,8 @@ exports.updateResource = onDocumentUpdated('resources/{resourceId}', async (even
 
   const resourceType = newValue.resourceType;
 
+  // TODO (2026-11-27): 'A actualizar' obsoleto, ver nota en updateResourceFromSPEG. Este push no se
+  // dispara nunca; se puede eliminar.
   if (newValue.status === 'Disponible' && previousValue.status === 'A actualizar') {
     const title = newValue.title;
     const interests = Object.values(newValue.interests);
@@ -523,14 +525,14 @@ exports.updateResource = onDocumentUpdated('resources/{resourceId}', async (even
     const now = adminFirebase.firestore.Timestamp.now().toMillis();
     const maxDate = newValue.maximumDate.toMillis();
     if (!newValue.notExpire && maxDate <= now) {
-      if (!['A actualizar', 'Completo', 'edition'].includes(newValue.status)) {
+      if (newValue.status !== 'Completo') {
         await adminFirebase.firestore().doc(`resources/${resourceId}`).update({
           enable: false,
           status: 'No disponible'
         });
       }
     } else {
-      if (!['A actualizar', 'Completo', 'edition'].includes(newValue.status)) {
+      if (newValue.status !== 'Completo') {
         await adminFirebase.firestore().doc(`resources/${resourceId}`).update({
           enable: true,
           status: 'Disponible'
@@ -1409,6 +1411,7 @@ exports.sendEmailOnCreateResource = onDocumentCreated('resources/{resourceId}', 
   const resourceType = data.resourceType;
   const resourceStatus = data.status;
 
+  // TODO (2026-11-27): 'A actualizar' obsoleto, ver nota en updateResourceFromSPEG. Se puede eliminar.
   if (resourceStatus === 'A actualizar') return;
 
   const usersSnapshot = await adminFirebase.firestore().collection('users').get();
@@ -1474,6 +1477,8 @@ exports.sendEmailOnCreateResource = onDocumentCreated('resources/{resourceId}', 
   return Promise.all(promises);
 });
 
+// TODO (2026-11-27): 'A actualizar' obsoleto, ver nota en updateResourceFromSPEG. Este bloque
+// comentado (scraper antiguo de SPEG) se puede eliminar.
 /*
 const findResourcesFromSPEGC = async () => {
     let url = 'https://www.spegc.org/formacion-y-eventos/'
@@ -2565,6 +2570,48 @@ style="padding:0px 0px 30px 0px;" role="module-content" bgcolor="">
 // */
       
 // // Web Scraping
+
+// Caducidad por defecto de los recursos scrapeados: fecha de alta + 60 días.
+// TODO: es la solución genérica para los scrapers cuya web no da una fecha de fin. Cuando se
+// reescriba cada scraper, si se encuentra una fecha de fin legítima en el recurso (fin del curso,
+// límite de inscripción...), usar esa en su lugar.
+const SCRAPED_RESOURCE_DEFAULT_DAYS = 60;
+const defaultScrapedMaximumDate = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + SCRAPED_RESOURCE_DEFAULT_DAYS);
+  return date;
+};
+
+// Campos comunes a todos los recursos scrapeados; cada scraper añade o sobrescribe los suyos.
+const scrapedResourceBase = ({ maximumDate = defaultScrapedMaximumDate(), end = maximumDate, start = new Date() } = {}) => {
+  const { Timestamp } = adminFirebase.firestore;
+  const now = Timestamp.now();
+  return {
+    assistants: 0,
+    capacity: 99,
+    contractType: "",
+    createdate: now,
+    createdby: "Web scrapping",
+    duration: "Indefinido",
+    enable: true,
+    end: Timestamp.fromDate(end),
+    interests: [],
+    lastupdate: now,
+    maximumDate: Timestamp.fromDate(maximumDate),
+    modality: "Presencial",
+    notExpire: false,
+    online: false,
+    organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
+    organizerType: "Organización",
+    resourcePhoto: randomImages[Math.floor(Math.random() * randomImages.length)],
+    salary: "",
+    start: Timestamp.fromDate(start),
+    status: "Disponible",
+    trust: true,
+    updatedby: "Web scrapping",
+  };
+};
+
 exports.extractResourcesFromFormacionCamaraToledo = onMessagePublished({
   topic: 'scrappingFormacionCamaraToledo',
   memory: '1GiB',
@@ -2611,43 +2658,19 @@ exports.extractResourcesFromFormacionCamaraToledo = onMessagePublished({
       const descriptionElement = page.locator('.e-con-inner').filter({ hasText: 'DIRIGIDO' }).first();
       const jobDescription = await descriptionElement.innerText();
 
-      const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
-      let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-
       const jobOffer = {
+        ...scrapedResourceBase(),
         address: {
           city: "vYcgz8Vy6qDj4Q5Pena6",
           country: "i0GHKqdCWBYeAYcAMa7I",
           place: jobLocation,
           province: "r7WT8mAsUdTAlPCKWstT",
         },
-        assistants: 0,
-        capacity: 99,
-        contractType: "",
-        createdate: adminFirebase.firestore.Timestamp.now(),
-        createdby: "Web scrapping",
         description: jobDescription,
-        duration: "Indefinido",
-        enable: true,
-        end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        interests: [],
-        lastupdate: adminFirebase.firestore.Timestamp.now(),
         link: jobLink,
-        maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        modality: "Presencial",
-        notExpire: true,
-        online: false,
-        organizer: "VrpgKatmJG4h4pxgvpZZ",
-        organizerType: "Organización",
         resourceCategory: "6ag9Px7zkFpHgRe17PQk",
-        resourcePhoto: randomImage,
         resourceType: "N9KdlBYmxUp82gOv8oJC",
-        salary: "",
-        start: adminFirebase.firestore.Timestamp.now(),
-        status: "Disponible",
         title: jobTitle,
-        trust: true,
-        updatedby: "Web scrapping",
         scrappingId: jobID,
       };
 
@@ -2694,43 +2717,19 @@ exports.extractResourcesFromEmpleoCamaraToledo = onMessagePublished(
       const jobLocation = await jobCard.locator('.c-lugar').innerText();
       const jobDescription = await jobCard.locator('.c-desc').innerText();
 
-      const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
-      const randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-
       const jobOffer = {
+        ...scrapedResourceBase(),
         address: {
           city: "vYcgz8Vy6qDj4Q5Pena6",
           country: "i0GHKqdCWBYeAYcAMa7I",
           place: jobLocation,
           province: "r7WT8mAsUdTAlPCKWstT",
         },
-        assistants: 0,
-        capacity: 99,
-        contractType: "",
-        createdate: adminFirebase.firestore.Timestamp.now(),
-        createdby: "Web scrapping",
         description: jobDescription,
-        duration: "Indefinido",
-        enable: true,
-        end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        interests: [],
-        lastupdate: adminFirebase.firestore.Timestamp.now(),
         link: `https://gestionandote.com${jobLink}`,
-        maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        modality: "Presencial",
-        notExpire: true,
-        online: false,
-        organizer: "VrpgKatmJG4h4pxgvpZZ",
-        organizerType: "Organización",
         resourceCategory: "POUBGFk5gU6c5X1DKo1b",
-        resourcePhoto: randomImage,
         resourceType: "kUM5r4lSikIPLMZlQ7FD",
-        salary: "",
-        start: adminFirebase.firestore.Timestamp.now(),
-        status: "Disponible",
         title: jobTitle,
-        trust: true,
-        updatedby: "Web scrapping",
         scrappingId: jobID,
       };
 
@@ -2780,8 +2779,6 @@ exports.extractResourcesFromIPETA = onMessagePublished(
       const jobLocation = await listItems[0].textContent();
       const capacityText = await listItems[1].textContent();
       const jobCapacity = parseInt(capacityText.match(/\d+/)[0]);
-      const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
-      let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
 
       let jobDescription = '';
       if (jobLink && jobLink.startsWith('https://ipetalavera.es/ofertas-de-trabajo')) {
@@ -2791,39 +2788,19 @@ exports.extractResourcesFromIPETA = onMessagePublished(
       }
 
       const jobOffer = {
+        ...scrapedResourceBase(),
         address: {
           city: "vYcgz8Vy6qDj4Q5Pena6",
           country: "i0GHKqdCWBYeAYcAMa7I",
           place: jobLocation.toUpperCase(),
           province: "r7WT8mAsUdTAlPCKWstT",
         },
-        assistants: 0,
         capacity: jobCapacity,
-        contractType: "",
-        createdate: adminFirebase.firestore.Timestamp.now(), // puedes parsear jobDate si lo necesitas
-        createdby: "Web scrapping",
         description: jobDescription,
-        duration: "Indefinido",
-        enable: true,
-        end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        interests: [],
-        lastupdate: adminFirebase.firestore.Timestamp.now(),
         link: jobLink,
-        maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-        modality: "Presencial",
-        notExpire: true,
-        online: false,
-        organizer: "VrpgKatmJG4h4pxgvpZZ",
-        organizerType: "Organización",
         resourceCategory: "POUBGFk5gU6c5X1DKo1b",
-        resourcePhoto: randomImage,
         resourceType: "kUM5r4lSikIPLMZlQ7FD",
-        salary: "",
-        start: adminFirebase.firestore.Timestamp.now(),
-        status: "Disponible",
         title: jobTitle,
-        trust: true,
-        updatedby: "Web scrapping",
         scrappingId: jobID,
       };
 
@@ -2866,10 +2843,9 @@ exports.extractResourcesFromSPEG = onMessagePublished(
       let jobLocation = '';
       let jobDuration = 'Indefinido';
       let jobModality = 'Presencial';
-      let maximumDate = new Date(2050, 12, 31, 23, 59, 0);
+      let maximumDate = defaultScrapedMaximumDate(); // si la web no da "Límite de inscripción"
   
       const jobTitle = await jobCard.locator('h3').innerText();
-      const randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
       const jobLink = await jobCard.locator('.spegc-event-details a').getAttribute('href');
   
       if (jobLink && jobLink.startsWith('https://www.spegc.org/formacion-y-eventos/')) {
@@ -2919,39 +2895,20 @@ exports.extractResourcesFromSPEG = onMessagePublished(
       }
   
       const jobOffer = {
+        ...scrapedResourceBase({ maximumDate }),
         address: {
           city: "U39M922HHR5FEVJtN3hN",
           country: "i0GHKqdCWBYeAYcAMa7I",
           place: jobLocation,
           province: "mi3tu6DK1GU4yZIQJ1dZ",
         },
-        assistants: 0,
-        capacity: 99,
-        contractType: "",
-        createdate: adminFirebase.firestore.Timestamp.now(),
-        createdby: "Web scrapping",
         description: jobDescription,
         duration: jobDuration,
-        enable: true,
-        end: maximumDate,
-        interests: [],
-        lastupdate: adminFirebase.firestore.Timestamp.now(),
         link: jobLink,
-        maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
         modality: jobModality,
-        notExpire: true,
-        online: false,
-        organizer: "VrpgKatmJG4h4pxgvpZZ",
-        organizerType: "Organización",
         resourceCategory: "6ag9Px7zkFpHgRe17PQk",
-        resourcePhoto: randomImage,
         resourceType: "N9KdlBYmxUp82gOv8oJC",
-        salary: "",
-        start: adminFirebase.firestore.Timestamp.now(),
-        status: "Disponible",
         title: jobTitle,
-        trust: true,
-        updatedby: "Web scrapping",
         scrappingId: jobID,
       };
   
@@ -2960,6 +2917,10 @@ exports.extractResourcesFromSPEG = onMessagePublished(
         logger.info(`🆕 Insertando recurso: ${jobTitle}`);
         await db.collection("resources").add(jobOffer);
       } else {
+        // TODO: actualizar el recurso existente (fechas, lugar, descripción) en lugar de ignorarlo.
+        // OJO: si SPEG amplía el plazo, checkResourceDate lo desactiva con la fecha antigua y aquí no
+        // se reactiva. Ejemplo: spegc_46908 (Jornada REF), guardado con límite 03-11-2026 y ampliado
+        // en la web al 02-12-2026.
         logger.info(`⛔ Recurso duplicado no insertado: ${jobTitle}`);
       }
     }
@@ -2968,6 +2929,11 @@ exports.extractResourcesFromSPEG = onMessagePublished(
     await browser.close();
   });
 
+// TODO (2026-11-27): el estado 'A actualizar' está obsoleto. Solo lo creaba el scraper antiguo de SPEG
+// (comentado más arriba, en findResourcesFromSPEGC) y en Firestore no queda ningún recurso con él
+// (comprobado el 2026-11-27: solo hay 'Disponible' y 'No disponible'). Esta función busca recursos
+// 'A actualizar' para completarlos, así que nunca encuentra nada. Se puede eliminar, junto con el job
+// de Cloud Scheduler que publique en 'updatingSPEG' si existe.
 exports.updateResourceFromSPEG = onMessagePublished('updatingSPEG', (event) => {
     return adminFirebase.firestore()
       .collection('resources')
@@ -3048,8 +3014,6 @@ exports.updateResourceFromSPEG = onMessagePublished('updatingSPEG', (event) => {
   
           await dialog.getByRole("button").first().click();
   
-          const maximumDate = new Date(2050, 12, 31, 23, 59, 0);
-          const randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
   
           let provinceId = "mi3tu6DK1GU4yZIQJ1dZ";
           let cityId = "U39M922HHR5FEVJtN3hN";
@@ -3060,39 +3024,19 @@ exports.updateResourceFromSPEG = onMessagePublished('updatingSPEG', (event) => {
           }
   
           const jobOffer = {
+            ...scrapedResourceBase(),
             address: {
               city: cityId,
               country: "i0GHKqdCWBYeAYcAMa7I",
               place: jobLocation,
               province: provinceId,
             },
-            assistants: 0,
             capacity: jobCapacity,
-            contractType: "",
-            createdate: adminFirebase.firestore.Timestamp.now(),
-            createdby: "Web scrapping",
             description: jobDescription,
-            duration: "Indefinido",
-            enable: true,
-            end: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-            interests: [],
-            lastupdate: adminFirebase.firestore.Timestamp.now(),
             link: jobLink,
-            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
-            modality: "Presencial",
-            notExpire: true,
-            online: false,
-            organizer: "VrpgKatmJG4h4pxgvpZZ",
-            organizerType: "Organización",
             resourceCategory: "POUBGFk5gU6c5X1DKo1b",
-            resourcePhoto: randomImage,
             resourceType: "kUM5r4lSikIPLMZlQ7FD",
-            salary: "",
-            start: adminFirebase.firestore.Timestamp.now(),
-            status: "Disponible",
             title: jobTitle,
-            trust: true,
-            updatedby: "Web scrapping",
             scrappingId: jobID,
           };
   
@@ -3228,10 +3172,10 @@ exports.extractEmployabilityFromSEPE = onMessagePublished(
         //console.log(`JOB ID: ${jobID}`);
         // No hay link especfico para cada recurso
         let jobLink = 'https://www.gobiernodecanarias.org/empleo/sce/principal/areas_tematicas/empleo/orientacion_para_el_empleo/acciones_de_la_red_de_empleabilidad_canaria.html';
-        let randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
         var jobCapacity = 99;   
     
-        let jobOffer = {
+        const jobOffer = {
+            ...scrapedResourceBase({ maximumDate, end: endDate, start: startDate }),
             address: {
                 // TODO: Ahora mismo solo guarda Las Palmas o Sta. Cruz, en la Base de Datos faltarían muchísimas ciudades
                 city: cityId,
@@ -3239,33 +3183,13 @@ exports.extractEmployabilityFromSEPE = onMessagePublished(
                 place: jobLocation,
                 province: provinceId,
             },
-            assistants: 0,
             capacity: jobCapacity,
-            contractType: "",
-            createdate: adminFirebase.firestore.Timestamp.now(),
-            createdby: "Web scrapping",
             description: jobDescription,
-            duration: 'Indefinido',
-            enable: true,
-            end: endDate,
-            interests: [],
-            lastupdate: adminFirebase.firestore.Timestamp.now(),
             link: jobLink,
-            maximumDate: adminFirebase.firestore.Timestamp.fromDate(maximumDate),
             modality: modality,
-            notExpire: true,
-            online: false,
-            organizer: "VrpgKatmJG4h4pxgvpZZ", // SIC4Change
-            organizerType: "Organización",
             resourceCategory: "6ag9Px7zkFpHgRe17PQk",
-            resourcePhoto: randomImage,
             resourceType: "N9KdlBYmxUp82gOv8oJC",
-            salary: "",
-            start: startDate,
-            status: "Disponible",
             title: jobTitle,
-            trust: true,
-            updatedby: "Web scrapping",
             scrappingId: jobID,
         };
 

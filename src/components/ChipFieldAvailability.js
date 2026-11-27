@@ -11,6 +11,8 @@ const ChipFieldAvailability = ({ record = {}, source }) =>{
             <Chip label={record[source]} style={{background: 'orange'}}/>
         )
     } else if(record[source] === 'A actualizar') {
+        // TODO (2026-11-27): 'A actualizar' obsoleto (ver nota en updateResourceFromSPEG, functions/index.js).
+        // Esta rama se puede eliminar.
         return (
             <Chip label={record[source]} style={{background: 'yellow'}}/>
         )

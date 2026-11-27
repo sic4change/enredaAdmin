@@ -11,6 +11,8 @@ const { onMessagePublished } = require('firebase-functions/v2/pubsub');
 const { logger } = require('firebase-functions');
 
 const adminFirebase = require('firebase-admin');
+const { normalizeLink, isHost, checkUrl, makeScheduler } = require('../utils/linkChecker');
+const { sceCode, fetchSceOffers, checkSceOffer } = require('../utils/sceOffers');
 
 var options = { memory: '2GB', timeoutSeconds: 540 };
 
@@ -475,29 +477,176 @@ exports.removeParticipantOnUserDeletion = onDocumentDeleted('users/{userId}', as
 });
 
 
-exports.checkResourceDate = onMessagePublished('checkResourceDate', async (event) => {
+// ---------- checkResourceDate: limpieza automática de recursos ----------
+const FIRESTORE_BATCH_LIMIT = 500;
+const CHECK_RESOURCE_TIMEOUT_S = 540;
+// Tiempo máximo (desde que empieza la función) para lanzar comprobaciones de enlaces. Un enlace
+// puede tardar hasta ~51 s (15 s x 3 intentos + esperas), así que dejando 340 s de margen siempre
+// da tiempo a terminar las que estén en curso. Las que no se lancen quedan para la siguiente
+// ejecución.
+const LINK_CHECK_BUDGET_MS = (CHECK_RESOURCE_TIMEOUT_S - 340) * 1000;
+// Tiempo máximo (desde que empieza la función) para descargar las ofertas del SCE, que puede
+// tardar 2-3 minutos. Se descarga a la vez que se comprueban los enlaces; el margen de 120 s es
+// para cruzarlas y guardar. Si no llega a tiempo o falla, ese día no se desactiva ningún recurso
+// del SCE.
+const SCE_FETCH_BUDGET_MS = (CHECK_RESOURCE_TIMEOUT_S - 120) * 1000;
+// Si hay al menos este número de ofertas del SCE por cruzar y no coincide ninguna con las
+// publicadas, se asume que el cruce está roto (p. ej. ha cambiado el formato) y no se desactivan.
+const SCE_MIN_FOR_SANITY_CHECK = 3;
+// Peticiones de enlaces simultáneas: en total y por web, para no saturar ninguna.
+const LINK_CHECK_CONCURRENCY = { global: 10, perHost: 2 };
+
+const toMillis = (date) => (date && typeof date.toMillis === 'function' ? date.toMillis() : null);
+const isPast = (date, nowMillis) => {
+  const millis = toMillis(date);
+  return millis !== null && millis <= nowMillis;
+};
+
+// Dominios cuyo enlace no se comprueba por HTTP:
+//   gobiernodecanarias.org  las ofertas con ?cod_buscar= se cruzan con el SCE (utils/sceOffers.js);
+//                           el resto son páginas genéricas.
+//   gestionandote.com       SPA: devuelve la misma página para cualquier oferta.
+//   ipetalavera.es          la web nunca retira las ofertas.
+const LINK_UNVERIFIABLE_DOMAINS = ['gobiernodecanarias.org', 'gestionandote.com', 'ipetalavera.es'];
+
+exports.checkResourceDate = onMessagePublished({ topic: 'checkResourceDate', timeoutSeconds: CHECK_RESOURCE_TIMEOUT_S }, async (event) => {
   try {
-    const snapshot = await adminFirebase.firestore().collection('resources').get();
-    const now = adminFirebase.firestore.Timestamp.now();
+    const db = adminFirebase.firestore();
+    const now = new Date();
+    const nowMillis = now.getTime();
+    const runId = `checkResourceDate-${now.toISOString()}`;
 
-    const updates = snapshot.docs.map(async (resourceDoc) => {
-      const data = resourceDoc.data();
+    const { Filter } = adminFirebase.firestore;
+    const snapshot = await db.collection('resources')
+      .where(Filter.or(Filter.where('enable', '==', true), Filter.where('status', '==', 'Disponible')))
+      .get();
 
-      const shouldDisable =
-        (data.end && data.end.toMillis() <= now.toMillis()) ||
-        (data.maximumDate && data.maximumDate.toMillis() <= now.toMillis());
+    const dateDisable = []; // { doc, block, reason }
+    const verificationDisable = []; // { doc, block, reason } (enlace roto u oferta del SCE no publicada)
+    const linkCandidates = []; // { doc, url }
+    const sceCandidates = []; // { doc, code, createdYear }
+    let skipped = 0;
 
-      if (shouldDisable && data.status !== 'A actualizar') {
-        await resourceDoc.ref.update({
-          enable: false,
-          status: 'No disponible',
+    // Desactiva una lista de recursos en lotes y deja constancia en `deactivation`.
+    const disableResources = async (list) => {
+      for (let i = 0; i < list.length; i += FIRESTORE_BATCH_LIMIT) {
+        const batch = db.batch();
+        list.slice(i, i + FIRESTORE_BATCH_LIMIT).forEach(({ doc, block, reason }) => {
+          batch.update(doc.ref, {
+            enable: false,
+            status: 'No disponible',
+            deactivation: {
+              runId,
+              block,
+              reason,
+              at: adminFirebase.firestore.FieldValue.serverTimestamp(),
+              previousEnable: doc.get('enable') ?? null,
+            },
+          });
         });
-        logger.info(`⛔ Recurso deshabilitado: ${data.title || data.resourceId}`);
+        await batch.commit();
+      }
+      list.forEach(({ doc, block, reason }) => {
+        logger.info(`⛔ Recurso deshabilitado [${block}]: ${doc.get('title') || doc.id} (${reason})`);
+      });
+    };
+
+    snapshot.docs.forEach((resourceDoc) => {
+      const data = resourceDoc.data();
+      if (data.notExpire) {
+        skipped++;
+        return;
+      }
+
+      // 1. Fecha
+      if (isPast(data.end, nowMillis) || isPast(data.maximumDate, nowMillis)) {
+        dateDisable.push({ doc: resourceDoc, block: 'FECHA', reason: 'Fecha de fin o límite de inscripción pasada' });
+        return;
+      }
+
+      // 2. Enlaces (se comprueban después, todos a la vez). Los del SCE no se piden: se cruzan con
+      //    las ofertas publicadas; sin fecha de alta no se puede emparejar el año y no se tocan.
+      const { url } = normalizeLink(data.link);
+      if (!url) return;
+      const code = isHost(url, 'gobiernodecanarias.org') ? sceCode(data.link) : null;
+      if (code) {
+        const created = toMillis(data.createdate);
+        if (created !== null) sceCandidates.push({ doc: resourceDoc, code, createdYear: new Date(created).getFullYear() });
+        return;
+      }
+      if (!LINK_UNVERIFIABLE_DOMAINS.some((domain) => isHost(url, domain))) {
+        linkCandidates.push({ doc: resourceDoc, url });
       }
     });
 
-    await Promise.all(updates);
-    logger.info('✔ Revisión de fechas de recursos completada');
+    // Descarga del SCE (para el paso 2). Empieza ya y corre en paralelo con el guardado por fecha y
+    // la comprobación de enlaces. Si falla, se registra y no se desactiva ningún recurso del SCE.
+    const sceOffersPromise = sceCandidates.length
+      ? fetchSceOffers({ deadline: nowMillis + SCE_FETCH_BUDGET_MS }).catch((error) => {
+        logger.warn(`⚠️ No se pudieron obtener las ofertas del SCE; no se desactiva ninguna: ${error.message}`);
+        return null;
+      })
+      : Promise.resolve(null);
+
+    // Las bajas por fecha se guardan ya, antes de comprobar enlaces: si la comprobación se alarga y
+    // la función se corta por tiempo, lo vencido por fecha queda desactivado igualmente.
+    await disableResources(dateDisable);
+
+    // 2. Enlaces, comprobación HTTP: varias peticiones en paralelo, como máximo 2 a la vez por web
+    //    y sin lanzar ninguna nueva pasado LINK_CHECK_BUDGET_MS. Los contadores son de URLs únicas.
+    let linksChecked = 0;
+    let linksSkipped = 0;
+    if (linkCandidates.length) {
+      const linkDeadline = nowMillis + LINK_CHECK_BUDGET_MS;
+      const schedule = makeScheduler(LINK_CHECK_CONCURRENCY.global, LINK_CHECK_CONCURRENCY.perHost);
+      const checked = new Map();
+      await Promise.all(linkCandidates.map(async ({ doc, url }) => {
+        if (!checked.has(url.href)) {
+          checked.set(url.href, schedule(url.hostname, async () => {
+            if (Date.now() > linkDeadline) {
+              linksSkipped++;
+              return null;
+            }
+            linksChecked++;
+            return checkUrl(url);
+          }));
+        }
+        const result = await checked.get(url.href);
+        if (!result) return;
+        if (result.verdict === 'ROTO') {
+          verificationDisable.push({ doc, block: 'ENLACE', reason: `Enlace roto: ${result.reason}` });
+        } else if (result.verdict !== 'OK') {
+          logger.info(`🔗 Enlace ${result.verdict} (no se desactiva): ${doc.get('title') || doc.id} → ${url.href} (${result.reason})`);
+        }
+      }));
+    }
+
+    // 2. Enlaces del SCE: cruce de cada oferta con las publicadas hoy.
+    const sceOffers = await sceOffersPromise;
+    let sceChecked = 0;
+    if (sceOffers) {
+      const results = sceCandidates.map((c) => ({ ...c, ...checkSceOffer(sceOffers.live, c.code, c.createdYear) }));
+      if (results.length >= SCE_MIN_FOR_SANITY_CHECK && !results.some((r) => r.published)) {
+        logger.error(`❌ Ninguna de las ${results.length} ofertas del SCE coincide con las ${sceOffers.total} publicadas: ` +
+          'el cruce parece roto (¿ha cambiado el formato de los códigos?). No se desactiva ninguna.');
+      } else {
+        sceChecked = results.length;
+        results.filter((r) => !r.published).forEach(({ doc, reason }) => {
+          verificationDisable.push({ doc, block: 'SCE_OFERTA', reason });
+        });
+      }
+    }
+
+    await disableResources(verificationDisable);
+
+    const toDisable = [...dateDisable, ...verificationDisable];
+    const byBlock = toDisable.reduce((acc, { block }) => ({ ...acc, [block]: (acc[block] || 0) + 1 }), {});
+    const reviewed = snapshot.size - skipped;
+    logger.info(`✔ Revisión de recursos completada: ${reviewed} revisados de ${snapshot.size} activos` +
+      `${skipped ? ` (${skipped} saltados por notExpire)` : ''}, ` +
+      `${linksChecked} enlaces comprobados${linksSkipped ? ` (${linksSkipped} sin tiempo, quedan para la siguiente)` : ''}, ` +
+      `${sceChecked}/${sceCandidates.length} ofertas del SCE cruzadas, ` +
+      `${toDisable.length} deshabilitados ${JSON.stringify(byBlock)}`);
   } catch (error) {
     logger.error('❌ Error en checkResourceDate:', error);
   }

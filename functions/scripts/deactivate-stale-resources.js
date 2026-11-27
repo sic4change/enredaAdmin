@@ -13,9 +13,9 @@
  *   SCE_GENERICO    gobiernodecanarias.org sin código: se mantiene.
  *   IPETALAVERA     ipetalavera.es nunca retira ofertas: se mantiene.
  *   ENLACE          Resto de dominios: se comprueba el enlace; solo se desactivan
- *                   los ROTOS (404/410, dominio inexistente, conexión rechazada,
- *                   soft-404). Los dudosos (403, 5xx, timeouts...) quedan para
- *                   revisión manual.
+ *                   los ROTOS (404/410, dominio inexistente, soft-404). Los
+ *                   dudosos (403, 5xx, timeouts, conexión rechazada...) quedan
+ *                   para revisión manual.
  *   NO_VERIFICABLE  gestionandote.com: revisión manual.
  *   SIN_ENLACE      Sin enlace o mal formado: revisión manual.
  *   Sin fecha de alta: nunca se desactivan por antigüedad.
@@ -49,6 +49,8 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline/promises');
 const admin = require('firebase-admin');
+const { sleep, normalizeLink, isHost, checkUrl, makeScheduler } = require('../utils/linkChecker');
+const { sceCode, fetchSceOffers, checkSceOffer } = require('../utils/sceOffers');
 
 // ---------- CLI ----------
 const args = process.argv.slice(2);
@@ -71,192 +73,10 @@ const PLAN_MAX_AGE_DAYS = 3; // un plan más viejo se considera desfasado
 const BATCH_SIZE = 200;
 const CANARY_WAIT_MS = 30000;
 
-const USER_AGENT = 'Mozilla/5.0 (compatible; EnredaLinkChecker/1.0)';
 const HOST_CONCURRENCY = 2;
 const GLOBAL_CONCURRENCY = 24;
 const TIMEOUT_MS = 20000;
-const RETRIES = 2;
-const MAX_BODY_BYTES = 256 * 1024;
-
-const SCE_PAGE_URL = 'https://www.gobiernodecanarias.org/empleo/sce/principal/componentes/buscadores_angular/index_ofertas_empleo.jsp?Title_prop=null&cod_buscar=null';
-const SCE_API_URL = 'https://www3.gobiernodecanarias.org/empleo/SERELE-Inter/api/v2.0/ofertas/difusion?plataformaCliente=LGOPTIMUSL5%3A%3AAPPMOVIL%3A%3AANDROID-2.1%3A%3AV2.0';
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// ---------- Enlaces ----------
-function normalizeLink(raw) {
-  const s = (raw || '').toString().trim();
-  if (!s || s === '-' || s === '.') return { error: 'SIN_LINK' };
-  const withScheme = /^https?:\/\//i.test(s) ? s : `https://${s.replace(/^\/+/, '')}`;
-  try {
-    const u = new URL(withScheme);
-    if (!u.hostname.includes('.')) return { error: 'LINK_INVALIDO' };
-    return { url: u };
-  } catch {
-    return { error: 'LINK_INVALIDO' };
-  }
-}
-
-const isHost = (u, domain) => u.hostname === domain || u.hostname.endsWith(`.${domain}`);
-
-// El SCE numera las ofertas con una secuencia que se reinicia cada año.
-const normCode = (v) => {
-  const n = parseInt(String(v ?? '').trim(), 10);
-  return Number.isFinite(n) ? String(n) : null;
-};
-const sceCode = (link) => normCode((link.match(/cod_buscar=(\d+)/) || [])[1]);
-
-// ---------- Comprobación HTTP (misma lógica que audit-resource-links.js) ----------
-const SOFT_404_TITLE = /(p[aá]gina no encontrada|no se ha encontrado|not found|page not found|error 404|\b404\b|no existe)/i;
-const DEFINITELY_BROKEN_CODES = new Set(['ENOTFOUND', 'ECONNREFUSED']);
-const TRANSIENT_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'EAI_AGAIN', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET', 'TimeoutError', 'AbortError']);
-
-async function readBodyLimited(res) {
-  if (!res.body) return '';
-  const reader = res.body.getReader();
-  const chunks = [];
-  let size = 0;
-  try {
-    while (size < MAX_BODY_BYTES) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      size += value.length;
-    }
-  } finally {
-    reader.cancel().catch(() => {});
-  }
-  return Buffer.concat(chunks.map((c) => Buffer.from(c))).toString('utf8');
-}
-
-const errorCode = (e) => e?.cause?.code || e?.code || e?.name || 'ERROR';
-
-async function fetchOnce(url) {
-  const res = await fetch(url, {
-    redirect: 'follow',
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,*/*;q=0.8', 'Accept-Language': 'es-ES,es;q=0.9' },
-  });
-  const isHtml = (res.headers.get('content-type') || '').includes('html');
-  const body = isHtml ? await readBodyLimited(res) : (res.body?.cancel().catch(() => {}), '');
-  const title = ((body.match(/<title[^>]*>([^<]*)/i) || [])[1] || '').replace(/\s+/g, ' ').trim();
-  return { status: res.status, finalUrl: res.url, title };
-}
-
-function classifyHttp(original, { status, finalUrl, title }) {
-  if (status === 404 || status === 410) return ['ROTO', `HTTP ${status}`];
-  if (status >= 200 && status < 300) {
-    if (SOFT_404_TITLE.test(title)) return ['ROTO', `Soft-404 (título: "${title.slice(0, 80)}")`];
-    try {
-      const f = new URL(finalUrl);
-      const deep = original.pathname.replace(/\/+$/, '') !== '';
-      if (deep && (f.pathname === '/' || f.pathname === '')) return ['DUDOSO', `Redirige a la home (${finalUrl})`];
-    } catch {}
-    return ['OK', `HTTP ${status}`];
-  }
-  if ([401, 403, 429].includes(status)) return ['DUDOSO', `HTTP ${status} (posible bloqueo anti-bots)`];
-  return ['DUDOSO', `HTTP ${status}`];
-}
-
-async function checkUrl(u) {
-  let lastErr = null;
-  for (let attempt = 0; attempt <= RETRIES; attempt++) {
-    try {
-      const r = await fetchOnce(u.href);
-      const [verdict, reason] = classifyHttp(u, r);
-      if (verdict === 'DUDOSO' && (r.status >= 500 || r.status === 429) && attempt < RETRIES) {
-        await sleep(2000 * (attempt + 1));
-        continue;
-      }
-      return { verdict, reason, httpStatus: r.status, finalUrl: r.finalUrl };
-    } catch (e) {
-      lastErr = e;
-      if (errorCode(e) === 'ENOTFOUND') break;
-      if (attempt < RETRIES) await sleep(2000 * (attempt + 1));
-    }
-  }
-  const code = errorCode(lastErr);
-  if (DEFINITELY_BROKEN_CODES.has(code)) {
-    return { verdict: 'ROTO', reason: code === 'ENOTFOUND' ? 'El dominio no existe (DNS)' : 'Conexión rechazada', httpStatus: '', finalUrl: '' };
-  }
-  const label = TRANSIENT_CODES.has(code) ? 'Timeout / error de red' : 'Error de conexión';
-  return { verdict: 'DUDOSO', reason: `${label} (${code})`, httpStatus: '', finalUrl: '' };
-}
-
-function makeScheduler(globalLimit, perHostLimit) {
-  let active = 0;
-  const perHost = new Map();
-  const queue = [];
-  const pump = () => {
-    for (let i = 0; i < queue.length && active < globalLimit; ) {
-      const job = queue[i];
-      const h = perHost.get(job.host) || 0;
-      if (h >= perHostLimit) { i++; continue; }
-      queue.splice(i, 1);
-      active++;
-      perHost.set(job.host, h + 1);
-      job.fn().then(job.resolve, job.reject).finally(() => {
-        active--;
-        perHost.set(job.host, perHost.get(job.host) - 1);
-        pump();
-      });
-    }
-  };
-  return (host, fn) => new Promise((resolve, reject) => { queue.push({ host, fn, resolve, reject }); pump(); });
-}
-
-// ---------- SCE (misma lógica que check-sce-offers.js) ----------
-async function fetchSceOffers() {
-  let t0 = Date.now();
-  console.log('SCE 1/2: cargando la página del buscador...');
-  let page;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const r = await fetch(SCE_PAGE_URL, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(45000) });
-      page = await r.text();
-      break;
-    } catch (e) {
-      console.log(`    Intento ${attempt} fallido (${errorCode(e)}) tras ${Math.round((Date.now() - t0) / 1000)} s`);
-      if (attempt === 3) throw new Error('La página del buscador del SCE no responde. Sin esa información no se puede decidir nada: inténtalo más tarde.');
-    }
-  }
-  const token = (page.match(/<sce-buscadores[^>]*\btoken="([^"]+)"/) || [])[1];
-  if (!token) throw new Error('No se encontró el token en la página del buscador del SCE (¿ha cambiado la web?)');
-
-  t0 = Date.now();
-  console.log('SCE 2/2: descargando las ofertas publicadas (puede tardar hasta 2-3 min)...');
-  const res = await fetch(SCE_API_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'User-Agent': USER_AGENT,
-      Accept: 'application/json, text/plain, */*',
-      Origin: 'https://www.gobiernodecanarias.org',
-      Referer: 'https://www.gobiernodecanarias.org/',
-    },
-    signal: AbortSignal.timeout(180000),
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`La API del SCE respondió HTTP ${res.status}: ${text.slice(0, 300)}`);
-  let body;
-  try { body = JSON.parse(text); } catch { throw new Error(`La API del SCE no devolvió JSON: ${text.slice(0, 300)}`); }
-  const offers = body?.data?.ofertasDifusion;
-  if (!Array.isArray(offers)) throw new Error('Formato inesperado en la respuesta del SCE (falta data.ofertasDifusion)');
-  // Salvaguarda: si la API devuelve vacío por un fallo, NO se desactiva todo el SCE.
-  if (offers.length < MIN_SCE_OFFERS) {
-    throw new Error(`El SCE solo devolvió ${offers.length} ofertas (mínimo esperado ${MIN_SCE_OFFERS}). Parece un fallo de la API; no se sigue.`);
-  }
-
-  const live = new Map(); // código -> [{ year, fecha }]
-  for (const o of offers) {
-    const code = normCode(o.codigoSecuenciaOferta);
-    if (!code) continue;
-    const list = live.get(code) || [];
-    list.push({ year: parseInt(o.codigoAnioOferta, 10), fecha: o.fechaPublicacion || '' });
-    live.set(code, list);
-  }
-  console.log(`    ${offers.length} ofertas publicadas hoy en el SCE (${Math.round((Date.now() - t0) / 1000)} s)`);
-  return { live, total: offers.length };
-}
+const SCE_FETCH_TIMEOUT_MS = 6 * 60 * 1000;
 
 // ---------- Decisión por recurso ----------
 function blockOf(n, link) {
@@ -296,21 +116,10 @@ function decide(row, created, sceLive) {
   }
 
   // SCE_OFERTA
-  {
-    const code = sceCode(row.link);
-    if (!created) return { block: 'SCE_OFERTA', action: 'REVISAR', reason: 'Sin fecha de alta para emparejar con el SCE' };
-    if (!sceLive) return { block: 'SCE_OFERTA', action: 'PENDIENTE_SCE' };
-    const year = created.getFullYear();
-    const hits = sceLive.get(code) || [];
-    // El scraper da de alta el recurso después de publicarse la oferta: mismo año o el anterior.
-    const match = hits.find((o) => o.year === year || o.year === year - 1);
-    if (match) return { block: 'SCE_OFERTA', action: 'MANTENER', reason: `Publicada en el SCE (${match.fecha})` };
-    return {
-      block: 'SCE_OFERTA',
-      action: 'DESACTIVAR',
-      reason: hits.length ? `No publicada en el SCE (el nº ${code} es ahora una oferta de ${hits[0].year})` : 'No publicada en el SCE',
-    };
-  }
+  if (!created) return { block, action: 'REVISAR', reason: 'Sin fecha de alta para emparejar con el SCE' };
+  if (!sceLive) return { block, action: 'PENDIENTE_SCE' };
+  const { published, reason } = checkSceOffer(sceLive, sceCode(row.link), created.getFullYear());
+  return { block, action: published ? 'MANTENER' : 'DESACTIVAR', reason };
 }
 
 // ---------- Modo simulación ----------
@@ -366,7 +175,12 @@ async function buildPlan(db) {
   let sce = null;
   if (pendingSce.length) {
     console.log(`${pendingSce.length} ofertas recientes del SCE por cruzar`);
-    sce = await fetchSceOffers();
+    sce = await fetchSceOffers({
+      deadline: Date.now() + SCE_FETCH_TIMEOUT_MS,
+      minOffers: MIN_SCE_OFFERS,
+      pageAttempts: 3,
+      log: console.log,
+    });
     for (const r of pendingSce) Object.assign(r, decide(r, r.created, sce.live));
     // Si ninguna coincide con las ofertas publicadas, el cruce está roto.
     if (!pendingSce.some((r) => r.action === 'MANTENER')) {
@@ -381,7 +195,7 @@ async function buildPlan(db) {
     let done = 0;
     const t0 = Date.now();
     await Promise.all([...toCheck.values()].map((entry) =>
-      schedule(entry.url.hostname, () => checkUrl(entry.url)).then((r) => {
+      schedule(entry.url.hostname, () => checkUrl(entry.url, { timeoutMs: TIMEOUT_MS })).then((r) => {
         const action = r.verdict === 'ROTO' ? 'DESACTIVAR' : r.verdict === 'DUDOSO' ? 'REVISAR' : 'MANTENER';
         for (const row of entry.rows) Object.assign(row, { action, reason: `Enlace ${r.verdict}: ${r.reason}`, httpStatus: r.httpStatus, finalUrl: r.finalUrl });
         done++;
@@ -575,4 +389,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { decide, normalizeLink, sceCode, classifyHttp };
+module.exports = { decide, normalizeLink, sceCode };
